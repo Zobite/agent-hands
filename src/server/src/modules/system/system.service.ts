@@ -1,36 +1,53 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { VersionResponse } from "./system.schema.js";
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-
-// Try multiple paths: works in dev (src/) and production (dist/)
-const PKG_CANDIDATES = [
-  join(__dirname, "..", "..", "..", "package.json"),             // prod: dist/modules/system → server/package.json
-  join(__dirname, "..", "..", "..", "..", "package.json"),       // dev: src/modules/system → src/server/package.json
-  join(__dirname, "..", "..", "..", "..", "..", "package.json"), // root fallback
-];
+/**
+ * Injected at build time by `src/server/build.ts` via Bun's `define`.
+ * In dev (bun --watch) this is undefined, so we fall back to reading package.json.
+ */
+declare const __PKG_VERSION__: string | undefined;
 
 let _currentVersion: string | null = null;
 
-export function getCurrentVersion(): string {
-  // Re-read on every call in dev; cached in prod after first successful read
-  if (_currentVersion && process.env.NODE_ENV !== "development") return _currentVersion;
-  for (const candidate of PKG_CANDIDATES) {
+/**
+ * Walk upward from `startDir` looking for a package.json that contains a version field.
+ */
+function findVersionUpward(startDir: string): string | null {
+  let dir = startDir;
+  for (let i = 0; i < 6; i++) {
+    const candidate = join(dir, "package.json");
     try {
-      const pkg = JSON.parse(readFileSync(candidate, "utf-8"));
-      if (pkg.version) {
-        _currentVersion = pkg.version;
-        return _currentVersion!;
+      if (existsSync(candidate)) {
+        const pkg = JSON.parse(readFileSync(candidate, "utf-8"));
+        if (pkg.version) return pkg.version;
       }
     } catch {
-      // try next
+      // skip
     }
+    const parent = dirname(dir);
+    if (parent === dir) break; // reached filesystem root
+    dir = parent;
   }
-  _currentVersion = "unknown";
+  return null;
+}
+
+export function getCurrentVersion(): string {
+  if (_currentVersion && process.env.NODE_ENV !== "development") return _currentVersion;
+
+  // 1. Build-time injected constant (production bundle)
+  if (typeof __PKG_VERSION__ !== "undefined") {
+    _currentVersion = __PKG_VERSION__;
+    return _currentVersion;
+  }
+
+  // 2. Dev fallback: walk up from this file's directory to find package.json
+  const __dirname = dirname(fileURLToPath(import.meta.url));
+  _currentVersion = findVersionUpward(__dirname) ?? "unknown";
   return _currentVersion;
 }
+
 
 /** Cache: latest version fetched from npm registry */
 let _cachedLatest: string | null = null;

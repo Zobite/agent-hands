@@ -1,10 +1,18 @@
 {
   "name": "moro-llm-toolkit",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "type": "module",
   "description": "Moro LLM Toolkit — LLM-first knowledge base. Docs, Datatable, MCP server, S3-compatible file store.",
   "author": "",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/devlangla/moro-llm-toolkit.git"
+  },
+  "homepage": "https://github.com/devlangla/moro-llm-toolkit#readme",
+  "bugs": {
+    "url": "https://github.com/devlangla/moro-llm-toolkit/issues"
+  },
   "bin": {
     "moro-llm-toolkit": "./bin/moro-llm-toolkit.js"
   },
@@ -27,7 +35,7 @@
     "dev:web": "cd src/web && bun run dev",
     "dev": "concurrently --names \"server,web\" --prefix-colors \"cyan,magenta\" --kill-others-on-fail \"bun run dev:server\" \"bun run dev:web\"",
     "start": "bun src/server/src/index.ts",
-    "build:server": "cd src/server && bunx tsc -b",
+    "build:server": "cd src/server && bun run build",
     "build:web": "cd src/web && bun run build",
     "build": "bun run build:web && bun run build:server",
     "lint": "bunx biome lint ./src/web",

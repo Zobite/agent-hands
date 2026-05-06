@@ -1,10 +1,10 @@
 {
   "name": "moro-llm-toolkit-server",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "type": "module",
   "private": true,
   "scripts": {
-    "build": "bun build src/index.ts --outdir ./dist --target bun --sourcemap=none",
+    "build": "bun run build.ts",
     "typecheck": "NODE_OPTIONS=\"--max-old-space-size=8192\" bunx tsc --noEmit",
     "dev": "bun --watch src/index.ts",
     "db:generate": "bunx drizzle-kit generate",
