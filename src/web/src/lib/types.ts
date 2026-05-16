@@ -564,6 +564,25 @@ export interface McpToolTestResult {
   stderr: string;
 }
 
+export interface McpToolLog {
+  id: string;
+  toolId: string;
+  serverId: string;
+  callerType: "mcp_agent" | "test_panel";
+  callerInfo: string | null;
+  inputParams: unknown;
+  outputResult: unknown;
+  status: "success" | "error";
+  errorMessage: string | null;
+  executionTimeMs: number;
+  createdAt: number;
+}
+
+export interface McpToolLogListResult {
+  items: McpToolLog[];
+  meta: { total: number; page: number; limit: number; hasMore: boolean };
+}
+
 // ── Dynamic APIs ────────────────────────────────────────────────────────────
 
 export interface DynamicApiItem {
@@ -638,4 +657,32 @@ export interface DynamicApiLogItem {
 export interface DynamicApiLogListResult {
   items: DynamicApiLogItem[];
   meta: { total: number; page: number; limit: number; hasMore: boolean };
+}
+
+// ── LLM Providers ───────────────────────────────────────────────────────────
+
+export type LlmProviderType = "openrouter" | "openai" | "gemini" | "anthropic" | "ollama" | "custom";
+
+export interface LlmProviderItem {
+  id: string;
+  name: string;
+  providerType: LlmProviderType;
+  apiKey: string; // masked
+  baseUrl: string | null;
+  models: string[];
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface CreateLlmProviderInput {
+  name: string;
+  providerType: LlmProviderType;
+  apiKey: string;
+  baseUrl?: string;
+}
+
+export interface UpdateLlmProviderInput {
+  name?: string;
+  apiKey?: string;
+  baseUrl?: string | null;
 }

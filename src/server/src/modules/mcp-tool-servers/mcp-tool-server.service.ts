@@ -1,6 +1,6 @@
 import { eq, and, sql, desc } from "drizzle-orm";
 import { getDb } from "../../common/db/client.js";
-import { mcpToolServers, mcpTools } from "../../common/db/schema.js";
+import { mcpToolServers, mcpTools, mcpToolLogs } from "../../common/db/schema.js";
 import { genId, now } from "../../common/utils.js";
 import type {
   CreateMcpServerBody,
@@ -228,4 +228,64 @@ export async function deleteMcpTool(toolId: string) {
   const db = getDb();
   await db.delete(mcpTools).where(eq(mcpTools.id, toolId));
   return true;
+}
+
+// ── MCP Tool Logs ───────────────────────────────────────────────────────────
+
+export async function createMcpToolLog(data: {
+  toolId: string;
+  serverId: string;
+  callerType: "mcp_agent" | "test_panel";
+  callerInfo?: string;
+  inputParams?: unknown;
+  outputResult?: unknown;
+  status: "success" | "error";
+  errorMessage?: string;
+  executionTimeMs: number;
+}) {
+  const db = getDb();
+  const id = genId("mtlg");
+  await db.insert(mcpToolLogs).values({
+    id,
+    toolId: data.toolId,
+    serverId: data.serverId,
+    callerType: data.callerType,
+    callerInfo: data.callerInfo ?? null,
+    inputParams: data.inputParams != null ? JSON.stringify(data.inputParams) : null,
+    outputResult: data.outputResult != null ? JSON.stringify(data.outputResult) : null,
+    status: data.status,
+    errorMessage: data.errorMessage ?? null,
+    executionTimeMs: data.executionTimeMs,
+    createdAt: now(),
+  });
+}
+
+export async function listMcpToolLogs(toolId: string, page = 1, limit = 50) {
+  const db = getDb();
+  const offset = (page - 1) * limit;
+
+  const countResult = await db
+    .select({ count: sql<number>`COUNT(*)` })
+    .from(mcpToolLogs)
+    .where(eq(mcpToolLogs.toolId, toolId))
+    .get();
+  const total = countResult?.count ?? 0;
+
+  const rows = await db
+    .select()
+    .from(mcpToolLogs)
+    .where(eq(mcpToolLogs.toolId, toolId))
+    .orderBy(desc(mcpToolLogs.createdAt))
+    .limit(limit)
+    .offset(offset)
+    .all();
+
+  return {
+    items: rows.map((r) => ({
+      ...r,
+      inputParams: r.inputParams ? JSON.parse(r.inputParams) : null,
+      outputResult: r.outputResult ? JSON.parse(r.outputResult) : null,
+    })),
+    meta: { total, page, limit, hasMore: offset + limit < total },
+  };
 }

@@ -29,6 +29,8 @@ import {
   createMcpTool,
   updateMcpTool,
   deleteMcpTool,
+  createMcpToolLog,
+  listMcpToolLogs,
 } from "./mcp-tool-server.service.js";
 
 // ── Server Routes ───────────────────────────────────────────────────────────
@@ -189,12 +191,22 @@ export function registerMcpToolRoutes(app: FastifyInstance) {
     return reply.send({ id: toolId, deleted: true });
   });
 
+  // GET /:toolId/logs — list execution logs for a tool
+  r.get("/:toolId/logs", { preHandler: [requireAuth] }, async (req, reply) => {
+    const { toolId } = req.params as { id: string; toolId: string };
+    const { page, limit } = req.query as { page?: string; limit?: string };
+    const tool = await getMcpToolById(toolId);
+    if (!tool) return reply.code(400).send({ error: "not_found", message: "Tool not found" });
+    const result = await listMcpToolLogs(toolId, Number(page ?? 1), Number(limit ?? 50));
+    return reply.send(result);
+  });
+
   // POST /:toolId/test — test execute tool
   r.post(
     "/:toolId/test",
     { preHandler: [requireAuth], schema: { body: testMcpToolBodySchema } },
     async (req, reply) => {
-      const { toolId } = req.params as { id: string; toolId: string };
+      const { id: serverId, toolId } = req.params as { id: string; toolId: string };
       const tool = await getMcpToolById(toolId);
       if (!tool) return reply.code(400).send({ error: "not_found", message: "Tool not found" });
 
@@ -214,6 +226,19 @@ export function registerMcpToolRoutes(app: FastifyInstance) {
           authToken,
         },
       );
+
+      // Save execution log (fire-and-forget, don't block response)
+      createMcpToolLog({
+        toolId: tool.id,
+        serverId,
+        callerType: "test_panel",
+        callerInfo: req.auth?.userId,
+        inputParams: body.params ?? {},
+        outputResult: result.result,
+        status: result.success ? "success" : "error",
+        errorMessage: result.success ? undefined : (result.stderr ?? "Unknown error"),
+        executionTimeMs: result.executionTimeMs,
+      }).catch(() => {});
 
       return reply.send(result);
     },

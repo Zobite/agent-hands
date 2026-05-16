@@ -33,6 +33,7 @@ import {
   updateColumn,
   deleteColumn,
   listRows,
+  getRowById,
   createRow,
   updateRow,
   deleteRow,
@@ -195,6 +196,16 @@ export function registerTableRoutes(app: FastifyInstance) {
       return reply.send(result);
     },
   );
+
+  // GET /:dbId/tables/:id/rows/:rowId — get single row
+  r.get("/:dbId/tables/:id/rows/:rowId", { preHandler: [requireAuth] }, async (req, reply) => {
+    const { id, rowId } = req.params as { dbId: string; id: string; rowId: string };
+    const table = await getTableById(id);
+    if (!table) return reply.code(400).send({ error: "not_found", message: "Table not found" });
+    const row = await getRowById(id, rowId);
+    if (!row) return reply.code(400).send({ error: "not_found", message: "Row not found" });
+    return reply.send(row);
+  });
 
   // POST /:dbId/tables/:id/rows — create row
   r.post(

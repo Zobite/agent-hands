@@ -3,6 +3,7 @@ import type { ModuleRoute, ModuleNav } from "src/common/types/router";
 
 const McpServersListPage = lazy(() => import("./pages/McpServersListPage"));
 const McpServerDetailPage = lazy(() => import("./pages/McpServerDetailPage"));
+const McpToolEditorPage = lazy(() => import("./pages/McpToolEditorPage"));
 
 export const routes: ModuleRoute[] = [
   {
@@ -12,6 +13,10 @@ export const routes: ModuleRoute[] = [
   {
     path: "/mcp-servers/:id",
     element: McpServerDetailPage,
+  },
+  {
+    path: "/mcp-servers/:id/tools/:toolId",
+    element: McpToolEditorPage,
   },
 ];
 

@@ -3,7 +3,7 @@
     <id>mcp_tool_logs</id>
     <title>Tool execution logs</title>
     <group>MCP Servers</group>
-    <status>planned</status>
+    <status>done</status>
     <priority>p2</priority>
   </meta>
 

@@ -32,6 +32,7 @@
   - Databases & Tables: `databases.list`, `tables.list`, `tables.query`, `tables.insert`, `tables.update`, `tables.delete`
   - Documents: `projects.list`, `documents.list`, `documents.get`, `documents.create`, `documents.update`
   - Storage: `storage.list_buckets`, `storage.list_objects`, `storage.get_object_info`, `storage.get_download_url`, `storage.delete_object`
+  - Web: `web.fetch`
 - [x] Auth: JWT Bearer hoặc API key
 
 ## Web

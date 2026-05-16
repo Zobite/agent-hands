@@ -1,6 +1,6 @@
 import { Modal, Spin, Tabs, message } from "antd";
-import { AlertTriangle, BookOpen, Clock, Terminal } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { AlertTriangle, BookOpen, Bot, Clock, Play, Terminal, PanelRightClose, PanelRightOpen } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { API_BASE, client } from "src/lib/client";
 import { MoroError } from "src/lib/http";
@@ -13,6 +13,7 @@ import { HandlerCodeEditor } from "../components/HandlerCodeEditor";
 import { HandlerSdkReference } from "../components/HandlerSdkReference";
 import { LogsPanel } from "../components/LogsPanel";
 import { TestPanel } from "../components/TestPanel";
+import { AiCodingPanel } from "../components/AiCodingPanel";
 
 const { confirm } = Modal;
 
@@ -66,6 +67,21 @@ export default function DynamicApiDetailPage() {
   // Logs
   const [logs, setLogs] = useState<DynamicApiLogItem[]>([]);
   const [logsLoading, setLogsLoading] = useState(false);
+
+  // AI panel visibility + resizable width
+  const [showAiPanel, setShowAiPanel] = useState(true);
+  const AI_PANEL_MIN = 280;
+  const AI_PANEL_MAX = 700;
+  const AI_PANEL_DEFAULT = 420;
+  const [aiPanelWidth, setAiPanelWidth] = useState(() => {
+    const saved = localStorage.getItem("ai_panel_width");
+    const w = saved ? Number(saved) : AI_PANEL_DEFAULT;
+    return Math.max(AI_PANEL_MIN, Math.min(AI_PANEL_MAX, w));
+  });
+  const dragRef = useRef<{ startX: number; startW: number } | null>(null);
+
+  // AI pending code (for diff review)
+  const [pendingCode, setPendingCode] = useState<string | null>(null);
 
   // ── Data Fetching ──────────────────────────────────────────────────────────
 
@@ -228,6 +244,35 @@ export default function DynamicApiDetailPage() {
   };
 
 
+  // ── AI panel resize handlers ─────────────────────────────────────────────
+
+  const handleResizeStart = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    dragRef.current = { startX: e.clientX, startW: aiPanelWidth };
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+
+    const onMove = (ev: MouseEvent) => {
+      if (!dragRef.current) return;
+      const delta = dragRef.current.startX - ev.clientX;
+      const next = Math.max(AI_PANEL_MIN, Math.min(AI_PANEL_MAX, dragRef.current.startW + delta));
+      setAiPanelWidth(next);
+    };
+    const onUp = () => {
+      document.removeEventListener("mousemove", onMove);
+      document.removeEventListener("mouseup", onUp);
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+      setAiPanelWidth((w) => {
+        localStorage.setItem("ai_panel_width", String(w));
+        return w;
+      });
+      dragRef.current = null;
+    };
+    document.addEventListener("mousemove", onMove);
+    document.addEventListener("mouseup", onUp);
+  }, [aiPanelWidth]);
+
   // ── Render ─────────────────────────────────────────────────────────────────
 
   if (loading) {
@@ -285,13 +330,30 @@ export default function DynamicApiDetailPage() {
 
       {/* Main content */}
       <div className="flex-1 overflow-hidden flex">
-        {/* Left: Config + Code */}
-        <div className="flex-1 flex flex-col overflow-hidden border-r border-hairline">
+        {/* Left/Center: Code + Test + Logs (takes all remaining space) */}
+        <div className="flex-1 flex flex-col overflow-hidden">
           <Tabs
             defaultActiveKey="code"
             style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}
             styles={{
               header: { paddingLeft: "20px", paddingRight: "20px", flexShrink: 0 },
+            }}
+            tabBarExtraContent={{
+              right: (
+                <button
+                  onClick={() => setShowAiPanel(!showAiPanel)}
+                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 mr-2 rounded-md font-mono text-[11px] border cursor-pointer transition-colors ${
+                    showAiPanel
+                      ? "bg-[#8b5cf610] text-[#8b5cf6] border-[#8b5cf630] hover:bg-[#8b5cf620]"
+                      : "bg-transparent text-muted-soft border-hairline hover:text-ink hover:border-hairline-strong"
+                  }`}
+                  title={showAiPanel ? "Hide AI Panel" : "Show AI Panel"}
+                >
+                  {showAiPanel ? <PanelRightClose size={12} /> : <PanelRightOpen size={12} />}
+                  <Bot size={12} />
+                  AI
+                </button>
+              ),
             }}
             items={[
               {
@@ -309,8 +371,39 @@ export default function DynamicApiDetailPage() {
                         setCode(v);
                         markDirty();
                       }}
+                      pendingCode={pendingCode}
+                      onAcceptPending={() => {
+                        if (pendingCode) {
+                          setCode(pendingCode);
+                          markDirty();
+                        }
+                        setPendingCode(null);
+                      }}
+                      onRejectPending={() => {
+                        setPendingCode(null);
+                      }}
                     />
                   </div>
+                ),
+              },
+              {
+                key: "test",
+                label: (
+                  <span className="flex items-center gap-1.5 font-mono text-[12px]">
+                    <Play size={13} /> Test
+                  </span>
+                ),
+                children: (
+                  <TestPanel
+                    method={method}
+                    path={path}
+                    testBody={testBody}
+                    onTestBodyChange={setTestBody}
+                    testing={testing}
+                    testResult={testResult}
+                    onSend={handleTest}
+                    baseUrl={baseUrl}
+                  />
                 ),
               },
               {
@@ -342,17 +435,33 @@ export default function DynamicApiDetailPage() {
           />
         </div>
 
-        {/* Right: Test Panel */}
-        <TestPanel
-          method={method}
-          path={path}
-          testBody={testBody}
-          onTestBodyChange={setTestBody}
-          testing={testing}
-          testResult={testResult}
-          onSend={handleTest}
-          baseUrl={baseUrl}
-        />
+        {/* Right: AI Agent Panel (collapsible + resizable) */}
+        {showAiPanel && (
+          <>
+            {/* Resize handle */}
+            <div
+              onMouseDown={handleResizeStart}
+              className="shrink-0 w-[5px] cursor-col-resize group relative flex items-center justify-center hover:bg-hairline-soft transition-colors"
+              title="Drag to resize"
+            >
+              <div className="w-[1px] h-8 bg-hairline-strong rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
+            </div>
+            <div
+              className="flex flex-col shrink-0 overflow-hidden"
+              style={{ width: aiPanelWidth }}
+            >
+              <AiCodingPanel
+                apiId={api.id}
+                method={method}
+                path={path}
+                currentCode={code}
+                onApplyCode={(newCode) => {
+                  setPendingCode(newCode);
+                }}
+              />
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

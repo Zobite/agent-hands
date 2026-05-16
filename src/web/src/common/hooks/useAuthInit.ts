@@ -25,7 +25,8 @@ export function useAuthInit() {
 
   useEffect(() => {
     if (!client.accessToken) {
-      setLoading(false);
+      // No token → clear any persisted auth state and stop loading
+      logout();
       return;
     }
 
@@ -84,6 +85,7 @@ export function useAuthInit() {
     function clearTokensAndLogout() {
       localStorage.removeItem("access_token");
       localStorage.removeItem("refresh_token");
+      localStorage.removeItem("auth-storage");
       logout();
     }
   }, [setUser, setLoading, logout]);

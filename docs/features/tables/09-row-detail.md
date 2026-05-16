@@ -3,7 +3,7 @@
     <id>table_row_detail</id>
     <title>Row detail dialog</title>
     <group>Dynamic Table</group>
-    <status>planned</status>
+    <status>done</status>
     <priority>p1</priority>
   </meta>
 

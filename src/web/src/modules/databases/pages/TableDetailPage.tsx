@@ -26,6 +26,7 @@ import {
   ToggleLeft,
   ChevronDown,
   Table2,
+  Expand,
 } from "lucide-react";
 import type {
   DynamicTable,
@@ -93,6 +94,9 @@ export default function TableDetailPage() {
 
   // New Row modal
   const [addRowOpen, setAddRowOpen] = useState(false);
+
+  // Row Detail modal
+  const [detailRow, setDetailRow] = useState<DynamicTableRow | null>(null);
 
   // ── Data Fetching ───────────────────────────────────────────────────────────
 
@@ -482,6 +486,13 @@ export default function TableDetailPage() {
                       menu={{
                         items: [
                           {
+                            key: "open",
+                            icon: <Expand size={13} />,
+                            label: "Open",
+                            onClick: () => setDetailRow(row),
+                          },
+                          { type: "divider" as const },
+                          {
                             key: "delete",
                             icon: <Trash2 size={13} />,
                             label: "Delete row",
@@ -575,6 +586,23 @@ export default function TableDetailPage() {
           setEditColumn(null);
           await fetchTable();
           await fetchRows();
+        }}
+        tableId={id as string}
+        databaseId={dbId as string}
+      />
+
+      <RowDetailModal
+        row={detailRow}
+        columns={columns}
+        onClose={() => setDetailRow(null)}
+        onUpdated={(updatedRow) => {
+          setRows((prev) => prev.map((r) => (r.id === updatedRow.id ? updatedRow : r)));
+          setDetailRow(updatedRow);
+        }}
+        onDeleted={(rowId) => {
+          setRows((prev) => prev.filter((r) => r.id !== rowId));
+          setPagination((prev) => ({ ...prev, total: prev.total - 1 }));
+          setDetailRow(null);
         }}
         tableId={id as string}
         databaseId={dbId as string}
@@ -992,4 +1020,172 @@ function EditColumnModal({
   );
 }
 
+// ── Row Detail Modal ────────────────────────────────────────────────────────────
 
+function RowDetailModal({
+  row,
+  columns,
+  onClose,
+  onUpdated,
+  onDeleted,
+  tableId,
+  databaseId,
+}: {
+  row: DynamicTableRow | null;
+  columns: ColumnDef[];
+  onClose: () => void;
+  onUpdated: (row: DynamicTableRow) => void;
+  onDeleted: (rowId: string) => void;
+  tableId: string;
+  databaseId: string;
+}) {
+  const [saving, setSaving] = useState(false);
+
+  const handleFieldSave = async (colId: string, value: unknown) => {
+    if (!row) return;
+    setSaving(true);
+    try {
+      const updated = await client.tables.updateRow(databaseId, tableId, row.id, {
+        data: { [colId]: value },
+      });
+      onUpdated(updated);
+    } catch {
+      message.error("Failed to update field");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = () => {
+    if (!row) return;
+    confirm({
+      title: "Delete this row?",
+      icon: <AlertTriangle size={20} style={{ color: "var(--color-error)", marginRight: 8 }} />,
+      content: "This action cannot be undone.",
+      okText: "Delete",
+      okType: "danger",
+      async onOk() {
+        try {
+          await client.tables.deleteRow(databaseId, tableId, row.id);
+          onDeleted(row.id);
+          message.success("Row deleted");
+        } catch {
+          message.error("Failed to delete row");
+        }
+      },
+    });
+  };
+
+  return (
+    <Modal
+      title={
+        <div className="flex items-center justify-between">
+          <span>Row Detail</span>
+          {saving && <span className="text-[12px] text-muted font-normal ml-2">Saving...</span>}
+        </div>
+      }
+      open={!!row}
+      onCancel={onClose}
+      footer={
+        <div className="flex justify-between">
+          <button
+            onClick={handleDelete}
+            className="flex items-center gap-2 px-4 py-2 bg-transparent border border-red-500/30 text-red-500 rounded-md font-medium text-[13px] hover:bg-red-50 transition-colors cursor-pointer"
+          >
+            <Trash2 size={14} />
+            Delete Row
+          </button>
+          <button
+            onClick={onClose}
+            className="px-4 py-2 bg-ink text-canvas border-none rounded-md font-medium text-[13px] hover:bg-opacity-90 cursor-pointer"
+          >
+            Done
+          </button>
+        </div>
+      }
+      destroyOnHidden
+      width={560}
+    >
+      {row && (
+        <div className="flex flex-col gap-4 py-2">
+          {columns.map((col) => (
+            <RowDetailField
+              key={col.id}
+              column={col}
+              value={row.data[col.id]}
+              onSave={(val) => handleFieldSave(col.id, val)}
+            />
+          ))}
+        </div>
+      )}
+    </Modal>
+  );
+}
+
+function RowDetailField({
+  column,
+  value,
+  onSave,
+}: {
+  column: ColumnDef;
+  value: unknown;
+  onSave: (val: unknown) => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(value);
+
+  useEffect(() => {
+    setDraft(value);
+  }, [value]);
+
+  const commit = () => {
+    setEditing(false);
+    if (draft !== value) onSave(draft);
+  };
+
+  return (
+    <div>
+      <div
+        style={{
+          fontSize: 11,
+          fontFamily: "var(--font-mono)",
+          textTransform: "uppercase",
+          letterSpacing: "0.05em",
+          color: "var(--color-muted)",
+          marginBottom: 4,
+        }}
+      >
+        {column.name}
+      </div>
+
+      {editing ? (
+        <CellEditor
+          column={column}
+          value={draft}
+          onChange={setDraft}
+          onSave={(val) => { setEditing(false); onSave(val); }}
+          onCancel={() => { setEditing(false); setDraft(value); }}
+        />
+      ) : (
+        <div
+          onClick={() => setEditing(true)}
+          onBlur={commit}
+          style={{
+            minHeight: 36,
+            padding: "7px 10px",
+            border: "1px solid var(--color-hairline)",
+            borderRadius: 6,
+            cursor: "text",
+            background: "var(--color-canvas-soft)",
+          }}
+        >
+          {value === null || value === undefined || value === "" ? (
+            <span style={{ color: "var(--color-muted-soft)", fontSize: 13 }}>—</span>
+          ) : (
+            <CellDisplay column={column} value={value} />
+          )}
+        </div>
+      )}
+    </div>
+  );
+}

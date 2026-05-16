@@ -118,6 +118,21 @@ export class HttpClient {
     // Proactively refresh token if it's about to expire
     await this.ensureFreshToken();
 
+    const res = await this._doFetch(method, path, body);
+
+    // If 401, try refresh token once then retry
+    if (res.status === 401 && this._refreshToken) {
+      const refreshed = await this._tryRefreshAndRetry();
+      if (refreshed) {
+        const retryRes = await this._doFetch(method, path, body);
+        return this._handleResponse<T>(retryRes);
+      }
+    }
+
+    return this._handleResponse<T>(res);
+  }
+
+  private async _doFetch(method: string, path: string, body?: unknown): Promise<Response> {
     const url = `${this._baseUrl}${path}`;
     const headers: Record<string, string> = {};
 
@@ -129,12 +144,14 @@ export class HttpClient {
       headers["Content-Type"] = "application/json";
     }
 
-    const res = await fetch(url, {
+    return fetch(url, {
       method,
       headers,
       body: body !== undefined ? JSON.stringify(body) : undefined,
     });
+  }
 
+  private async _handleResponse<T>(res: Response): Promise<T> {
     if (!res.ok) {
       let errorBody: ApiError;
       try {
@@ -147,6 +164,48 @@ export class HttpClient {
 
     if (res.status === 204) return undefined as T;
     return (await res.json()) as T;
+  }
+
+  /**
+   * Attempt to refresh the access token. Returns true if refresh succeeded.
+   * If refresh fails, calls onRefreshFail and returns false.
+   */
+  private async _tryRefreshAndRetry(): Promise<boolean> {
+    // Deduplicate: if already refreshing, wait for that
+    if (this._refreshing) {
+      try {
+        await this._refreshing;
+        return !!this._accessToken;
+      } catch {
+        return false;
+      }
+    }
+
+    this._refreshing = (async () => {
+      const res = await fetch(`${this._baseUrl}/api/auth/refresh`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refresh_token: this._refreshToken }),
+      });
+      if (res.ok) {
+        const data = await res.json() as { access_token: string; refresh_token: string };
+        this.setTokens(data.access_token, data.refresh_token);
+      } else {
+        // Refresh failed — clear tokens and notify
+        this.clearTokens();
+        this._onRefreshFail?.();
+        throw new Error("refresh_failed");
+      }
+    })();
+
+    try {
+      await this._refreshing;
+      return true;
+    } catch {
+      return false;
+    } finally {
+      this._refreshing = null;
+    }
   }
 
   get<T>(path: string) {
@@ -169,31 +228,25 @@ export class HttpClient {
   async requestFormData<T>(method: string, path: string, formData: FormData): Promise<T> {
     await this.ensureFreshToken();
 
-    const url = `${this._baseUrl}${path}`;
-    const headers: Record<string, string> = {};
-
-    if (this._accessToken) {
-      headers["Authorization"] = `Bearer ${this._accessToken}`;
-    }
-
-    const res = await fetch(url, {
-      method,
-      headers,
-      body: formData,
-    });
-
-    if (!res.ok) {
-      let errorBody: ApiError;
-      try {
-        errorBody = (await res.json()) as ApiError;
-      } catch {
-        errorBody = { error: "unknown", message: res.statusText };
+    const doFetch = () => {
+      const url = `${this._baseUrl}${path}`;
+      const headers: Record<string, string> = {};
+      if (this._accessToken) {
+        headers["Authorization"] = `Bearer ${this._accessToken}`;
       }
-      throw new MoroError(res.status, errorBody);
+      return fetch(url, { method, headers, body: formData });
+    };
+
+    const res = await doFetch();
+
+    if (res.status === 401 && this._refreshToken) {
+      const refreshed = await this._tryRefreshAndRetry();
+      if (refreshed) {
+        return this._handleResponse<T>(await doFetch());
+      }
     }
 
-    if (res.status === 204) return undefined as T;
-    return (await res.json()) as T;
+    return this._handleResponse<T>(res);
   }
 
   /** Send a raw binary body request — used for file uploads */
@@ -205,32 +258,26 @@ export class HttpClient {
   ): Promise<T> {
     await this.ensureFreshToken();
 
-    const url = `${this._baseUrl}${path}`;
-    const headers: Record<string, string> = {
-      "Content-Type": contentType ?? "application/octet-stream",
+    const doFetch = () => {
+      const url = `${this._baseUrl}${path}`;
+      const headers: Record<string, string> = {
+        "Content-Type": contentType ?? "application/octet-stream",
+      };
+      if (this._accessToken) {
+        headers["Authorization"] = `Bearer ${this._accessToken}`;
+      }
+      return fetch(url, { method, headers, body: body as BodyInit });
     };
 
-    if (this._accessToken) {
-      headers["Authorization"] = `Bearer ${this._accessToken}`;
-    }
+    const res = await doFetch();
 
-    const res = await fetch(url, {
-      method,
-      headers,
-      body: body as BodyInit,
-    });
-
-    if (!res.ok) {
-      let errorBody: ApiError;
-      try {
-        errorBody = (await res.json()) as ApiError;
-      } catch {
-        errorBody = { error: "unknown", message: res.statusText };
+    if (res.status === 401 && this._refreshToken) {
+      const refreshed = await this._tryRefreshAndRetry();
+      if (refreshed) {
+        return this._handleResponse<T>(await doFetch());
       }
-      throw new MoroError(res.status, errorBody);
     }
 
-    if (res.status === 204) return undefined as T;
-    return (await res.json()) as T;
+    return this._handleResponse<T>(res);
   }
 }

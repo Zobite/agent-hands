@@ -6,9 +6,13 @@ import {
   Save,
   Play,
   Wrench,
+  ScrollText,
+  CheckCircle2,
+  XCircle,
 } from "lucide-react";
 import type {
   McpToolTestResult,
+  McpToolLog,
 } from "src/lib/types";
 import { MoroError } from "src/lib/http";
 import { client } from "src/lib/client";
@@ -54,6 +58,10 @@ export default function McpToolEditorPage() {
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<McpToolTestResult | null>(null);
+  const [rightPanel, setRightPanel] = useState<"test" | "logs">("test");
+  const [logs, setLogs] = useState<McpToolLog[]>([]);
+  const [logsLoading, setLogsLoading] = useState(false);
+  const [expandedLogId, setExpandedLogId] = useState<string | null>(null);
   const [form] = Form.useForm();
   const [code, setCode] = useState(DEFAULT_CODE);
   const [inputSchema, setInputSchema] = useState(DEFAULT_INPUT_SCHEMA);
@@ -141,6 +149,25 @@ export default function McpToolEditorPage() {
       setTesting(false);
     }
   };
+
+  const fetchLogs = useCallback(async () => {
+    if (!serverId || !toolId || isNew) return;
+    setLogsLoading(true);
+    try {
+      const result = await client.mcpToolServers.listToolLogs(serverId, toolId);
+      setLogs(result.items);
+    } catch {
+      message.error("Failed to load logs");
+    } finally {
+      setLogsLoading(false);
+    }
+  }, [serverId, toolId, isNew]);
+
+  useEffect(() => {
+    if (rightPanel === "logs" && !isNew) {
+      fetchLogs();
+    }
+  }, [rightPanel, fetchLogs, isNew]);
 
   // Keyboard shortcut: Cmd/Ctrl + S
   useEffect(() => {
@@ -290,88 +317,186 @@ export default function McpToolEditorPage() {
           </div>
         </div>
 
-        {/* Right panel: Test */}
+        {/* Right panel: Test / Logs */}
         <div className="w-[360px] shrink-0 border-l border-hairline flex flex-col bg-surface-card overflow-y-auto">
-          <div className="px-5 py-4 border-b border-hairline">
-            <div className="font-mono text-[11px] uppercase tracking-wider text-muted">
-              Test Panel
-            </div>
-          </div>
-
-          <div className="px-5 py-4 flex-1 flex flex-col gap-4">
-            <div>
-              <div className="font-mono text-[10px] uppercase tracking-wider text-muted-soft mb-2">
-                Input Params (JSON)
-              </div>
-              <textarea
-                value={testParams}
-                onChange={(e) => setTestParams(e.target.value)}
-                className="w-full h-[120px] p-3 rounded-md border border-hairline bg-canvas font-mono text-[12px] text-ink resize-y focus:outline-none focus:border-hairline-strong transition-colors"
-                spellCheck={false}
-              />
-            </div>
-
+          {/* Tab switcher */}
+          <div className="px-5 py-3 border-b border-hairline flex items-center gap-1">
             <button
-              onClick={handleTest}
-              disabled={testing || isNew}
-              className="flex items-center justify-center gap-2 h-[36px] w-full rounded-md bg-ink text-canvas font-medium text-[13px] hover:bg-opacity-90 transition-opacity cursor-pointer border-none disabled:opacity-50"
+              onClick={() => setRightPanel("test")}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-[11px] font-mono font-medium cursor-pointer border-none transition-colors ${
+                rightPanel === "test"
+                  ? "bg-ink text-canvas"
+                  : "bg-transparent text-muted hover:text-ink"
+              }`}
             >
-              <Play size={14} />
-              {testing ? "Running..." : "Run Test"}
+              <Play size={11} />
+              Test
             </button>
-
-            {isNew && (
-              <p className="text-[12px] text-muted-soft text-center">
-                Save the tool first to enable testing
-              </p>
-            )}
-
-            {testResult && (
-              <div className="flex flex-col gap-3">
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <span
-                      className={`font-mono text-[10px] uppercase tracking-wider ${
-                        testResult.success
-                          ? "text-[#1f8a65]"
-                          : "text-[#cf2d56]"
-                      }`}
-                    >
-                      {testResult.success ? "SUCCESS" : "ERROR"}
-                    </span>
-                    <span className="font-mono text-[10px] text-muted-soft">
-                      {testResult.executionTimeMs}ms
-                    </span>
-                  </div>
-                  <pre className="m-0 p-3 rounded-md bg-canvas border border-hairline font-mono text-[11px] text-ink whitespace-pre-wrap break-all max-h-[200px] overflow-auto">
-                    {JSON.stringify(testResult.result, null, 2)}
-                  </pre>
-                </div>
-
-                {testResult.stdout && (
-                  <div>
-                    <div className="font-mono text-[10px] uppercase tracking-wider text-muted-soft mb-1">
-                      Stdout
-                    </div>
-                    <pre className="m-0 p-3 rounded-md bg-canvas border border-hairline font-mono text-[11px] text-muted whitespace-pre-wrap max-h-[120px] overflow-auto">
-                      {testResult.stdout}
-                    </pre>
-                  </div>
-                )}
-
-                {testResult.stderr && (
-                  <div>
-                    <div className="font-mono text-[10px] uppercase tracking-wider text-[#cf2d56] mb-1">
-                      Stderr
-                    </div>
-                    <pre className="m-0 p-3 rounded-md bg-canvas border border-[#cf2d56]/20 font-mono text-[11px] text-[#cf2d56] whitespace-pre-wrap max-h-[120px] overflow-auto">
-                      {testResult.stderr}
-                    </pre>
-                  </div>
-                )}
-              </div>
-            )}
+            <button
+              onClick={() => setRightPanel("logs")}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-[11px] font-mono font-medium cursor-pointer border-none transition-colors ${
+                rightPanel === "logs"
+                  ? "bg-ink text-canvas"
+                  : "bg-transparent text-muted hover:text-ink"
+              }`}
+            >
+              <ScrollText size={11} />
+              Logs
+            </button>
           </div>
+
+          {rightPanel === "test" && (
+            <div className="px-5 py-4 flex-1 flex flex-col gap-4">
+              <div>
+                <div className="font-mono text-[10px] uppercase tracking-wider text-muted-soft mb-2">
+                  Input Params (JSON)
+                </div>
+                <textarea
+                  value={testParams}
+                  onChange={(e) => setTestParams(e.target.value)}
+                  className="w-full h-[120px] p-3 rounded-md border border-hairline bg-canvas font-mono text-[12px] text-ink resize-y focus:outline-none focus:border-hairline-strong transition-colors"
+                  spellCheck={false}
+                />
+              </div>
+
+              <button
+                onClick={handleTest}
+                disabled={testing || isNew}
+                className="flex items-center justify-center gap-2 h-[36px] w-full rounded-md bg-ink text-canvas font-medium text-[13px] hover:bg-opacity-90 transition-opacity cursor-pointer border-none disabled:opacity-50"
+              >
+                <Play size={14} />
+                {testing ? "Running..." : "Run Test"}
+              </button>
+
+              {isNew && (
+                <p className="text-[12px] text-muted-soft text-center">
+                  Save the tool first to enable testing
+                </p>
+              )}
+
+              {testResult && (
+                <div className="flex flex-col gap-3">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span
+                        className={`font-mono text-[10px] uppercase tracking-wider ${
+                          testResult.success ? "text-[#1f8a65]" : "text-[#cf2d56]"
+                        }`}
+                      >
+                        {testResult.success ? "SUCCESS" : "ERROR"}
+                      </span>
+                      <span className="font-mono text-[10px] text-muted-soft">
+                        {testResult.executionTimeMs}ms
+                      </span>
+                    </div>
+                    <pre className="m-0 p-3 rounded-md bg-canvas border border-hairline font-mono text-[11px] text-ink whitespace-pre-wrap break-all max-h-[200px] overflow-auto">
+                      {JSON.stringify(testResult.result, null, 2)}
+                    </pre>
+                  </div>
+
+                  {testResult.stdout && (
+                    <div>
+                      <div className="font-mono text-[10px] uppercase tracking-wider text-muted-soft mb-1">
+                        Stdout
+                      </div>
+                      <pre className="m-0 p-3 rounded-md bg-canvas border border-hairline font-mono text-[11px] text-muted whitespace-pre-wrap max-h-[120px] overflow-auto">
+                        {testResult.stdout}
+                      </pre>
+                    </div>
+                  )}
+
+                  {testResult.stderr && (
+                    <div>
+                      <div className="font-mono text-[10px] uppercase tracking-wider text-[#cf2d56] mb-1">
+                        Stderr
+                      </div>
+                      <pre className="m-0 p-3 rounded-md bg-canvas border border-[#cf2d56]/20 font-mono text-[11px] text-[#cf2d56] whitespace-pre-wrap max-h-[120px] overflow-auto">
+                        {testResult.stderr}
+                      </pre>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {rightPanel === "logs" && (
+            <div className="flex-1 flex flex-col">
+              <div className="px-5 py-3 border-b border-hairline flex items-center justify-between">
+                <span className="font-mono text-[10px] uppercase tracking-wider text-muted-soft">
+                  Execution History
+                </span>
+                <button
+                  onClick={fetchLogs}
+                  disabled={logsLoading}
+                  className="font-mono text-[10px] uppercase tracking-wider text-muted hover:text-ink cursor-pointer bg-transparent border-none p-0 disabled:opacity-50"
+                >
+                  {logsLoading ? "Loading..." : "Refresh"}
+                </button>
+              </div>
+
+              {logsLoading ? (
+                <div className="flex-1 flex items-center justify-center">
+                  <Spin size="small" />
+                </div>
+              ) : logs.length === 0 ? (
+                <div className="flex-1 flex items-center justify-center">
+                  <span className="font-mono text-[11px] text-muted-soft">No logs yet</span>
+                </div>
+              ) : (
+                <div className="flex-1 overflow-y-auto divide-y divide-hairline-soft">
+                  {logs.map((log) => (
+                    <div key={log.id}>
+                      <button
+                        onClick={() => setExpandedLogId(expandedLogId === log.id ? null : log.id)}
+                        className="w-full px-5 py-3 flex items-center gap-3 text-left hover:bg-canvas transition-colors cursor-pointer bg-transparent border-none"
+                      >
+                        {log.status === "success" ? (
+                          <CheckCircle2 size={13} className="text-[#1f8a65] shrink-0" />
+                        ) : (
+                          <XCircle size={13} className="text-[#cf2d56] shrink-0" />
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono text-[11px] text-ink">
+                              {log.executionTimeMs}ms
+                            </span>
+                            <span className="font-mono text-[10px] text-muted-soft">
+                              {log.callerType === "test_panel" ? "Test" : "Agent"}
+                            </span>
+                          </div>
+                          <div className="font-mono text-[10px] text-muted-soft">
+                            {new Date(log.createdAt).toLocaleString()}
+                          </div>
+                        </div>
+                      </button>
+
+                      {expandedLogId === log.id && (
+                        <div className="px-5 pb-4 flex flex-col gap-2">
+                          <div>
+                            <div className="font-mono text-[10px] uppercase tracking-wider text-muted-soft mb-1">Input</div>
+                            <pre className="m-0 p-2 rounded bg-canvas border border-hairline font-mono text-[10px] text-ink whitespace-pre-wrap break-all max-h-[120px] overflow-auto">
+                              {JSON.stringify(log.inputParams, null, 2)}
+                            </pre>
+                          </div>
+                          <div>
+                            <div className={`font-mono text-[10px] uppercase tracking-wider mb-1 ${log.status === "error" ? "text-[#cf2d56]" : "text-muted-soft"}`}>
+                              {log.status === "error" ? "Error" : "Output"}
+                            </div>
+                            <pre className={`m-0 p-2 rounded border font-mono text-[10px] whitespace-pre-wrap break-all max-h-[120px] overflow-auto ${log.status === "error" ? "bg-canvas border-[#cf2d56]/20 text-[#cf2d56]" : "bg-canvas border-hairline text-ink"}`}>
+                              {log.status === "error"
+                                ? (log.errorMessage ?? "Unknown error")
+                                : JSON.stringify(log.outputResult, null, 2)}
+                            </pre>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

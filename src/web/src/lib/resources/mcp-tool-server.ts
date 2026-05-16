@@ -9,6 +9,7 @@ import type {
   McpToolListQuery,
   McpToolListResult,
   McpToolTestResult,
+  McpToolLogListResult,
 } from "../types";
 
 export class McpToolServersResource {
@@ -106,6 +107,21 @@ export class McpToolServersResource {
     return this.http.post<McpToolTestResult>(
       `/api/mcp-tool-servers/${serverId}/tools/${toolId}/test`,
       { params: params ?? {} },
+    );
+  }
+
+  /** List execution logs for a tool */
+  async listToolLogs(
+    serverId: string,
+    toolId: string,
+    query?: { page?: number; limit?: number },
+  ): Promise<McpToolLogListResult> {
+    const params = new URLSearchParams();
+    if (query?.page) params.set("page", String(query.page));
+    if (query?.limit) params.set("limit", String(query.limit));
+    const qs = params.toString();
+    return this.http.get<McpToolLogListResult>(
+      `/api/mcp-tool-servers/${serverId}/tools/${toolId}/logs${qs ? `?${qs}` : ""}`,
     );
   }
 }

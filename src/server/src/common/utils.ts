@@ -3,7 +3,7 @@ import { customAlphabet } from "nanoid";
 const alpha = customAlphabet("0123456789abcdefghijklmnopqrstuvwxyz", 16);
 
 /** Generate a typed semantic ID */
-export function genId(prefix: "usr" | "doc" | "blk" | "db" | "row" | "file" | "key" | "var" | "dtb" | "dtr" | "col" | "prj" | "bkt" | "obj" | "sak" | "dbs" | "vpr" | "mts" | "mtl" | "dap" | "dal"): string {
+export function genId(prefix: "usr" | "doc" | "blk" | "db" | "row" | "file" | "key" | "var" | "dtb" | "dtr" | "col" | "prj" | "bkt" | "obj" | "sak" | "dbs" | "vpr" | "vns" | "mts" | "mtl" | "mtlg" | "dap" | "dal" | "llm"): string {
   return `${prefix}_${alpha()}`;
 }
 

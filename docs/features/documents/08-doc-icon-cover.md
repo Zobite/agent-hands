@@ -3,7 +3,7 @@
     <id>doc_icon_cover</id>
     <title>Document icon & cover</title>
     <group>Documents</group>
-    <status>planned</status>
+    <status>done</status>
     <priority>p2</priority>
   </meta>
 

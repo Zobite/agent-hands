@@ -1054,6 +1054,89 @@ const data = await res.json();`,
       },
     ],
   },
+  {
+    id: "llm-providers",
+    label: "LLM Providers",
+    description: "Manage LLM provider configurations (API keys, base URLs, cached model lists).",
+    basePrefix: "/api/llm-providers",
+    endpoints: [
+      {
+        method: "GET",
+        path: "/",
+        summary: "List all LLM providers (API keys are masked)",
+        auth: "both",
+        response: `{
+  "items": [{
+    "id": "llm_xxx",
+    "name": "My OpenAI",
+    "providerType": "openai",
+    "apiKey": "••••••••abcd",
+    "baseUrl": null,
+    "models": [{ "id": "gpt-4o", "name": "gpt-4o" }],
+    "createdAt": 1714000000,
+    "updatedAt": 1714000000
+  }],
+  "meta": { "total": 1 }
+}`,
+        jsExample: `const providers = await client.llmProviders.list();
+providers.forEach(p => console.log(p.name, p.models.length));`,
+      },
+      {
+        method: "POST",
+        path: "/",
+        summary: "Create a new LLM provider — fetches models on save",
+        auth: "both",
+        body: `{
+  "name": "My OpenAI",
+  "providerType": "openai",
+  "apiKey": "sk-...",
+  "baseUrl": ""
+}`,
+        notes: "The server will attempt to fetch models from the provider. If the fetch fails (invalid key, unreachable), the request returns 400.",
+        jsExample: `const provider = await client.llmProviders.create({
+  name: "My OpenAI",
+  providerType: "openai",
+  apiKey: "sk-..."
+});
+console.log(provider.models.length); // cached models`,
+      },
+      {
+        method: "GET",
+        path: "/:id",
+        summary: "Get a single provider by ID",
+        auth: "both",
+        jsExample: `const provider = await client.llmProviders.get("llm_xxx");`,
+      },
+      {
+        method: "PUT",
+        path: "/:id",
+        summary: "Update provider — re-fetches models if key or URL changed",
+        auth: "both",
+        body: `{ "name": "Updated Name", "apiKey": "sk-new..." }`,
+        notes: "If apiKey or baseUrl changes, models are re-fetched. If re-fetch fails, returns 400 and no update is applied.",
+        jsExample: `const updated = await client.llmProviders.update("llm_xxx", {
+  name: "Updated Name",
+  apiKey: "sk-new..."
+});`,
+      },
+      {
+        method: "DELETE",
+        path: "/:id",
+        summary: "Delete an LLM provider",
+        auth: "both",
+        jsExample: `await client.llmProviders.delete("llm_xxx");`,
+      },
+      {
+        method: "POST",
+        path: "/:id/refresh-models",
+        summary: "Re-fetch models from the provider using stored credentials",
+        auth: "both",
+        notes: "Uses the stored API key and base URL to fetch the latest model list. On failure, the existing models are preserved.",
+        jsExample: `const refreshed = await client.llmProviders.refreshModels("llm_xxx");
+console.log(refreshed.models.length);`,
+      },
+    ],
+  },
 ];
 
 /** Return full API docs data */

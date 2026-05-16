@@ -1,4 +1,4 @@
-import { eq, sql, desc, asc } from "drizzle-orm";
+import { eq, and, sql, desc, asc } from "drizzle-orm";
 import { getDb } from "../../common/db/client.js";
 import { dynamicTables, dynamicTableRows } from "../../common/db/schema.js";
 import { genId, now } from "../../common/utils.js";

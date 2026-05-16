@@ -13,4 +13,5 @@
 | 📦 | **Storage** | [features/storage/overview.md](features/storage/overview.md) | Object storage tự xây dựng giống MinIO/S3: buckets, upload/download, presigned URLs. |
 | 🔌 | **MCP Servers** | [features/mcp-servers/overview.md](features/mcp-servers/overview.md) | Quản lý MCP servers & Tools. Custom servers chứa Python tools chạy trong sandbox. |
 | ⚡ | **Dynamic API** | [features/dynamic-api/overview.md](features/dynamic-api/overview.md) | Hệ thống Cloudflare Worker-like API runtime tạo bằng JS/TS trên Bun. |
+| ✅🤖 | **LLM Providers** | [features/llm-providers/overview.md](features/llm-providers/overview.md) | Quản lý các nhà cung cấp LLM: API key, base URL, auto-fetch models. |
 

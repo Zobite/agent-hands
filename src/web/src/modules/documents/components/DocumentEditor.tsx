@@ -1,13 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import "./DocumentEditor.css";
-import { Spin, Typography } from "antd";
-import { Check, AlertCircle, Loader2, Eye, Code2, WrapText } from "lucide-react";
+import { Input, Popover, Spin, Typography } from "antd";
+import { Check, AlertCircle, Loader2, Eye, Code2, WrapText, Smile } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
 import Editor from "@monaco-editor/react";
 import { useShallow } from "zustand/react/shallow";
 import { useDocumentsStore } from "../stores/document.store";
+
+const QUICK_EMOJIS = ["📄", "📝", "📋", "📌", "📎", "🗒️", "📚", "💡", "🎯", "🚀", "⚡", "🔧", "🛠️", "🔍", "💼", "🌟", "✅", "🎨", "📊", "🔑"];
 
 const { Text } = Typography;
 
@@ -27,6 +29,8 @@ export default function DocumentEditor() {
   const [content, setContent] = useState("");
   const [isPreview, setIsPreview] = useState(false);
   const [wordWrap, setWordWrap] = useState(true);
+  const [iconPickerOpen, setIconPickerOpen] = useState(false);
+  const [iconInput, setIconInput] = useState("");
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const editorRef = useRef<EditorInstance | null>(null);
 
@@ -36,6 +40,7 @@ export default function DocumentEditor() {
       setTitle(activeDoc.title);
       setContent(activeDoc.content);
       setIsPreview(true); // Default to preview mode
+      setIconInput(activeDoc.icon ?? "");
     }
   }, [activeDoc?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -69,6 +74,22 @@ export default function DocumentEditor() {
     setContent(val);
     if (activeDoc?.projectId) {
       debouncedSave(activeDoc.projectId, activeDoc.id, { content: val });
+    }
+  };
+
+  const handleIconSelect = (emoji: string) => {
+    setIconInput(emoji);
+    setIconPickerOpen(false);
+    if (activeDoc?.projectId) {
+      updateDocument(activeDoc.projectId, activeDoc.id, { icon: emoji });
+    }
+  };
+
+  const handleIconClear = () => {
+    setIconInput("");
+    setIconPickerOpen(false);
+    if (activeDoc?.projectId) {
+      updateDocument(activeDoc.projectId, activeDoc.id, { icon: null });
     }
   };
 
@@ -156,6 +177,15 @@ export default function DocumentEditor() {
       {isPreview ? (
         <div className="flex-1 overflow-y-auto w-full">
           <div className="px-8 pt-6 pb-2">
+            <IconPickerArea
+              icon={iconInput}
+              open={iconPickerOpen}
+              onOpenChange={setIconPickerOpen}
+              onSelect={handleIconSelect}
+              onClear={handleIconClear}
+              iconInputValue={iconInput}
+              onIconInputChange={setIconInput}
+            />
             <input
               className="block w-full border-none outline-none bg-transparent font-display text-4xl font-medium text-ink tracking-[-0.5px] leading-[1.2] p-0 placeholder:text-hairline"
               value={title}
@@ -181,6 +211,15 @@ export default function DocumentEditor() {
         <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
           {/* Inline Title */}
           <div className="px-8 pt-6 pb-2 w-full shrink-0">
+            <IconPickerArea
+              icon={iconInput}
+              open={iconPickerOpen}
+              onOpenChange={setIconPickerOpen}
+              onSelect={handleIconSelect}
+              onClear={handleIconClear}
+              iconInputValue={iconInput}
+              onIconInputChange={setIconInput}
+            />
             <input
               className="block w-full border-none outline-none bg-transparent font-display text-4xl font-medium text-ink tracking-[-0.5px] leading-[1.2] p-0 placeholder:text-hairline"
               value={title}
@@ -285,5 +324,110 @@ export default function DocumentEditor() {
         </div>
       )}
     </div>
+  );
+}
+
+// ── Icon Picker ─────────────────────────────────────────────────────────────────
+
+function IconPickerArea({
+  icon,
+  open,
+  onOpenChange,
+  onSelect,
+  onClear,
+  iconInputValue,
+  onIconInputChange,
+}: {
+  icon: string;
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  onSelect: (emoji: string) => void;
+  onClear: () => void;
+  iconInputValue: string;
+  onIconInputChange: (v: string) => void;
+}) {
+  const content = (
+    <div style={{ width: 220 }}>
+      <Input
+        autoFocus
+        value={iconInputValue}
+        onChange={(e) => onIconInputChange(e.target.value)}
+        placeholder="Paste emoji…"
+        maxLength={4}
+        onPressEnter={() => { if (iconInputValue) onSelect(iconInputValue); }}
+        style={{ marginBottom: 8 }}
+      />
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 8 }}>
+        {QUICK_EMOJIS.map((e) => (
+          <button
+            key={e}
+            onClick={() => onSelect(e)}
+            style={{
+              fontSize: 20,
+              padding: "2px 4px",
+              background: "transparent",
+              border: "none",
+              cursor: "pointer",
+              borderRadius: 4,
+            }}
+            title={e}
+          >
+            {e}
+          </button>
+        ))}
+      </div>
+      {icon && (
+        <button
+          onClick={onClear}
+          style={{
+            width: "100%",
+            padding: "4px 8px",
+            background: "transparent",
+            border: "1px solid var(--color-hairline)",
+            borderRadius: 6,
+            cursor: "pointer",
+            fontSize: 12,
+            color: "var(--color-muted)",
+          }}
+        >
+          Remove icon
+        </button>
+      )}
+    </div>
+  );
+
+  return (
+    <Popover
+      open={open}
+      onOpenChange={onOpenChange}
+      content={content}
+      trigger="click"
+      placement="bottomLeft"
+    >
+      <button
+        style={{
+          background: "transparent",
+          border: "none",
+          cursor: "pointer",
+          padding: "2px 4px",
+          borderRadius: 6,
+          marginBottom: 4,
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 4,
+          color: "var(--color-muted-soft)",
+        }}
+        title={icon ? "Change icon" : "Add icon"}
+      >
+        {icon ? (
+          <span style={{ fontSize: 32 }}>{icon}</span>
+        ) : (
+          <span style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 13 }}>
+            <Smile size={14} />
+            Add icon
+          </span>
+        )}
+      </button>
+    </Popover>
   );
 }

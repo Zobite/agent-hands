@@ -12,6 +12,8 @@
   "dependencies": {
     "@ant-design/icons": "^6.2.2",
     "@monaco-editor/react": "^4.7.0",
+    "@radix-ui/react-use-controllable-state": "^1.2.2",
+    "@streamdown/code": "^1.1.1",
     "ag-grid-community": "^35.2.1",
     "ag-grid-react": "^35.2.1",
     "antd": "^6.3.7",
@@ -23,6 +25,7 @@
     "react-router-dom": "^7.14.2",
     "rehype-highlight": "^7.0.2",
     "remark-gfm": "^4.0.1",
+    "streamdown": "^2.5.0",
     "zustand": "^5.0.12"
   },
   "devDependencies": {

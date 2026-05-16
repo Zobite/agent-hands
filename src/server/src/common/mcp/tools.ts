@@ -20,6 +20,7 @@ import { variableActions, variableNamespaceActions } from "./actions/variable.js
 import { databaseActions, tableActions } from "./actions/table.js";
 import { projectActions, documentActions } from "./actions/document.js";
 import { storageActions } from "./actions/storage.js";
+import { fetchActions } from "../agent_tools/index.js";
 
 // ── Bootstrap all actions into the registry ────────────────────────────────────
 
@@ -31,6 +32,7 @@ registerActions([
   ...projectActions,
   ...documentActions,
   ...storageActions,
+  ...fetchActions,
 ]);
 
 // ── Register MCP Tools ─────────────────────────────────────────────────────────

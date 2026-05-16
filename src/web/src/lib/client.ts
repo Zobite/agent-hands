@@ -12,6 +12,8 @@ import { StorageResource } from "./resources/storage";
 import { McpToolServersResource } from "./resources/mcp-tool-server";
 import { SystemResource } from "./resources/system";
 import { DynamicApisResource } from "./resources/dynamic-api";
+import { LlmProvidersResource } from "./resources/llm-provider";
+import { ConfigurationsResource } from "./resources/configuration";
 
 class MoroClient {
   private http: HttpClient;
@@ -29,6 +31,8 @@ class MoroClient {
   public readonly mcpToolServers: McpToolServersResource;
   public readonly system: SystemResource;
   public readonly dynamicApis: DynamicApisResource;
+  public readonly llmProviders: LlmProvidersResource;
+  public readonly configurations: ConfigurationsResource;
 
   constructor(options: ClientOptions) {
     this.http = new HttpClient(options);
@@ -45,6 +49,8 @@ class MoroClient {
     this.mcpToolServers = new McpToolServersResource(this.http);
     this.system = new SystemResource(this.http);
     this.dynamicApis = new DynamicApisResource(this.http);
+    this.llmProviders = new LlmProvidersResource(this.http);
+    this.configurations = new ConfigurationsResource(this.http);
   }
 
   get accessToken() {
@@ -71,6 +77,8 @@ export const client = new MoroClient({
   onRefreshFail: () => {
     localStorage.removeItem("access_token");
     localStorage.removeItem("refresh_token");
+    // Clear zustand persisted auth state so AuthGuard redirects to login on reload
+    localStorage.removeItem("auth-storage");
     window.location.href = "/ui";
   },
 });

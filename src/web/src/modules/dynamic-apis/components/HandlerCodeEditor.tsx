@@ -1,6 +1,6 @@
-import Editor, { type Monaco } from "@monaco-editor/react";
+import Editor, { DiffEditor, type Monaco } from "@monaco-editor/react";
 import { Dropdown } from "antd";
-import { BookOpen, WrapText } from "lucide-react";
+import { BookOpen, Check, WrapText, X } from "lucide-react";
 import { useCallback, useRef, useState } from "react";
 
 type EditorInstance = Parameters<NonNullable<React.ComponentProps<typeof Editor>["onMount"]>>[0];
@@ -178,6 +178,9 @@ export default async function handler(request, context) {
 interface HandlerCodeEditorProps {
   value: string;
   onChange: (code: string) => void;
+  pendingCode?: string | null;
+  onAcceptPending?: () => void;
+  onRejectPending?: () => void;
 }
 
 // Track if providers are registered (global, not per-component)
@@ -387,11 +390,16 @@ declare var context: {
   });
 }
 
-export function HandlerCodeEditor({ value, onChange }: HandlerCodeEditorProps) {
+export function HandlerCodeEditor({ value, onChange, pendingCode, onAcceptPending, onRejectPending }: HandlerCodeEditorProps) {
   const [wordWrap, setWordWrap] = useState(true);
   const editorRef = useRef<EditorInstance | null>(null);
+  const diffEditorRef = useRef<any>(null);
+  const monacoRef = useRef<Monaco | null>(null);
+
+  const hasPending = !!pendingCode && pendingCode !== value;
 
   const handleBeforeMount = useCallback((monaco: Monaco) => {
+    monacoRef.current = monaco;
     registerProviders(monaco);
   }, []);
 
@@ -399,11 +407,40 @@ export function HandlerCodeEditor({ value, onChange }: HandlerCodeEditorProps) {
     editorRef.current = ed;
   }, []);
 
+  const handleDiffMount = useCallback((editor: any) => {
+    diffEditorRef.current = editor;
+  }, []);
+
   return (
     <div className="flex flex-col flex-1 min-h-0">
       <div className="flex items-center justify-between shrink-0 px-3 py-2">
-        <label className="font-mono text-[10px] text-muted-soft uppercase tracking-wider">Handler Code (JavaScript)</label>
+        <div className="flex items-center gap-2">
+          <label className="font-mono text-[10px] text-muted-soft uppercase tracking-wider">Handler Code (JavaScript)</label>
+          {hasPending && (
+            <span className="font-mono text-[10px] text-[#8b5cf6] bg-[#8b5cf620] px-1.5 py-0.5 rounded">
+              AI Changes Pending
+            </span>
+          )}
+        </div>
         <div className="flex items-center gap-1.5">
+          {hasPending && (
+            <>
+              <button
+                onClick={onAcceptPending}
+                className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-mono text-[#1f8a65] bg-[#1f8a6520] border border-[#1f8a6540] cursor-pointer transition-colors hover:bg-[#1f8a6530]"
+              >
+                <Check size={11} />
+                Accept
+              </button>
+              <button
+                onClick={onRejectPending}
+                className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-mono text-[#cf2d56] bg-[#cf2d5620] border border-[#cf2d5640] cursor-pointer transition-colors hover:bg-[#cf2d5630]"
+              >
+                <X size={11} />
+                Reject
+              </button>
+            </>
+          )}
           <button
             onClick={() => setWordWrap(!wordWrap)}
             className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-mono bg-transparent border cursor-pointer transition-colors ${
@@ -432,35 +469,61 @@ export function HandlerCodeEditor({ value, onChange }: HandlerCodeEditorProps) {
         </div>
       </div>
       <div className="flex-1 min-h-0 overflow-hidden border border-hairline">
-        <Editor
-          defaultLanguage="javascript"
-          value={value}
-          onChange={(v) => onChange(v ?? "")}
-          theme="vs-dark"
-          beforeMount={handleBeforeMount}
-          onMount={handleEditorMount}
-          options={{
-            minimap: { enabled: false },
-            fontSize: 13,
-            lineHeight: 1.6,
-            padding: { top: 12, bottom: 12 },
-            tabSize: 2,
-            scrollBeyondLastLine: false,
-            automaticLayout: true,
-            stickyScroll: { enabled: false },
-            wordWrap: wordWrap ? "on" : "off",
-            renderLineHighlight: "line",
-            cursorBlinking: "smooth",
-            smoothScrolling: true,
-            bracketPairColorization: { enabled: true },
-            fontFamily: "'JetBrains Mono', 'Fira Code', 'Cascadia Code', Menlo, monospace",
-            fontLigatures: true,
-            quickSuggestions: true,
-            suggestOnTriggerCharacters: true,
-            wordBasedSuggestions: "off",
-          }}
-        />
+        {hasPending ? (
+          /* Diff editor mode */
+          <DiffEditor
+            original={value}
+            modified={pendingCode!}
+            language="javascript"
+            theme="vs-dark"
+            onMount={handleDiffMount}
+            options={{
+              minimap: { enabled: false },
+              fontSize: 13,
+              lineHeight: 1.6,
+              padding: { top: 12, bottom: 12 },
+              scrollBeyondLastLine: false,
+              automaticLayout: true,
+              readOnly: true,
+              renderSideBySide: false,
+              wordWrap: wordWrap ? "on" : "off",
+              fontFamily: "'JetBrains Mono', 'Fira Code', 'Cascadia Code', Menlo, monospace",
+              fontLigatures: true,
+            }}
+          />
+        ) : (
+          /* Normal editor mode */
+          <Editor
+            defaultLanguage="javascript"
+            value={value}
+            onChange={(v) => onChange(v ?? "")}
+            theme="vs-dark"
+            beforeMount={handleBeforeMount}
+            onMount={handleEditorMount}
+            options={{
+              minimap: { enabled: false },
+              fontSize: 13,
+              lineHeight: 1.6,
+              padding: { top: 12, bottom: 12 },
+              tabSize: 2,
+              scrollBeyondLastLine: false,
+              automaticLayout: true,
+              stickyScroll: { enabled: false },
+              wordWrap: wordWrap ? "on" : "off",
+              renderLineHighlight: "line",
+              cursorBlinking: "smooth",
+              smoothScrolling: true,
+              bracketPairColorization: { enabled: true },
+              fontFamily: "'JetBrains Mono', 'Fira Code', 'Cascadia Code', Menlo, monospace",
+              fontLigatures: true,
+              quickSuggestions: true,
+              suggestOnTriggerCharacters: true,
+              wordBasedSuggestions: "off",
+            }}
+          />
+        )}
       </div>
     </div>
   );
 }
+

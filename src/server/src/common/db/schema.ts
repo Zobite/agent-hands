@@ -170,6 +170,23 @@ export const mcpTools = sqliteTable("mcp_tools", {
   updatedAt: int("updated_at").notNull(),
 });
 
+// ─── MCP Tool Logs ─────────────────────────────────────────────────────────────
+export const mcpToolLogs = sqliteTable("mcp_tool_logs", {
+  id: text("id").primaryKey(),              // mtlg_xxxx
+  toolId: text("tool_id").notNull(),        // FK → mcp_tools
+  serverId: text("server_id").notNull(),    // FK → mcp_tool_servers
+  callerType: text("caller_type", { enum: ["mcp_agent", "test_panel"] })
+    .notNull()
+    .default("test_panel"),
+  callerInfo: text("caller_info"),          // agent name or user info
+  inputParams: text("input_params"),        // JSON
+  outputResult: text("output_result"),      // JSON
+  status: text("status", { enum: ["success", "error"] }).notNull().default("success"),
+  errorMessage: text("error_message"),
+  executionTimeMs: int("execution_time_ms").notNull().default(0),
+  createdAt: int("created_at").notNull(),
+});
+
 // ─── Dynamic API Endpoints ─────────────────────────────────────────────────────
 export const dynamicApis = sqliteTable("dynamic_apis", {
   id: text("id").primaryKey(),              // dap_xxxx
@@ -207,6 +224,28 @@ export const dynamicApiLogs = sqliteTable("dynamic_api_logs", {
   createdAt: int("created_at").notNull(),
 });
 
+// ─── LLM Providers ─────────────────────────────────────────────────────────────
+export const llmProviders = sqliteTable("llm_providers", {
+  id: text("id").primaryKey(),              // llm_xxxx
+  name: text("name").notNull(),
+  providerType: text("provider_type", {
+    enum: ["openrouter", "openai", "gemini", "anthropic", "ollama", "custom"],
+  }).notNull(),
+  apiKey: text("api_key").notNull().default(""),
+  baseUrl: text("base_url"),                 // null → use default
+  models: text("models").notNull().default("[]"), // JSON: { id, name }[]
+  createdAt: int("created_at").notNull(),
+  updatedAt: int("updated_at").notNull(),
+});
+
+// ─── Configurations ────────────────────────────────────────────────────────
+export const configurations = sqliteTable("configurations", {
+  key: text("key").primaryKey(),
+  value: text("value").notNull(),
+  createdAt: int("created_at").notNull(),
+  updatedAt: int("updated_at").notNull(),
+});
+
 // ─── Types ─────────────────────────────────────────────────────────────────────
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
@@ -236,8 +275,13 @@ export type McpToolServer = typeof mcpToolServers.$inferSelect;
 export type InsertMcpToolServer = typeof mcpToolServers.$inferInsert;
 export type McpTool = typeof mcpTools.$inferSelect;
 export type InsertMcpTool = typeof mcpTools.$inferInsert;
+export type McpToolLog = typeof mcpToolLogs.$inferSelect;
+export type InsertMcpToolLog = typeof mcpToolLogs.$inferInsert;
 export type DynamicApi = typeof dynamicApis.$inferSelect;
 export type InsertDynamicApi = typeof dynamicApis.$inferInsert;
 export type DynamicApiLog = typeof dynamicApiLogs.$inferSelect;
 export type InsertDynamicApiLog = typeof dynamicApiLogs.$inferInsert;
-
+export type LlmProvider = typeof llmProviders.$inferSelect;
+export type InsertLlmProvider = typeof llmProviders.$inferInsert;
+export type Configuration = typeof configurations.$inferSelect;
+export type InsertConfiguration = typeof configurations.$inferInsert;

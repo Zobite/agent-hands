@@ -1,5 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import type { ZodTypeProvider } from "fastify-type-provider-zod";
+import { z } from "zod";
 import { requireAuth } from "../../common/auth/middleware.js";
 import {
   createDynamicApiBodySchema,
@@ -24,6 +25,8 @@ import {
   listDynamicApiLogs,
 } from "./dynamic-api.service.js";
 import { executeIsolated, hasNpmImports } from "../../common/sandbox/js-executor.js";
+import { runCodingAgent, type AgentEvent } from "./dynamic-api.coding-agent.js";
+
 
 export function registerDynamicApiRoutes(app: FastifyInstance) {
   const r = app.withTypeProvider<ZodTypeProvider>();
@@ -247,5 +250,57 @@ export function registerDynamicApiRoutes(app: FastifyInstance) {
       }
     }
   );
-}
 
+  // ── Coding Agent SSE Endpoint ────────────────────────────────────────────
+
+  const codingAgentBodySchema = z.object({
+    providerId: z.string().min(1),
+    model: z.string().min(1),
+    prompt: z.string().min(1),
+    currentCode: z.string().default(""),
+    apiId: z.string().min(1),
+    method: z.enum(["GET", "POST", "PUT", "PATCH", "DELETE"]).default("GET"),
+    path: z.string().default("/"),
+    history: z.array(z.object({
+      role: z.enum(["user", "assistant"]),
+      content: z.string(),
+    })).default([]),
+  });
+
+  // POST /coding-agent — SSE stream of coding agent events
+  r.post(
+    "/coding-agent",
+    {
+      preHandler: [requireAuth],
+      schema: { body: codingAgentBodySchema },
+    },
+    async (req, reply) => {
+      const input = req.body as z.infer<typeof codingAgentBodySchema>;
+
+      // Set SSE headers
+      reply.raw.writeHead(200, {
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache",
+        Connection: "keep-alive",
+        "X-Accel-Buffering": "no",
+      });
+
+      const sendEvent = (event: AgentEvent) => {
+        reply.raw.write(`data: ${JSON.stringify(event)}\n\n`);
+      };
+
+      try {
+        await runCodingAgent(input, sendEvent);
+        reply.raw.write(`data: ${JSON.stringify({ type: "stream_end" })}\n\n`);
+      } catch (err: unknown) {
+        console.error("[CodingAgent] Error:", err);
+        const message = err instanceof Error ? err.message : "Agent failed";
+        reply.raw.write(
+          `data: ${JSON.stringify({ type: "error", message })}\n\n`,
+        );
+      } finally {
+        reply.raw.end();
+      }
+    },
+  );
+}
