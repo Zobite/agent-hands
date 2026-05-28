@@ -1,4 +1,4 @@
-import { Modal, message } from "antd";
+import { App } from "antd";
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { client } from "src/lib/client";
@@ -6,6 +6,7 @@ import { AgentHandsError } from "src/lib/http";
 import type { McpToolItem, McpToolServerItem } from "src/lib/types";
 
 export function useServerDetail() {
+  const { message, modal } = App.useApp();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [server, setServer] = useState<McpToolServerItem | null>(null);
@@ -82,7 +83,7 @@ export function useServerDetail() {
 
   const handleDeleteServer = () => {
     if (!id || isBuiltin) return;
-    Modal.confirm({
+    modal.confirm({
       title: "Delete MCP Server",
       content: `Deleting "${server?.name}" will delete all ${tools.length} tool(s) belonging to this server. This action cannot be undone.`,
       okText: "Delete",
@@ -104,7 +105,7 @@ export function useServerDetail() {
 
   const handleDeleteTool = (tool: McpToolItem) => {
     if (!id) return;
-    Modal.confirm({
+    modal.confirm({
       title: "Delete Tool",
       content: `Delete tool "${tool.name}"? This action cannot be undone.`,
       okText: "Delete",

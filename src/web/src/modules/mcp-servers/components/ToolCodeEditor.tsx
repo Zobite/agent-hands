@@ -412,10 +412,10 @@ export function ToolCodeEditor({ value, onChange, pendingCode, onAcceptPending, 
         </div>
       </div>
       <div className="flex-1 min-h-0 overflow-hidden border border-hairline relative">
-        {hasPending ? (
+        <div style={{ display: hasPending ? "block" : "none" }} className="w-full h-full">
           <DiffEditor
             original={value}
-            modified={pendingCode!}
+            modified={pendingCode || ""}
             language="javascript"
             theme="vs-dark"
             onMount={handleDiffMount}
@@ -433,7 +433,8 @@ export function ToolCodeEditor({ value, onChange, pendingCode, onAcceptPending, 
               fontLigatures: true,
             }}
           />
-        ) : (
+        </div>
+        <div style={{ display: hasPending ? "none" : "block" }} className="w-full h-full">
           <Editor
             defaultLanguage="javascript"
             value={value}
@@ -462,7 +463,7 @@ export function ToolCodeEditor({ value, onChange, pendingCode, onAcceptPending, 
               wordBasedSuggestions: "off",
             }}
           />
-        )}
+        </div>
 
         {hasPending && (
           <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 px-2.5 py-2 rounded-md bg-[#181818] border border-[#2d2d2d] shadow-[0_8px_24px_rgba(0,0,0,0.5)]">

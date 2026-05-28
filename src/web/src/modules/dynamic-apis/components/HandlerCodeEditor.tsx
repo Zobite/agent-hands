@@ -464,12 +464,11 @@ export function HandlerCodeEditor({ value, onChange, pendingCode, onAcceptPendin
           </Dropdown>
         </div>
       </div>
-      <div className="flex-1 min-h-0 overflow-hidden border border-hairline">
-        {hasPending ? (
-          /* Diff editor mode */
+      <div className="flex-1 min-h-0 overflow-hidden border border-hairline relative">
+        <div style={{ display: hasPending ? "block" : "none" }} className="w-full h-full">
           <DiffEditor
             original={value}
-            modified={pendingCode!}
+            modified={pendingCode || ""}
             language="javascript"
             theme="vs-dark"
             onMount={handleDiffMount}
@@ -487,8 +486,8 @@ export function HandlerCodeEditor({ value, onChange, pendingCode, onAcceptPendin
               fontLigatures: true,
             }}
           />
-        ) : (
-          /* Normal editor mode */
+        </div>
+        <div style={{ display: hasPending ? "none" : "block" }} className="w-full h-full">
           <Editor
             defaultLanguage="javascript"
             value={value}
@@ -517,7 +516,7 @@ export function HandlerCodeEditor({ value, onChange, pendingCode, onAcceptPendin
               wordBasedSuggestions: "off",
             }}
           />
-        )}
+        </div>
       </div>
     </div>
   );

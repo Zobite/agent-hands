@@ -688,9 +688,40 @@ export function McpAiCodingPanel({ serverId, toolId, toolName, toolDescription, 
   const buildHistory = useCallback(
     (): Array<{ role: "user" | "assistant"; content: string }> =>
       chatMessages.map((msg) => {
-        if (msg.role === "assistant" && msg.code) {
-          const codeBlock = `\n\n\`\`\`javascript\n${msg.code}\n\`\`\``;
-          return { role: msg.role, content: msg.content + codeBlock };
+        if (msg.role === "assistant") {
+          let content = "";
+
+          // Summarize tool actions so model understands what happened
+          if (msg.events && msg.events.length > 0) {
+            const actions: string[] = [];
+            for (let i = 0; i < msg.events.length; i++) {
+              const ev = msg.events[i];
+              if (ev.type === "tool_call" && ev.toolName === "write_code") {
+                actions.push("- Called write_code to save code draft");
+              } else if (ev.type === "tool_call" && ev.toolName === "run_test") {
+                // Find matching tool_result
+                const resultEv = msg.events.slice(i + 1).find((e) => e.type === "tool_result" && e.toolName === "run_test");
+                if (resultEv && typeof resultEv.toolResult === "object" && resultEv.toolResult !== null) {
+                  const r = resultEv.toolResult as Record<string, unknown>;
+                  actions.push(`- Called run_test → ${r.success ? "PASSED" : "FAILED"}${r.executionTimeMs ? ` (${r.executionTimeMs}ms)` : ""}`);
+                } else {
+                  actions.push("- Called run_test");
+                }
+              } else if (ev.type === "tool_call" && ev.toolName === "fetch_web") {
+                const url = ev.toolArgs?.url;
+                actions.push(`- Called fetch_web: ${url || "unknown URL"}`);
+              }
+            }
+            if (actions.length > 0) {
+              content += `Actions performed:\n${actions.join("\n")}\n\n`;
+            }
+          }
+
+          if (msg.content) content += msg.content;
+          if (msg.code) content += `\n\n\`\`\`javascript\n${msg.code}\n\`\`\``;
+          if (msg.cancelled) content += "\n\n(Cancelled by user)";
+
+          return { role: msg.role, content: content || "Done." };
         }
         return { role: msg.role, content: msg.content };
       }),
@@ -775,10 +806,6 @@ export function McpAiCodingPanel({ serverId, toolId, toolName, toolDescription, 
             if (parsed.type === "stream_end") continue;
             const event: AgentEvent = { ...parsed, receivedAt: Date.now() };
 
-            // Debug: log tool events
-            if (event.type === "tool_call" || event.type === "tool_result") {
-              console.log("[CodingAgent] Event:", event.type, event.toolName, event.type === "tool_result" ? event.toolResult : "");
-            }
 
             collectedEvents.push(event);
             setCurrentEvents((prev) => [...prev, event]);

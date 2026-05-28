@@ -1,9 +1,9 @@
-import { streamText, tool, stepCountIs } from "ai";
+import { stepCountIs, streamText, tool } from "ai";
 import type { LanguageModel } from "ai";
-import { z } from "zod";
 import TurndownService from "turndown";
-import { getModelForProvider } from "../llm-providers/llm-provider.chat.js";
+import { z } from "zod";
 import { executeIsolated, hasNpmImports } from "../../common/sandbox/js-executor.js";
+import { getModelForProvider } from "../llm-providers/llm-provider.chat.js";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -79,16 +79,12 @@ async function dryRunCode(
   const consoleLogs: string[] = [];
   const context = {
     log: (...args: unknown[]) => {
-      consoleLogs.push(
-        args.map((a) => (typeof a === "string" ? a : JSON.stringify(a))).join(" "),
-      );
+      consoleLogs.push(args.map((a) => (typeof a === "string" ? a : JSON.stringify(a))).join(" "));
     },
   };
 
   try {
-    const cleanCode = code
-      .replace(/export\s+default\s+/g, "")
-      .replace(/module\.exports\s*=\s*/g, "");
+    const cleanCode = code.replace(/export\s+default\s+/g, "").replace(/module\.exports\s*=\s*/g, "");
 
     const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
     const factory = new AsyncFunction(
@@ -98,10 +94,10 @@ async function dryRunCode(
     );
 
     const handler = await factory();
-    const result = await Promise.race([
+    const result = (await Promise.race([
       handler(requestObj, context),
       new Promise((_, reject) => setTimeout(() => reject(new Error("Execution timeout")), 15000)),
-    ]) as Record<string, unknown>;
+    ])) as Record<string, unknown>;
 
     return {
       status: (result?.status as number) ?? 200,
@@ -221,8 +217,8 @@ function createTools(
       }),
       execute: async ({ url, mode }) => {
         fetchWebCount.count++;
-        if (fetchWebCount.count > 3) {
-          return `[LIMIT REACHED] You have already made 3 fetch_web calls. Use the information you have to write the code. Do NOT call fetch_web again.`;
+        if (fetchWebCount.count > 10) {
+          return `[LIMIT REACHED] You have already made 10 fetch_web calls. Use the information you have to write the code. Do NOT call fetch_web again.`;
         }
         return await fetchWebContent(url, mode ?? "raw");
       },
@@ -234,7 +230,10 @@ function createTools(
         code: z.string().describe("The JavaScript handler code to test"),
         body: z.record(z.unknown()).optional().describe("Request body (for POST/PUT/PATCH)"),
         query: z.record(z.string()).optional().describe("Query string params (e.g. ?page=1)"),
-        params: z.record(z.string()).optional().describe("URL path params — REQUIRED when route has :paramName placeholders. Example: { videoId: 'abc123' } for route /videos/:videoId"),
+        params: z
+          .record(z.string())
+          .optional()
+          .describe("URL path params — REQUIRED when route has :paramName placeholders. Example: { videoId: 'abc123' } for route /videos/:videoId"),
         headers: z.record(z.string()).optional().describe("Request headers"),
       }),
       execute: async ({ code, body, query, params, headers }) => {
@@ -345,10 +344,7 @@ async function streamAgentLoop(
 
 // ── Run Agent (AI SDK v6 — streamText) ───────────────────────────────────────
 
-export async function runCodingAgent(
-  reqData: CodingAgentRequest,
-  onEvent: (event: AgentEvent) => void,
-): Promise<void> {
+export async function runCodingAgent(reqData: CodingAgentRequest, onEvent: (event: AgentEvent) => void): Promise<void> {
   const model = await getModelForProvider(reqData.providerId, reqData.model);
 
   const fetchWebCount = { count: 0 };
@@ -358,9 +354,7 @@ export async function runCodingAgent(
 
   // ── Build messages ──────────────────────────────────────────────────────
 
-  const messages: Array<{ role: "system" | "user" | "assistant"; content: string }> = [
-    { role: "system", content: SYSTEM_PROMPT },
-  ];
+  const messages: Array<{ role: "system" | "user" | "assistant"; content: string }> = [{ role: "system", content: SYSTEM_PROMPT }];
 
   // Add history
   for (const msg of reqData.history ?? []) {
@@ -398,13 +392,7 @@ export async function runCodingAgent(
 
   try {
     // ── Stream the agent loop ─────────────────────────────────────────────
-    const { text: finalText } = await streamAgentLoop(
-      model as LanguageModel,
-      messages,
-      aiTools,
-      25,
-      onEvent,
-    );
+    const { text: finalText } = await streamAgentLoop(model as LanguageModel, messages, aiTools, 25, onEvent);
 
     // ── Process final response ───────────────────────────────────────────
 
@@ -437,13 +425,7 @@ export async function runCodingAgent(
           },
         ];
 
-        const { text: fixText } = await streamAgentLoop(
-          model as LanguageModel,
-          fixMessages,
-          aiTools,
-          15,
-          onEvent,
-        );
+        const { text: fixText } = await streamAgentLoop(model as LanguageModel, fixMessages, aiTools, 15, onEvent);
 
         const fixCode = extractCode(fixText);
         if (fixCode) {

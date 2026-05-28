@@ -1,4 +1,4 @@
-import { Modal, message } from "antd";
+import { App } from "antd";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { client } from "src/lib/client";
@@ -303,6 +303,7 @@ export function generateJSDocHeader(name: string, description: string, schemaStr
 // ── Hook Definition ─────────────────────────────────────────────────────────
 
 export function useToolEditor() {
+  const { message, modal } = App.useApp();
   const { id: serverId, toolId } = useParams<{ id: string; toolId: string }>();
   const navigate = useNavigate();
 
@@ -440,7 +441,7 @@ export function useToolEditor() {
 
   const handleDelete = () => {
     if (!serverId || !toolId) return;
-    Modal.confirm({
+    modal.confirm({
       title: "Delete Tool",
       content: `Delete this tool? This action cannot be undone.`,
       okText: "Delete",

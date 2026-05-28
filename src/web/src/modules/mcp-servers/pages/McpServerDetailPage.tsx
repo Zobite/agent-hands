@@ -198,7 +198,7 @@ export default function McpServerDetailPage() {
         }}
         okText="Save"
         confirmLoading={editLoading}
-        destroyOnClose
+        destroyOnHidden
       >
         <Form form={form} layout="vertical" requiredMark={false} className="mt-4">
           <Form.Item
@@ -248,7 +248,7 @@ export default function McpServerDetailPage() {
         }}
         okText="Create"
         confirmLoading={newToolLoading}
-        destroyOnClose
+        destroyOnHidden
       >
         <Form form={newToolForm} layout="vertical" requiredMark={false} className="mt-4">
           <Form.Item

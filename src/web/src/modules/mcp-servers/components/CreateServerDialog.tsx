@@ -1,4 +1,4 @@
-import { Form, Input, Modal, message } from "antd";
+import { App, Form, Input, Modal } from "antd";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { client } from "src/lib/client";
@@ -10,6 +10,7 @@ interface CreateServerDialogProps {
 }
 
 export function CreateServerDialog({ open, onClose }: CreateServerDialogProps) {
+  const { message } = App.useApp();
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -44,7 +45,7 @@ export function CreateServerDialog({ open, onClose }: CreateServerDialogProps) {
       }}
       okText="Create"
       confirmLoading={loading}
-      destroyOnClose
+      destroyOnHidden
     >
       <Form form={form} layout="vertical" requiredMark={false} className="mt-4">
         <Form.Item
