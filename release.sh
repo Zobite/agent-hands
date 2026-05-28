@@ -120,6 +120,11 @@ if [ "$NEW_VERSION" != "$CURRENT_VERSION" ]; then
   sed -i '' "s/\"version\": \"[^\"]*\"/\"version\": \"$NEW_VERSION\"/" src/web/package.json
 
   success "Version bumped in all package.json files"
+
+  # Rebuild server to bake in __PKG_VERSION__ with the new version
+  step "Rebuilding server with v${NEW_VERSION}"
+  (cd src/server && bun run build) || fail "Server rebuild failed!"
+  success "Server rebuilt with correct version"
 fi
 
 # ── 5. Prepare release layout ──────────────────────────────────────────────
