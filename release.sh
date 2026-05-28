@@ -158,7 +158,7 @@ mkdir -p "$TARBALL_DIR"
 TARBALL_NAME="agent-hands-${NEW_VERSION}.tar.gz"
 TARBALL_PATH="$TARBALL_DIR/$TARBALL_NAME"
 
-(cd "$STAGING_DIR" && tar -czf "$TARBALL_PATH" agent-hands)
+(cd "$STAGING_DIR" && COPYFILE_DISABLE=1 tar -czf "$TARBALL_PATH" agent-hands)
 
 TARBALL_SIZE=$(du -h "$TARBALL_PATH" | cut -f1 | tr -d ' ')
 success "Tarball created: ${TARBALL_NAME} (${TARBALL_SIZE})"
