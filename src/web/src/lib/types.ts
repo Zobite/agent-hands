@@ -95,42 +95,10 @@ export interface CreateApiKeyInput {
   expiresAt?: number;
 }
 
-// ── Variable Namespaces ─────────────────────────────────────────────────
-
-export interface VariableNamespace {
-  id: string;
-  name: string;
-  description: string | null;
-  icon: string | null;
-  createdBy: string;
-  createdAt: number;
-  updatedAt: number;
-}
-
-export interface CreateVariableNamespaceInput {
-  name: string;
-  description?: string;
-  icon?: string;
-}
-
-export interface UpdateVariableNamespaceInput {
-  name?: string;
-  description?: string | null;
-  icon?: string | null;
-}
-
-/** @deprecated Use VariableNamespace instead */
-export type VariableProject = VariableNamespace;
-/** @deprecated Use CreateVariableNamespaceInput instead */
-export type CreateVariableProjectInput = CreateVariableNamespaceInput;
-/** @deprecated Use UpdateVariableNamespaceInput instead */
-export type UpdateVariableProjectInput = UpdateVariableNamespaceInput;
-
-// ── Variables ────────────────────────────────────────────────────────────────
+// ── KV Store ─────────────────────────────────────────────────────────────────
 
 export interface Variable {
   id: string;
-  projectId: string | null;
   key: string;
   value: string;
   type: "string" | "number" | "boolean" | "json";
@@ -166,15 +134,9 @@ export interface VariableListResult {
   meta: { total: number; page: number; limit: number; hasMore: boolean };
 }
 
-
-
 // ── Dynamic Tables ──────────────────────────────────────────────────────────
 
-export type ColumnType =
-  | "text"
-  | "number"
-  | "date"
-  | "boolean";
+export type ColumnType = "text" | "number" | "date" | "boolean";
 
 export type FilterOperator =
   | "eq"
@@ -191,8 +153,8 @@ export type FilterOperator =
   | "is_not_empty";
 
 export interface FilterCondition {
-  columnId?: string;   // internal column ID (col_xxx) — used by UI
-  column?: string;     // column name (human-readable) — used by LLMs/API
+  columnId?: string; // internal column ID (col_xxx) — used by UI
+  column?: string; // column name (human-readable) — used by LLMs/API
   operator: FilterOperator;
   value?: unknown;
 }
@@ -216,7 +178,7 @@ export interface DynamicTable {
   name: string;
   description: string | null;
   icon: string | null;
-  databaseId: string | null;
+  projectId: string | null;
   columns: ColumnDef[];
   createdBy: string;
   createdAt: number;
@@ -280,9 +242,9 @@ export interface RowListResult {
   meta: { total: number; page: number; limit: number; hasMore: boolean };
 }
 
-// ── Databases (grouping for tables) ─────────────────────────────────────────
+// ── DataTable Projects (grouping for tables) ───────────────────────────────────
 
-export interface DatabaseItem {
+export interface ProjectItem {
   id: string;
   name: string;
   description: string | null;
@@ -291,31 +253,6 @@ export interface DatabaseItem {
   createdAt: number;
   updatedAt: number;
   tableCount: number;
-}
-
-export interface CreateDatabaseInput {
-  name: string;
-  description?: string;
-  icon?: string;
-}
-
-export interface UpdateDatabaseInput {
-  name?: string;
-  description?: string | null;
-  icon?: string | null;
-}
-
-// ── Projects ────────────────────────────────────────────────────────────────
-
-export interface Project {
-  id: string;
-  name: string;
-  description: string | null;
-  icon: string | null;
-  createdBy: string;
-  createdAt: number;
-  updatedAt: number;
-  documentCount: number;
 }
 
 export interface CreateProjectInput {
@@ -328,50 +265,6 @@ export interface UpdateProjectInput {
   name?: string;
   description?: string | null;
   icon?: string | null;
-}
-
-// ── Documents ───────────────────────────────────────────────────────────────
-
-export interface DocumentItem {
-  id: string;
-  projectId: string | null;
-  parentId: string | null;
-  title: string;
-  icon: string | null;
-  order: number;
-  createdAt: number;
-  updatedAt: number;
-}
-
-export interface DocumentDetail extends DocumentItem {
-  cover: string | null;
-  content: string;  // markdown
-  isPublic: boolean;
-  createdBy: string;
-}
-
-export interface CreateDocumentInput {
-  title?: string;
-  icon?: string | null;
-  content?: string;
-  parentId?: string | null;
-}
-
-export interface UpdateDocumentInput {
-  title?: string;
-  icon?: string | null;
-  cover?: string | null;
-  content?: string;
-  parentId?: string | null;
-}
-
-export interface DocumentSearchResult {
-  id: string;
-  projectId: string | null;
-  title: string;
-  icon: string | null;
-  createdAt: number;
-  updatedAt: number;
 }
 
 // ── API Docs ────────────────────────────────────────────────────────────────
@@ -526,6 +419,7 @@ export interface McpToolItem {
   description: string;
   inputSchema: string | null;
   code: string;
+  draftCode: string | null;
   isActive: number;
   createdAt: number;
   updatedAt: number;
@@ -533,9 +427,9 @@ export interface McpToolItem {
 
 export interface CreateMcpToolInput {
   name: string;
-  description: string;
+  description?: string;
   inputSchema?: string;
-  code: string;
+  code?: string;
 }
 
 export interface UpdateMcpToolInput {
@@ -543,6 +437,7 @@ export interface UpdateMcpToolInput {
   description?: string;
   inputSchema?: string | null;
   code?: string;
+  draftCode?: string | null;
   isActive?: boolean;
 }
 

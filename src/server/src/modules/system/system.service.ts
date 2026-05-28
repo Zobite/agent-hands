@@ -61,7 +61,7 @@ export async function checkLatestVersion(): Promise<string | null> {
   }
 
   try {
-    const res = await fetch("https://registry.npmjs.org/moro-llm-toolkit/latest", {
+    const res = await fetch("https://registry.npmjs.org/agent-hands/latest", {
       headers: { Accept: "application/json" },
       signal: AbortSignal.timeout(5000),
     });
@@ -94,12 +94,12 @@ export async function getVersionInfo(): Promise<VersionResponse> {
 
 /**
  * Performs the actual update:
- * 1. Runs `bun add -g moro-llm-toolkit@latest`
+ * 1. Runs `bun add -g agent-hands@latest`
  * 2. Exits with code 1 → monitor process auto-restarts with the new binary
  */
 export async function performUpdate(): Promise<{ ok: boolean; message: string }> {
   try {
-    const proc = Bun.spawn(["bun", "add", "-g", "moro-llm-toolkit@latest"], {
+    const proc = Bun.spawn(["bun", "add", "-g", "agent-hands@latest"], {
       stdout: "inherit",
       stderr: "inherit",
     });

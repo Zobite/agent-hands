@@ -1,27 +1,26 @@
-# Moro LLM Toolkit
+# Agent Hands
 
 **Self-hosted infrastructure toolkit for LLM agents and AI applications.**
 
-Moro LLM Toolkit provides all the building blocks LLM agents need to operate — state storage, structured data, knowledge base, file storage, tool execution, and dynamic APIs — packaged in a single server with a built-in Web UI.
+Agent Hands provides all the building blocks LLM agents need to operate — state storage, structured data, file storage, tool execution, and dynamic APIs — packaged in a single server with a built-in Web UI.
 
 ![License](https://img.shields.io/badge/license-MIT-blue)
 ![Runtime](https://img.shields.io/badge/runtime-Bun-%23f472b6)
-![Version](https://img.shields.io/badge/version-0.2.5-green)
+![Version](https://img.shields.io/badge/version-0.2.7-green)
 
 ---
 
-## Why Moro LLM Toolkit?
+## Why Agent Hands?
 
 When building LLM agents and AI pipelines, you typically need:
 
 - **State storage** — agents need to read/write runtime variables across runs
 - **Structured data** — tables with custom columns, sort/filter like Notion databases
-- **Knowledge base** — documents with a Markdown editor for agent retrieval
 - **File storage** — self-hosted object storage for documents, images, artifacts
 - **Agent tools** — system tools exposed via MCP protocol for AI clients
 - **Custom HTTP endpoints** — dynamic APIs written in JS/TS, created at runtime
 
-Instead of integrating multiple separate services (Redis, Notion, S3, custom tool server...), Moro LLM Toolkit bundles everything into **a single self-hosted server**.
+Instead of integrating multiple separate services (Redis, Notion, S3, custom tool server...), Agent Hands bundles everything into **a single self-hosted server**.
 
 ---
 
@@ -34,9 +33,9 @@ Instead of integrating multiple separate services (Redis, Notion, S3, custom too
 | 👤 **User Management** | Authentication, RBAC (superadmin/admin/user), session management, API keys | ✅ Done |
 | 🔑 **Dynamic Variables** | Redis-like key-value store with data types, TTL, namespaces | ✅ Done |
 | 📊 **Dynamic Tables** | Notion-style databases with custom columns, sort/filter, row CRUD | ✅ Done |
-| 📝 **Documents** | Markdown editor (Monaco), document tree, nested pages, organized into Projects | ✅ Done |
+
 | 📦 **Storage** | Self-hosted S3-compatible object storage: buckets, upload/download, presigned URLs, access keys | ✅ Done |
-| 🔌 **Built-in MCP Server** | System MCP server exposing Variables, Tables, Documents, Storage as tools for AI agents | ✅ Done |
+| 🔌 **Built-in MCP Server** | System MCP server exposing Variables, Tables, Storage as tools for AI agents | ✅ Done |
 | ⚡ **Dynamic API** | Create HTTP API endpoints at runtime using JS/TS code on Bun runtime | ✅ Done |
 
 ### 🚧 In Progress / Planned
@@ -46,7 +45,6 @@ Instead of integrating multiple separate services (Redis, Notion, S3, custom too
 | 🔌 **Custom MCP Servers** | User-defined MCP servers with custom Python tools in sandbox | ⬜ Planned |
 | 📊 **Table Views** | Multiple views (Table/Board/List) for Dynamic Tables | ⬜ Planned |
 | 📊 **Row Detail Dialog** | Detailed row view in Dynamic Tables | ⬜ Planned |
-| 📝 **Document Icon & Cover** | Custom icons and cover images for Documents | ⬜ Planned |
 
 ---
 
@@ -63,14 +61,20 @@ curl -fsSL https://bun.sh/install | bash
 ### Installation
 
 ```bash
-bun add -g moro-llm-toolkit
+curl -fsSL https://raw.githubusercontent.com/Zobite/agent-hands/main/install.sh | bash
+```
+
+Or install a specific version:
+
+```bash
+VERSION=0.2.7 curl -fsSL https://raw.githubusercontent.com/Zobite/agent-hands/main/install.sh | bash
 ```
 
 ### Launch
 
 ```bash
 # Start the server (background daemon)
-moro-llm-toolkit start
+agent-hands start
 
 # Open the Web UI
 open http://localhost:18080
@@ -78,12 +82,19 @@ open http://localhost:18080
 
 The Web UI is pre-bundled and served automatically — no additional setup required.
 
+### Uninstall
+
+```bash
+rm -rf ~/.local/share/agent-hands
+sudo rm /usr/local/bin/agent-hands
+```
+
 ---
 
 ## CLI Reference
 
 ```
-moro-llm-toolkit <command> [options]
+agent-hands <command> [options]
 ```
 
 ### Commands
@@ -106,7 +117,7 @@ moro-llm-toolkit <command> [options]
 |-----------------------|-----------------------|----------------------|
 | `--port <number>`     | `18080`               | Server port          |
 | `--host <string>`     | `127.0.0.1`           | Server host          |
-| `--data-dir <path>`   | `~/.moro-llm-toolkit` | Data directory       |
+| `--data-dir <path>`   | `~/.agent-hands` | Data directory       |
 | `-f, --foreground`    | —                     | Run in foreground    |
 
 **`logs`:**
@@ -120,22 +131,22 @@ moro-llm-toolkit <command> [options]
 
 ```bash
 # Start with a custom port
-moro-llm-toolkit start --port 8080
+agent-hands start --port 8080
 
 # Expose on the local network
-moro-llm-toolkit start --host 0.0.0.0
+agent-hands start --host 0.0.0.0
 
 # Run in foreground for debugging
-moro-llm-toolkit start --foreground
+agent-hands start --foreground
 
 # View live logs
-moro-llm-toolkit logs --follow
+agent-hands logs --follow
 
 # Check status
-moro-llm-toolkit status
+agent-hands status
 
 # Stop the server
-moro-llm-toolkit stop
+agent-hands stop
 ```
 
 ---
@@ -157,10 +168,10 @@ On first startup when no accounts exist, the server automatically creates a defa
 
 ## Data Storage
 
-All data is stored in the data directory (`~/.moro-llm-toolkit` by default):
+All data is stored in the data directory (`~/.agent-hands` by default):
 
 ```
-~/.moro-llm-toolkit/
+~/.agent-hands/
 ├── data.db       # SQLite database (users, variables, tables, documents, configs...)
 ├── agent.pid     # PID file (daemon mode)
 ├── agent.log     # Server logs (daemon mode)
@@ -202,8 +213,7 @@ X-API-Key: ltk_xxxxxxxxxxxx
 | `/api/variable-namespaces/:nsId/variables` | Variables CRUD (within a namespace) |
 | `/api/databases` | Database containers CRUD |
 | `/api/databases/:dbId/tables` | Tables, columns, rows CRUD |
-| `/api/projects` | Document projects CRUD |
-| `/api/projects/:projectId/documents` | Documents CRUD (within a project) |
+
 | `/api/storage/buckets` | Bucket management |
 | `/api/storage/buckets/:name/objects` | Object upload/download/delete |
 | `/api/storage/buckets/:name/presigned` | Generate presigned URLs |
@@ -264,7 +274,7 @@ The built-in MCP server exposes the entire system to AI agents via 3 meta-tools:
 - **Variables**: `variables.list`, `variables.get`, `variables.set`, `variables.delete`
 - **Variable Namespaces**: `variable_namespaces.list`, `variable_namespaces.create`, `variable_namespaces.update`, `variable_namespaces.delete`
 - **Databases & Tables**: `databases.list`, `tables.list`, `tables.query`, `tables.insert`, `tables.update`, `tables.delete`
-- **Documents**: `projects.list`, `documents.list`, `documents.get`, `documents.create`, `documents.update`
+
 - **Storage**: `storage.list_buckets`, `storage.list_objects`, `storage.get_object_info`, `storage.get_download_url`, `storage.delete_object`
 
 **Connect your AI client** to:
@@ -281,7 +291,7 @@ http://localhost:18080/api/mcp/<server-id>
 ```json
 {
   "mcpServers": {
-    "moro-toolkit": {
+    "agent-hands": {
       "type": "streamableHttp",
       "url": "http://localhost:18080/api/mcp/<server-id>",
       "headers": {
@@ -299,7 +309,7 @@ http://localhost:18080/api/mcp/<server-id>
 ```json
 {
   "mcpServers": {
-    "moro-toolkit": {
+    "agent-hands": {
       "url": "http://localhost:18080/api/mcp/<server-id>",
       "headers": {
         "Authorization": "Bearer ltk_your-api-key"
@@ -330,7 +340,7 @@ POST http://localhost:18080/apis/my-endpoint
 Use the REST API or any S3-compatible client/SDK:
 
 ```bash
-# Using AWS CLI with Moro Storage
+# Using AWS CLI with Agent Hands Storage
 aws s3 ls --endpoint-url http://localhost:18080/s3 \
   --region us-east-1
 ```
@@ -360,8 +370,8 @@ Features: buckets, upload/download, public URLs, presigned URLs (time-limited), 
 
 ```bash
 # Clone the repo
-git clone https://github.com/devlangla/moro-llm-toolkit.git
-cd moro-llm-toolkit
+git clone https://github.com/Zobite/agent-hands.git
+cd agent-hands
 
 # Install dependencies
 bun install
@@ -380,7 +390,7 @@ bun run biome:check
 ### Project Structure
 
 ```
-moro-llm-toolkit/
+agent-hands/
 ├── src/
 │   ├── server/                    # Fastify API server
 │   │   └── src/
@@ -435,12 +445,12 @@ cd docker
 docker compose up -d
 
 # Or build manually
-docker build -t moro-llm-toolkit -f docker/Dockerfile .
+docker build -t agent-hands -f docker/Dockerfile .
 docker run -d \
   -p 18080:18080 \
   -v ./data:/data \
   -e DATA_DIR=/data \
-  moro-llm-toolkit
+  agent-hands
 ```
 
 ---

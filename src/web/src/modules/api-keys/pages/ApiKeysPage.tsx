@@ -1,25 +1,9 @@
+import { Form, Input, Modal, Spin, Tooltip, message } from "antd";
+import { AlertTriangle, CheckCircle2, Clock, Copy, KeyRound, Plus, ShieldCheck, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
-import {
-  Modal,
-  Form,
-  Input,
-  message,
-  Spin,
-  Tooltip,
-} from "antd";
-import {
-  Plus,
-  Trash2,
-  Copy,
-  AlertTriangle,
-  Clock,
-  CheckCircle2,
-  KeyRound,
-  ShieldCheck,
-} from "lucide-react";
-import type { ApiKeyItem, ApiKeyCreated, CreateApiKeyInput } from "src/lib/types";
-import { MoroError } from "src/lib/http";
 import { client } from "src/lib/client";
+import { AgentHandsError } from "src/lib/http";
+import type { ApiKeyCreated, ApiKeyItem, CreateApiKeyInput } from "src/lib/types";
 
 const { confirm } = Modal;
 
@@ -57,7 +41,7 @@ export default function ApiKeysPage() {
           setKeys((prev) => prev.filter((k) => k.id !== key.id));
           message.success("API key revoked");
         } catch (err) {
-          if (err instanceof MoroError) {
+          if (err instanceof AgentHandsError) {
             message.error(err.message);
           }
         }
@@ -69,8 +53,7 @@ export default function ApiKeysPage() {
     return new Date(ts).toISOString().split("T")[0];
   };
 
-  const isExpired = (key: ApiKeyItem) =>
-    key.expiresAt !== null && key.expiresAt < Date.now();
+  const isExpired = (key: ApiKeyItem) => key.expiresAt !== null && key.expiresAt < Date.now();
 
   return (
     <div className="flex flex-col h-full overflow-hidden bg-canvas">
@@ -78,24 +61,17 @@ export default function ApiKeysPage() {
       <div className="px-8 pt-10 pb-6 shrink-0 border-b border-hairline">
         <div className="flex items-center gap-2 mb-3">
           <KeyRound size={16} className="text-muted" />
-          <span className="font-mono text-[11px] uppercase tracking-wide text-muted">
-            Access Control / API Keys
-          </span>
+          <span className="font-mono text-[11px] uppercase tracking-wide text-muted">Access Control / API Keys</span>
         </div>
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div>
-            <h1 className="font-display text-[32px] font-normal text-ink tracking-[-0.64px] m-0 leading-tight">
-              API Credentials
-            </h1>
+            <h1 className="font-display text-[32px] font-normal text-ink tracking-[-0.64px] m-0 leading-tight">API Credentials</h1>
             <p className="text-[13px] text-muted mt-2 m-0 leading-relaxed max-w-[520px]">
               Manage programmatic access to the platform. Authenticate via{" "}
               <code className="font-mono text-[12px] bg-canvas-soft text-ink px-1.5 py-0.5 rounded-sm border border-hairline-soft">
                 Authorization: Bearer ltk_xxx
               </code>{" "}
-              or{" "}
-              <code className="font-mono text-[12px] bg-canvas-soft text-ink px-1.5 py-0.5 rounded-sm border border-hairline-soft">
-                X-API-Key: ltk_xxx
-              </code>
+              or <code className="font-mono text-[12px] bg-canvas-soft text-ink px-1.5 py-0.5 rounded-sm border border-hairline-soft">X-API-Key: ltk_xxx</code>
             </p>
           </div>
           <button
@@ -118,9 +94,7 @@ export default function ApiKeysPage() {
           /* ── Empty State ─────────────────────────────── */
           <div className="flex flex-col items-center justify-center min-h-[300px] flex-1 border border-dashed border-hairline-strong rounded-md bg-transparent m-auto max-w-[600px]">
             <KeyRound size={32} className="text-muted-soft mb-4" strokeWidth={1.5} />
-            <div className="font-mono text-[12px] text-muted-soft uppercase tracking-wide mb-6">
-              NO CREDENTIALS FOUND
-            </div>
+            <div className="font-mono text-[12px] text-muted-soft uppercase tracking-wide mb-6">NO CREDENTIALS FOUND</div>
             <button
               onClick={() => setCreateModalOpen(true)}
               className="bg-transparent border border-hairline-strong text-ink px-4 py-2 rounded-md font-medium text-[13px] hover:border-ink transition-colors cursor-pointer"
@@ -133,24 +107,12 @@ export default function ApiKeysPage() {
           <div className="flex flex-col gap-3">
             {/* Table-like header */}
             <div className="grid grid-cols-[1fr_160px_80px_100px_100px_100px_40px] gap-4 px-5 py-2">
-              <span className="font-mono text-[10px] text-muted-soft uppercase tracking-wider font-semibold">
-                Identifier
-              </span>
-              <span className="font-mono text-[10px] text-muted-soft uppercase tracking-wider font-semibold">
-                Key Prefix
-              </span>
-              <span className="font-mono text-[10px] text-muted-soft uppercase tracking-wider font-semibold">
-                Status
-              </span>
-              <span className="font-mono text-[10px] text-muted-soft uppercase tracking-wider font-semibold">
-                Last Used
-              </span>
-              <span className="font-mono text-[10px] text-muted-soft uppercase tracking-wider font-semibold">
-                Expires
-              </span>
-              <span className="font-mono text-[10px] text-muted-soft uppercase tracking-wider font-semibold">
-                Created
-              </span>
+              <span className="font-mono text-[10px] text-muted-soft uppercase tracking-wider font-semibold">Identifier</span>
+              <span className="font-mono text-[10px] text-muted-soft uppercase tracking-wider font-semibold">Key Prefix</span>
+              <span className="font-mono text-[10px] text-muted-soft uppercase tracking-wider font-semibold">Status</span>
+              <span className="font-mono text-[10px] text-muted-soft uppercase tracking-wider font-semibold">Last Used</span>
+              <span className="font-mono text-[10px] text-muted-soft uppercase tracking-wider font-semibold">Expires</span>
+              <span className="font-mono text-[10px] text-muted-soft uppercase tracking-wider font-semibold">Created</span>
               <span />
             </div>
 
@@ -165,20 +127,16 @@ export default function ApiKeysPage() {
                   <div className="flex items-center justify-center w-8 h-8 rounded-md border border-hairline-soft bg-canvas text-muted shrink-0">
                     <KeyRound size={14} strokeWidth={1.5} />
                   </div>
-                  <span className="text-[14px] font-medium text-ink tracking-tight truncate">
-                    {key.name}
-                  </span>
+                  <span className="text-[14px] font-medium text-ink tracking-tight truncate">{key.name}</span>
                 </div>
 
                 {/* Key Prefix */}
-                <span className="font-mono text-[12px] text-muted tracking-wide truncate">
-                  {key.prefix}••••••••
-                </span>
+                <span className="font-mono text-[12px] text-muted tracking-wide truncate">{key.prefix}••••••••</span>
 
                 {/* Status */}
                 {isExpired(key) ? (
-                  <span className="inline-flex items-center gap-1 font-mono text-[10px] uppercase tracking-wider" style={{ color: 'var(--color-error)' }}>
-                    <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: 'var(--color-error)' }} />
+                  <span className="inline-flex items-center gap-1 font-mono text-[10px] uppercase tracking-wider" style={{ color: "var(--color-error)" }}>
+                    <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: "var(--color-error)" }} />
                     Expired
                   </span>
                 ) : (
@@ -203,14 +161,10 @@ export default function ApiKeysPage() {
                 </span>
 
                 {/* Expires */}
-                <span className="font-mono text-[11px] text-muted-soft tracking-wide">
-                  {key.expiresAt ? formatDate(key.expiresAt) : "NEVER"}
-                </span>
+                <span className="font-mono text-[11px] text-muted-soft tracking-wide">{key.expiresAt ? formatDate(key.expiresAt) : "NEVER"}</span>
 
                 {/* Created */}
-                <span className="font-mono text-[11px] text-muted-soft tracking-wide">
-                  {formatDate(key.createdAt)}
-                </span>
+                <span className="font-mono text-[11px] text-muted-soft tracking-wide">{formatDate(key.createdAt)}</span>
 
                 {/* Action */}
                 <button
@@ -245,10 +199,7 @@ export default function ApiKeysPage() {
         }}
       />
 
-      <KeyCreatedModal
-        created={createdKey}
-        onClose={() => setCreatedKey(null)}
-      />
+      <KeyCreatedModal created={createdKey} onClose={() => setCreatedKey(null)} />
     </div>
   );
 }
@@ -275,7 +226,7 @@ function CreateKeyModal({
       form.resetFields();
       message.success("API key generated");
     } catch (err) {
-      if (err instanceof MoroError) {
+      if (err instanceof AgentHandsError) {
         message.error(err.message);
       } else {
         message.error("Failed to generate API key");
@@ -294,23 +245,9 @@ function CreateKeyModal({
       destroyOnHidden
       width={440}
     >
-      <Form<CreateApiKeyInput>
-        form={form}
-        layout="vertical"
-        onFinish={handleSubmit}
-        requiredMark={false}
-        style={{ marginTop: 16 }}
-      >
-        <Form.Item
-          name="name"
-          label="Identifier"
-          rules={[{ required: true, message: "Key identifier is required" }]}
-        >
-          <Input
-            autoFocus
-            placeholder="e.g. production-agent, ci-pipeline"
-            style={{ fontFamily: "var(--font-mono)" }}
-          />
+      <Form<CreateApiKeyInput> form={form} layout="vertical" onFinish={handleSubmit} requiredMark={false} style={{ marginTop: 16 }}>
+        <Form.Item name="name" label="Identifier" rules={[{ required: true, message: "Key identifier is required" }]}>
+          <Input autoFocus placeholder="e.g. production-agent, ci-pipeline" style={{ fontFamily: "var(--font-mono)" }} />
         </Form.Item>
 
         <Form.Item style={{ marginBottom: 0 }}>
@@ -383,18 +320,14 @@ function KeyCreatedModal({
       maskClosable={false}
     >
       {/* Warning */}
-      <div className="flex items-start gap-3 px-4 py-3 border border-dashed rounded-md bg-transparent mb-4" style={{ borderColor: 'var(--color-warning)' }}>
-        <AlertTriangle size={16} className="shrink-0 mt-0.5" style={{ color: 'var(--color-warning)' }} />
-        <span className="font-mono text-[12px] text-ink leading-relaxed">
-          COPY THIS KEY NOW — IT WILL NOT BE DISPLAYED AGAIN
-        </span>
+      <div className="flex items-start gap-3 px-4 py-3 border border-dashed rounded-md bg-transparent mb-4" style={{ borderColor: "var(--color-warning)" }}>
+        <AlertTriangle size={16} className="shrink-0 mt-0.5" style={{ color: "var(--color-warning)" }} />
+        <span className="font-mono text-[12px] text-ink leading-relaxed">COPY THIS KEY NOW — IT WILL NOT BE DISPLAYED AGAIN</span>
       </div>
 
       {/* Key display */}
       <div className="flex items-center gap-2 px-4 py-3 border border-hairline rounded-md bg-canvas-soft">
-        <code className="flex-1 font-mono text-[13px] text-ink break-all leading-relaxed">
-          {created?.key}
-        </code>
+        <code className="flex-1 font-mono text-[13px] text-ink break-all leading-relaxed">{created?.key}</code>
         <Tooltip title={copied ? "Copied!" : "Copy to clipboard"}>
           <button
             onClick={handleCopy}
@@ -407,9 +340,7 @@ function KeyCreatedModal({
 
       {/* Key metadata */}
       <div className="mt-3 flex items-center gap-2">
-        <span className="font-mono text-[10px] uppercase tracking-wider text-muted-soft">
-          Identifier:
-        </span>
+        <span className="font-mono text-[10px] uppercase tracking-wider text-muted-soft">Identifier:</span>
         <span className="font-mono text-[12px] text-ink">{created?.name}</span>
       </div>
     </Modal>

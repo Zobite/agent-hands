@@ -8,23 +8,23 @@
   </meta>
 
   <overview>
-    Khi cài đặt ứng dụng lần đầu, hệ thống tự động tạo tài khoản super admin
-    thông qua database migration. Thông tin đăng nhập mặc định được in ra console.
+    On first app installation, the system automatically creates a super admin
+    account via database migration. Default login credentials are printed to console.
   </overview>
 
   <user-stories>
     <story id="US-01">
       <actor>System</actor>
-      <action>chạy migration lần đầu khi cài đặt app</action>
-      <benefit>tạo super admin account sẵn sàng để quản trị</benefit>
+      <action>run migration on first app installation</action>
+      <benefit>super admin account is ready for administration</benefit>
     </story>
   </user-stories>
 </feature>
 
 ## Server
-- [x] Migration tạo bảng `users`: id, username, email, password_hash, role, created_at, updated_at
-- [x] Seed record super admin: username `admin`, password ngẫu nhiên (hoặc từ env `ADMIN_PASSWORD`)
-- [x] Password hash bằng bcrypt/argon2 trước khi lưu DB
-- [x] Console in ra username + password mặc định sau migration thành công
-- [x] Nếu super admin đã tồn tại → không tạo trùng
-- [x] Role `superadmin` không thể bị xoá hoặc hạ quyền
+- [x] Migration creates `users` table: id, username, email, password_hash, role, created_at, updated_at
+- [x] Seed super admin record: username `admin`, random password (or from env `ADMIN_PASSWORD`)
+- [x] Password hashed with bcrypt/argon2 before storing in DB
+- [x] Console prints username + default password after successful migration
+- [x] If super admin already exists → do not create duplicate
+- [x] Role `superadmin` cannot be deleted or downgraded

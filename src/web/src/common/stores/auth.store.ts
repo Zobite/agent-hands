@@ -1,7 +1,7 @@
+import type { User } from "src/lib/types";
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
-import type { User } from "src/lib/types";
 
 interface AuthState {
   user: User | null;
@@ -48,8 +48,8 @@ export const useAuthStore = create<AuthState & AuthActions>()(
           user: state.user,
           isAuthenticated: state.isAuthenticated,
         }),
-      }
+      },
     ),
-    { name: "AuthStore" }
-  )
+    { name: "AuthStore" },
+  ),
 );

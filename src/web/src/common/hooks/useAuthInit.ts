@@ -1,13 +1,13 @@
 import { useEffect, useRef } from "react";
-import { useAuthStore } from "../stores/auth.store";
 import { client } from "src/lib/client";
-import { MoroError } from "src/lib/http";
+import { AgentHandsError } from "src/lib/http";
+import { useAuthStore } from "../stores/auth.store";
 
 /** Interval to check token refresh (10 minutes) */
 const REFRESH_CHECK_INTERVAL = 10 * 60 * 1000;
 
 function is401(err: unknown): boolean {
-  return err instanceof MoroError && err.status === 401;
+  return err instanceof AgentHandsError && err.status === 401;
 }
 
 /**
@@ -90,4 +90,3 @@ export function useAuthInit() {
     }
   }, [setUser, setLoading, logout]);
 }
-

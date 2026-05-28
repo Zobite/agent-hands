@@ -2,7 +2,7 @@ import { Tooltip } from "antd";
 import { BookOpen, Bot, Database, FileText, HardDrive, Key, KeyRound, LayoutDashboard, LogOut, Plug, Settings, Table2, Users } from "lucide-react";
 import type React from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
-import { MoroLogo } from "src/common/components/MoroLogo";
+import { AgentHandsLogo } from "src/common/components/AgentHandsLogo";
 import { useUpdateChecker } from "src/common/hooks/useUpdateChecker";
 import { useAuthStore } from "src/common/stores/auth.store";
 import { client } from "src/lib/client";
@@ -95,10 +95,10 @@ export default function AppLayout() {
         <div className="flex flex-col gap-1 p-4 md:px-6 md:py-6 border-b border-hairline">
           <div className="flex items-center gap-3 justify-center md:justify-start">
             <span className="inline-flex items-center justify-center w-8 h-8 shrink-0 text-ink">
-              <MoroLogo className="w-full h-full" />
+              <AgentHandsLogo className="w-full h-full" />
             </span>
             <div className="flex-col min-w-0 hidden md:flex">
-              <span className="font-display font-medium text-[15px] tracking-[-0.2px] text-ink leading-tight">Moro LLM Toolkit</span>
+              <span className="font-display font-medium text-[15px] tracking-[-0.2px] text-ink leading-tight">Agent Hands</span>
               <span className="font-mono text-[10px] text-muted-soft tracking-[0.5px] mt-1 flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-success" />
                 {versionInfo ? `v${versionInfo.current}` : "—"}

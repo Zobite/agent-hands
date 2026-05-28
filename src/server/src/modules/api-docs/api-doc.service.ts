@@ -54,9 +54,9 @@ const API_SECTIONS: ApiSection[] = [
     "role": "superadmin"
   }
 }`,
-        jsExample: `const { MoroClient } = require("moro-llm-toolkit-client");
+        jsExample: `const { AgentHandsClient } = require("agent-hands-client");
 
-const client = new MoroClient({
+const client = new AgentHandsClient({
   baseUrl: "{{BASE_URL}}"
 });
 
@@ -172,17 +172,17 @@ console.log(created.key);`,
     ],
   },
   {
-    id: "variables",
-    label: "Variables",
-    description: "Key-value store with TTL, scoped under variable namespaces.",
-    basePrefix: "/api/variable-namespaces/:namespaceId/variables",
+    id: "kv-store",
+    label: "KV Store",
+    description: "Key-value store with TTL. Use key prefixes for organization (e.g. config.api_url, cache.token).",
+    basePrefix: "/api/kv-store",
     endpoints: [
       {
         method: "GET",
         path: "/",
         summary: "List variables (paginated, filterable)",
         auth: "both",
-        queryParams: "namespace, search, sort (key|type|updated_at|ttl), order (asc|desc), page, limit",
+        queryParams: "search, sort (key|type|updated_at|ttl), order (asc|desc), page, limit",
         response: `{
   "items": [...],
   "meta": {
@@ -192,8 +192,7 @@ console.log(created.key);`,
     "hasMore": true
   }
 }`,
-        jsExample: `const result = await client.variables.list("vns_xxx", {
-  namespace: "config",
+        jsExample: `const result = await client.kvStore.list({
   search: "api",
   page: 1,
   limit: 20
@@ -204,34 +203,18 @@ console.log(result.meta);    // { total, page, limit, hasMore }`,
       },
       {
         method: "GET",
-        path: "/namespaces",
-        summary: "List all namespaces with counts",
-        auth: "both",
-        response: `{
-  "items": [
-    { "namespace": "default", "count": 15 },
-    { "namespace": "cache", "count": 8 }
-  ],
-  "meta": { "total": 2 }
-}`,
-        jsExample: `const ns = await client.variables.listNamespaces("prj_xxx");
-ns.forEach(n => console.log(n.namespace, n.count));`,
-      },
-      {
-        method: "GET",
         path: "/by-key/:key",
-        summary: "Get variable by key (query: namespace)",
+        summary: "Get variable by key",
         auth: "both",
-        queryParams: "namespace (default: 'default')",
         response: `{
   "id": "var_xxx",
-  "projectId": "vns_xxx",
   "key": "api_url",
   "value": "https://...",
   "type": "string",
-  "namespace": "default"
+  "ttl": null,
+  "expiresAt": null
 }`,
-        jsExample: `const v = await client.variables.getByKey("vns_xxx", "api_url", "config");
+        jsExample: `const v = await client.kvStore.getByKey("api_url");
 console.log(v.value);`,
       },
       {
@@ -243,15 +226,13 @@ console.log(v.value);`,
   "key": "api_url",
   "value": "https://example.com",
   "type": "string",
-  "namespace": "config",
   "ttl": 3600
 }`,
-        notes: "If a variable with the same key+namespace exists within the project, it will be updated (upsert).",
-        jsExample: `const v = await client.variables.create("vns_xxx", {
+        notes: "If a variable with the same key exists, it will be updated (upsert).",
+        jsExample: `const v = await client.kvStore.create({
   key: "api_url",
   value: "https://example.com",
   type: "string",
-  namespace: "config",
   ttl: 3600     // seconds, 0 = no expiry
 });`,
       },
@@ -266,7 +247,7 @@ console.log(v.value);`,
     { "key": "b", "value": "2" }
   ]
 }`,
-        jsExample: `const vars = await client.variables.bulkCreate("vns_xxx", [
+        jsExample: `const vars = await client.kvStore.bulkCreate([
   { key: "a", value: "1" },
   { key: "b", value: "2" }
 ]);`,
@@ -277,7 +258,7 @@ console.log(v.value);`,
         summary: "Update variable by ID",
         auth: "both",
         body: `{ "value": "new-value", "ttl": 7200 }`,
-        jsExample: `const updated = await client.variables.update("vns_xxx", "var_xxx", {
+        jsExample: `const updated = await client.kvStore.update("var_xxx", {
   value: "new-value",
   ttl: 7200
 });`,
@@ -287,33 +268,33 @@ console.log(v.value);`,
         path: "/:id",
         summary: "Delete a single variable",
         auth: "both",
-        jsExample: `await client.variables.delete("vns_xxx", "var_xxx");`,
+        jsExample: `await client.kvStore.delete("var_xxx");`,
       },
       {
         method: "DELETE",
-        path: "/",
-        summary: "Flush all variables in a namespace",
+        path: "/flush",
+        summary: "Flush (delete) all variables",
         auth: "both",
-        notes: "Deletes ALL variables belonging to the namespace. Cannot flush global (null namespace).",
-        jsExample: `const result = await client.variables.flushNamespace("vns_xxx");
+        notes: "Deletes ALL variables. Use with caution.",
+        jsExample: `const result = await client.kvStore.flush();
 console.log(result.deleted); // number of deleted variables`,
       },
     ],
   },
   {
-    id: "databases",
-    label: "Databases",
-    description: "Group tables into logical databases for organization.",
-    basePrefix: "/api/databases",
+    id: "datatables-projects",
+    label: "DataTable Projects",
+    description: "Group tables into logical projects for organization.",
+    basePrefix: "/api/datatables",
     endpoints: [
       {
         method: "GET",
         path: "/",
-        summary: "List all databases",
+        summary: "List all projects",
         auth: "both",
         response: `{
   "items": [{
-    "id": "dbs_xxx",
+    "id": "prj_xxx",
     "name": "CRM",
     "description": "Customer data",
     "tableCount": 5,
@@ -322,19 +303,19 @@ console.log(result.deleted); // number of deleted variables`,
   }],
   "meta": { "total": 1 }
 }`,
-        jsExample: `const databases = await client.databases.list();
-databases.forEach(db => console.log(db.name, db.tableCount));`,
+        jsExample: `const projects = await client.projects.list();
+projects.forEach(p => console.log(db.name, db.tableCount));`,
       },
       {
         method: "POST",
         path: "/",
-        summary: "Create a new database",
+        summary: "Create a new project",
         auth: "both",
         body: `{
   "name": "CRM",
   "description": "Customer relationship management"
 }`,
-        jsExample: `const db = await client.databases.create({
+        jsExample: `const db = await client.projects.create({
   name: "CRM",
   description: "Customer relationship management"
 });`,
@@ -342,42 +323,42 @@ databases.forEach(db => console.log(db.name, db.tableCount));`,
       {
         method: "GET",
         path: "/:id",
-        summary: "Get database by ID",
+        summary: "Get project by ID",
         auth: "both",
-        jsExample: `const db = await client.databases.get("dbs_xxx");
+        jsExample: `const db = await client.projects.get("prj_xxx");
 console.log(db.tableCount);`,
       },
       {
         method: "PATCH",
         path: "/:id",
-        summary: "Update database metadata",
+        summary: "Update project metadata",
         auth: "both",
         body: `{ "name": "Updated Name" }`,
-        jsExample: `await client.databases.update("dbs_xxx", {
+        jsExample: `await client.projects.update("prj_xxx", {
   name: "Updated Name"
 });`,
       },
       {
         method: "DELETE",
         path: "/:id",
-        summary: "Delete database (tables are unlinked, not deleted)",
+        summary: "Delete project (cascades tables + rows)",
         auth: "both",
-        jsExample: `await client.databases.delete("dbs_xxx");`,
+        jsExample: `await client.projects.delete("prj_xxx");`,
       },
     ],
   },
   {
     id: "tables",
-    label: "Tables (nested under Databases)",
-    description: "Tables are nested under databases. All table operations require a database ID.",
-    basePrefix: "/api/databases/:dbId/tables",
+    label: "Tables (nested under Projects)",
+    description: "Tables are nested under projects. All table operations require a project ID.",
+    basePrefix: "/api/datatables/:projectId/tables",
     endpoints: [
       {
         method: "GET",
         path: "/",
-        summary: "List tables in a database",
+        summary: "List tables in a project",
         auth: "both",
-        jsExample: `const tables = await client.tables.list("dbs_xxx");`,
+        jsExample: `const tables = await client.tables.list("prj_xxx");`,
       },
       {
         method: "POST",
@@ -391,7 +372,7 @@ console.log(db.tableCount);`,
     { "name": "Email", "type": "text" }
   ]
 }`,
-        jsExample: `const table = await client.tables.create("dbs_xxx", {
+        jsExample: `const table = await client.tables.create("prj_xxx", {
   name: "Contacts",
   columns: [{ name: "Name", type: "text" }]
 });`,
@@ -401,7 +382,7 @@ console.log(db.tableCount);`,
         path: "/:id",
         summary: "Get table details by ID",
         auth: "both",
-        jsExample: `const table = await client.tables.get("dbs_xxx", "dtb_xxx");`,
+        jsExample: `const table = await client.tables.get("prj_xxx", "dtb_xxx");`,
       },
       {
         method: "PATCH",
@@ -409,14 +390,14 @@ console.log(db.tableCount);`,
         summary: "Update table metadata",
         auth: "both",
         body: `{ "name": "Updated Name" }`,
-        jsExample: `await client.tables.update("dbs_xxx", "dtb_xxx", { name: "Updated" });`,
+        jsExample: `await client.tables.update("prj_xxx", "dtb_xxx", { name: "Updated" });`,
       },
       {
         method: "DELETE",
         path: "/:id",
         summary: "Delete table and all rows",
         auth: "both",
-        jsExample: `await client.tables.delete("dbs_xxx", "dtb_xxx");`,
+        jsExample: `await client.tables.delete("prj_xxx", "dtb_xxx");`,
       },
       {
         method: "POST",
@@ -424,7 +405,7 @@ console.log(db.tableCount);`,
         summary: "Add a new column",
         auth: "both",
         body: `{ "name": "Status", "type": "text" }`,
-        jsExample: `await client.tables.addColumn("dbs_xxx", "dtb_xxx", { name: "Status", type: "text" });`,
+        jsExample: `await client.tables.addColumn("prj_xxx", "dtb_xxx", { name: "Status", type: "text" });`,
       },
       {
         method: "GET",
@@ -438,10 +419,10 @@ console.log(db.tableCount);`,
 Operators: eq, neq, contains, not_contains, starts_with, ends_with, gt, gte, lt, lte, is_empty, is_not_empty.
 Sort also supports column names: sort=Name&order=asc`,
         jsExample: `// Simple list
-const result = await client.tables.listRows("dbs_xxx", "dtb_xxx", { page: 1, limit: 50 });
+const result = await client.tables.listRows("prj_xxx", "dtb_xxx", { page: 1, limit: 50 });
 
 // Filter by column NAME (LLM-friendly — no need to look up column IDs)
-const filtered = await client.tables.listRows("dbs_xxx", "dtb_xxx", {
+const filtered = await client.tables.listRows("prj_xxx", "dtb_xxx", {
   filter: [
     { column: "Name", operator: "contains", value: "John" },
     { column: "Age", operator: "gt", value: 18 }
@@ -450,7 +431,7 @@ const filtered = await client.tables.listRows("dbs_xxx", "dtb_xxx", {
 });
 
 // Sort by column name
-const sorted = await client.tables.listRows("dbs_xxx", "dtb_xxx", {
+const sorted = await client.tables.listRows("prj_xxx", "dtb_xxx", {
   sort: "Name",
   order: "asc"
 });`,
@@ -461,7 +442,7 @@ const sorted = await client.tables.listRows("dbs_xxx", "dtb_xxx", {
         summary: "Create a new row",
         auth: "both",
         body: `{ "data": { "col_xxx": "John" } }`,
-        jsExample: `const row = await client.tables.createRow("dbs_xxx", "dtb_xxx", { data: { col_xxx: "John" } });`,
+        jsExample: `const row = await client.tables.createRow("prj_xxx", "dtb_xxx", { data: { col_xxx: "John" } });`,
       },
       {
         method: "PATCH",
@@ -469,14 +450,14 @@ const sorted = await client.tables.listRows("dbs_xxx", "dtb_xxx", {
         summary: "Update a row",
         auth: "both",
         body: `{ "data": { "col_xxx": "Updated" } }`,
-        jsExample: `await client.tables.updateRow("dbs_xxx", "dtb_xxx", "dtr_yyy", { data: { col_xxx: "Updated" } });`,
+        jsExample: `await client.tables.updateRow("prj_xxx", "dtb_xxx", "dtr_yyy", { data: { col_xxx: "Updated" } });`,
       },
       {
         method: "DELETE",
         path: "/:id/rows/:rowId",
         summary: "Delete a row",
         auth: "both",
-        jsExample: `await client.tables.deleteRow("dbs_xxx", "dtb_xxx", "dtr_yyy");`,
+        jsExample: `await client.tables.deleteRow("prj_xxx", "dtb_xxx", "dtr_yyy");`,
       },
       {
         method: "POST",
@@ -484,7 +465,7 @@ const sorted = await client.tables.listRows("dbs_xxx", "dtb_xxx", {
         summary: "Bulk delete rows",
         auth: "both",
         body: `{ "rowIds": ["dtr_a", "dtr_b"] }`,
-        jsExample: `await client.tables.bulkDeleteRows("dbs_xxx", "dtb_xxx", ["dtr_a", "dtr_b"]);`,
+        jsExample: `await client.tables.bulkDeleteRows("prj_xxx", "dtb_xxx", ["dtr_a", "dtr_b"]);`,
       },
       {
         method: "POST",
@@ -497,11 +478,70 @@ const sorted = await client.tables.listRows("dbs_xxx", "dtb_xxx", {
     { "rowId": "dtr_b", "data": { "col_xxx": "other value" } }
   ]
 }`,
-        jsExample: `const result = await client.tables.bulkUpdateRows("dbs_xxx", "dtb_xxx", [
+        jsExample: `const result = await client.tables.bulkUpdateRows("prj_xxx", "dtb_xxx", [
   { rowId: "dtr_a", data: { col_xxx: "new value" } },
   { rowId: "dtr_b", data: { col_xxx: "other value" } }
 ]);
 console.log(result.updated); // number of updated rows`,
+      },
+      {
+        method: "POST",
+        path: "/:id/query",
+        summary: "Execute MQL query (SQL-like syntax for flexible row querying)",
+        auth: "both",
+        body: `{
+  "q": "SELECT name, email WHERE city = 'HCM' AND age > 30 ORDER BY name ASC LIMIT 10"
+}`,
+        response: `{
+  "items": [
+    { "id": "dtr_xxx", "data": { "col_name": "Bob", "col_email": "bob@test.com" }, ... }
+  ],
+  "meta": { "total": 3, "limit": 10, "offset": 0, "hasMore": false, "query": "..." }
+}`,
+        notes: `MQL (Agent Hands Query Language) — a safe SQL-like DSL for querying rows.
+
+Syntax: [SELECT cols] [WHERE conditions] [ORDER BY col ASC|DESC, ...] [LIMIT n] [OFFSET n]
+
+Operators: = != > >= < <= LIKE IN BETWEEN IS NULL IS NOT NULL
+Logic: AND, OR, parentheses for grouping
+Special: COUNT WHERE ... (count-only, no data returned)
+
+Security: MQL is NOT raw SQL. It's parsed into structured filters.
+• DDL/DML keywords (DROP, DELETE, INSERT, UPDATE, etc.) are rejected
+• Semicolons and SQL comments (--) are rejected
+• Column names are validated against the table schema
+• Table scope is from URL path — cannot query other tables
+
+Examples:
+• "WHERE active = true ORDER BY name LIMIT 20"
+• "SELECT name, email WHERE age BETWEEN 25 AND 40"
+• "WHERE city IN ('HCM', 'Hanoi') ORDER BY age DESC"
+• "WHERE (status = 'active' AND age > 30) OR role = 'admin'"
+• "COUNT WHERE status = 'pending'"
+• "WHERE name LIKE '%john%' ORDER BY created_at DESC"`,
+        jsExample: `// Simple filter
+const result = await fetch("{{BASE_URL}}/api/datatables/prj_xxx/tables/dtb_xxx/query", {
+  method: "POST",
+  headers: { "Content-Type": "application/json", "Authorization": "Bearer TOKEN" },
+  body: JSON.stringify({
+    q: "WHERE active = true AND age > 25 ORDER BY name LIMIT 10"
+  })
+});
+
+// Select specific columns
+{ q: "SELECT name, email WHERE city = 'HCM'" }
+
+// Complex filter with nested logic
+{ q: "WHERE (city = 'HCM' AND age > 30) OR status = 'vip'" }
+
+// IN operator
+{ q: "WHERE city IN ('HCM', 'Hanoi', 'Danang')" }
+
+// Count only (no data returned)
+{ q: "COUNT WHERE active = true" }
+
+// Multi-sort
+{ q: "ORDER BY city ASC, age DESC LIMIT 50" }`,
       },
     ],
   },
@@ -589,7 +629,7 @@ console.log(result.updated); // number of updated rows`,
   },
   {
     id: "storage",
-    label: "Storage",
+    label: "Object Storage",
     description: "Object storage with buckets, file upload/download, presigned URLs, and access keys.",
     basePrefix: "/api/storage",
     endpoints: [
@@ -719,7 +759,7 @@ console.log(key.accessKey, key.secretKey); // save secretKey!`,
   {
     id: "s3-api",
     label: "S3-compatible API",
-    description: "S3-compatible endpoint at /s3 on the same server. Create access keys from the Storage UI, then use with aws-sdk, minio-js, mc CLI, or rclone.",
+    description: "S3-compatible endpoint at /s3 on the same server. Create access keys from the Object Storage UI, then use with aws-sdk, minio-js, mc CLI, or rclone.",
     basePrefix: "/s3",
     endpoints: [
       {
@@ -727,7 +767,7 @@ console.log(key.accessKey, key.secretKey); // save secretKey!`,
         path: "/",
         summary: "ListBuckets — list all buckets",
         auth: "none",
-        notes: "Auth via AWS Signature V4 (Authorization header). Create access keys from the Storage → Access Keys tab.",
+        notes: "Auth via AWS Signature V4 (Authorization header). Create access keys from the Object Storage → Access Keys tab.",
         response: `<?xml version="1.0"?>
 <ListAllMyBucketsResult>
   <Buckets>
@@ -824,7 +864,7 @@ console.log(result.CommonPrefixes);`,
   {
     id: "mcp-tool-servers",
     label: "MCP Tool Servers",
-    description: "Manage the built-in MCP server (Moro LLM Toolkit). Custom servers coming soon.",
+    description: "Manage the built-in MCP server (Agent Hands). Custom servers coming soon.",
     basePrefix: "/api/mcp-tool-servers",
     endpoints: [
       {
@@ -835,7 +875,7 @@ console.log(result.CommonPrefixes);`,
         response: `{
   "items": [{
     "id": "mts_system",
-    "name": "Moro LLM Toolkit",
+    "name": "Agent Hands",
     "type": "builtin",
     "isActive": 1,
     "toolCount": 0

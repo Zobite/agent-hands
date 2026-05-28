@@ -1,17 +1,8 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { Tooltip, message, Spin } from "antd";
-import {
-  Copy,
-  CheckCircle2,
-  Zap,
-  Lock,
-  Server,
-  ChevronRight,
-  AlertTriangle,
-  BookOpen,
-} from "lucide-react";
+import { Spin, Tooltip, message } from "antd";
+import { AlertTriangle, BookOpen, CheckCircle2, ChevronRight, Copy, Lock, Server, Zap } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { client } from "src/lib/client";
-import type { ApiEndpoint, ApiDocsData } from "src/lib/types";
+import type { ApiDocsData, ApiEndpoint } from "src/lib/types";
 
 // ── Base URL ─────────────────────────────────────────────────────────────────
 
@@ -76,15 +67,11 @@ function CodeBlock({ code, label }: { code: string; label?: string }) {
     <div className="relative bg-surface-dark rounded-md overflow-hidden border border-surface-dark-elevated">
       {label && (
         <div className="px-3 py-1.5 border-b border-white/8">
-          <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.6px] text-white/35">
-            {label}
-          </span>
+          <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.6px] text-white/35">{label}</span>
         </div>
       )}
       <CopyButton text={code} />
-      <pre className="text-on-dark text-[13px] font-mono leading-[1.7] p-4 m-0 overflow-x-auto whitespace-pre-wrap break-all">
-        {code}
-      </pre>
+      <pre className="text-on-dark text-[13px] font-mono leading-[1.7] p-4 m-0 overflow-x-auto whitespace-pre-wrap break-all">{code}</pre>
     </div>
   );
 }
@@ -162,18 +149,19 @@ export default function ApiDocsPage() {
     }
   }, []);
 
-  const setRef = useCallback((id: string) => (el: HTMLElement | null) => {
-    sectionRefs.current[id] = el;
-  }, []);
+  const setRef = useCallback(
+    (id: string) => (el: HTMLElement | null) => {
+      sectionRefs.current[id] = el;
+    },
+    [],
+  );
 
   // Loading state
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center h-full bg-canvas">
         <Spin size="large" />
-        <span className="font-mono text-[11px] uppercase tracking-wide text-muted-soft mt-4">
-          LOADING REFERENCE
-        </span>
+        <span className="font-mono text-[11px] uppercase tracking-wide text-muted-soft mt-4">LOADING REFERENCE</span>
       </div>
     );
   }
@@ -184,9 +172,7 @@ export default function ApiDocsPage() {
       <div className="flex flex-col items-center justify-center h-full bg-canvas">
         <div className="flex flex-col items-center justify-center border border-dashed border-hairline-strong rounded-md p-12 max-w-[480px]">
           <AlertTriangle size={28} className="text-muted-soft mb-4" strokeWidth={1.5} />
-          <div className="font-mono text-[11px] uppercase tracking-wide text-muted-soft mb-2">
-            FETCH ERROR
-          </div>
+          <div className="font-mono text-[11px] uppercase tracking-wide text-muted-soft mb-2">FETCH ERROR</div>
           <p className="text-[13px] text-muted text-center">{error}</p>
         </div>
       </div>
@@ -199,48 +185,38 @@ export default function ApiDocsPage() {
       <nav className="w-[220px] min-w-[220px] border-r border-hairline overflow-y-auto shrink-0 py-6 max-md:hidden bg-canvas">
         <div className="flex items-center gap-2 px-5 mb-6">
           <BookOpen size={14} className="text-muted" strokeWidth={1.5} />
-          <span className="font-mono text-[11px] uppercase tracking-wide text-muted">
-            API Reference
-          </span>
+          <span className="font-mono text-[11px] uppercase tracking-wide text-muted">API Reference</span>
         </div>
 
         <div className="mb-5">
-          <div className="font-mono text-[10px] uppercase tracking-[0.8px] text-muted-soft px-5 mb-2">
-            Overview
-          </div>
-          {introSections.filter((s) => s.id !== "response-format").map((s) => (
-            <button
-              key={s.id}
-              className={`flex items-center w-full text-left text-[13px] py-[7px] px-5 border-none bg-transparent cursor-pointer transition-all duration-150 font-sans border-l-2 ${
-                activeSection === s.id
-                  ? "text-ink border-l-ink bg-ink/5 font-medium"
-                  : "text-muted border-l-transparent hover:text-ink hover:bg-ink/3"
-              }`}
-              onClick={() => scrollTo(s.id)}
-            >
-              {s.label}
-            </button>
-          ))}
+          <div className="font-mono text-[10px] uppercase tracking-[0.8px] text-muted-soft px-5 mb-2">Overview</div>
+          {introSections
+            .filter((s) => s.id !== "response-format")
+            .map((s) => (
+              <button
+                key={s.id}
+                className={`flex items-center w-full text-left text-[13px] py-[7px] px-5 border-none bg-transparent cursor-pointer transition-all duration-150 font-sans border-l-2 ${
+                  activeSection === s.id ? "text-ink border-l-ink bg-ink/5 font-medium" : "text-muted border-l-transparent hover:text-ink hover:bg-ink/3"
+                }`}
+                onClick={() => scrollTo(s.id)}
+              >
+                {s.label}
+              </button>
+            ))}
         </div>
 
         <div className="mb-5">
-          <div className="font-mono text-[10px] uppercase tracking-[0.8px] text-muted-soft px-5 mb-2">
-            Endpoints
-          </div>
+          <div className="font-mono text-[10px] uppercase tracking-[0.8px] text-muted-soft px-5 mb-2">Endpoints</div>
           {apiSections.map((s) => (
             <button
               key={s.id}
               className={`flex items-center justify-between w-full text-left text-[13px] py-[7px] px-5 border-none bg-transparent cursor-pointer transition-all duration-150 font-sans border-l-2 ${
-                activeSection === s.id
-                  ? "text-ink border-l-ink bg-ink/5 font-medium"
-                  : "text-muted border-l-transparent hover:text-ink hover:bg-ink/3"
+                activeSection === s.id ? "text-ink border-l-ink bg-ink/5 font-medium" : "text-muted border-l-transparent hover:text-ink hover:bg-ink/3"
               }`}
               onClick={() => scrollTo(s.id)}
             >
               <span>{s.label}</span>
-              <span className="font-mono text-[10px] text-muted-soft tracking-wide">
-                {s.endpoints.length}
-              </span>
+              <span className="font-mono text-[10px] text-muted-soft tracking-wide">{s.endpoints.length}</span>
             </button>
           ))}
         </div>
@@ -253,32 +229,23 @@ export default function ApiDocsPage() {
           <div className="max-w-[860px]">
             <div className="flex items-center gap-2 mb-3">
               <BookOpen size={14} className="text-muted" strokeWidth={1.5} />
-              <span className="font-mono text-[11px] uppercase tracking-wide text-muted">
-                Documentation
-              </span>
+              <span className="font-mono text-[11px] uppercase tracking-wide text-muted">Documentation</span>
             </div>
-            <h1 className="font-display text-[32px] font-normal text-ink tracking-[-0.64px] m-0 leading-tight">
-              API Reference
-            </h1>
+            <h1 className="font-display text-[32px] font-normal text-ink tracking-[-0.64px] m-0 leading-tight">API Reference</h1>
           </div>
         </div>
 
         <div className="px-10 py-8 [&_section]:mb-14">
           <div className="max-w-[860px]">
-
             {/* ── Getting Started ─────────────────────────────────────── */}
             <section ref={setRef("getting-started")} id="getting-started">
-              <h2 className="font-display text-[26px] font-normal text-ink tracking-[-0.4px] mb-4">
-                Getting Started
-              </h2>
+              <h2 className="font-display text-[26px] font-normal text-ink tracking-[-0.4px] mb-4">Getting Started</h2>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
                 <div className="flex items-start gap-3 p-4 border border-hairline rounded-md bg-surface-card">
                   <Zap size={16} className="text-muted mt-0.5 shrink-0" strokeWidth={1.5} />
                   <div className="min-w-0">
-                    <div className="font-mono text-[10px] uppercase tracking-[0.6px] text-muted-soft mb-2">
-                      BASE URL
-                    </div>
+                    <div className="font-mono text-[10px] uppercase tracking-[0.6px] text-muted-soft mb-2">BASE URL</div>
                     <div className="flex items-center gap-2 bg-canvas rounded-sm py-1.5 px-2.5 border border-hairline-soft">
                       <code className="font-mono text-[12px] text-ink truncate">{baseUrl}</code>
                       <CopyButton text={baseUrl} inline />
@@ -288,35 +255,27 @@ export default function ApiDocsPage() {
                 <div className="flex items-start gap-3 p-4 border border-hairline rounded-md bg-surface-card">
                   <Lock size={16} className="text-muted mt-0.5 shrink-0" strokeWidth={1.5} />
                   <div>
-                    <div className="font-mono text-[10px] uppercase tracking-[0.6px] text-muted-soft mb-2">
-                      AUTHENTICATION
-                    </div>
+                    <div className="font-mono text-[10px] uppercase tracking-[0.6px] text-muted-soft mb-2">AUTHENTICATION</div>
                     <p className="text-[13px] text-body m-0">JWT token or API key</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3 p-4 border border-hairline rounded-md bg-surface-card">
                   <Server size={16} className="text-muted mt-0.5 shrink-0" strokeWidth={1.5} />
                   <div>
-                    <div className="font-mono text-[10px] uppercase tracking-[0.6px] text-muted-soft mb-2">
-                      FORMAT
-                    </div>
+                    <div className="font-mono text-[10px] uppercase tracking-[0.6px] text-muted-soft mb-2">FORMAT</div>
                     <p className="text-[13px] text-body m-0">JSON request &amp; response</p>
                   </div>
                 </div>
               </div>
 
               <div className="mb-6">
-                <div className="font-mono text-[10px] uppercase tracking-[0.6px] text-muted-soft mb-2">
-                  INSTALL SDK
-                </div>
-                <CodeBlock code={`npm install moro-llm-toolkit-client`} />
+                <div className="font-mono text-[10px] uppercase tracking-[0.6px] text-muted-soft mb-2">INSTALL SDK</div>
+                <CodeBlock code={`npm install agent-hands-client`} />
               </div>
 
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <div className="font-mono text-[10px] uppercase tracking-[0.6px] text-muted-soft">
-                    QUICK EXAMPLE
-                  </div>
+                  <div className="font-mono text-[10px] uppercase tracking-[0.6px] text-muted-soft">QUICK EXAMPLE</div>
                   <div className="flex items-center gap-1">
                     {(["curl", "js"] as const).map((tab) => (
                       <button
@@ -335,33 +294,33 @@ export default function ApiDocsPage() {
                 </div>
                 {quickExampleTab === "curl" ? (
                   <CodeBlock
-                    code={`# Create a variable in a project
-curl -X POST ${baseUrl}/api/projects/prj_xxx/variables \\
+                    code={`# Create a KV entry
+curl -X POST ${baseUrl}/api/kv-store \\
   -H "X-API-Key: ltk_YOUR_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{"key": "greeting", "value": "Hello World"}'
 
 # Read it back
-curl ${baseUrl}/api/projects/prj_xxx/variables/by-key/greeting \\
+curl ${baseUrl}/api/kv-store/by-key/greeting \\
   -H "X-API-Key: ltk_YOUR_KEY"`}
                   />
                 ) : (
                   <CodeBlock
-                    code={`import { MoroClient } from "src/lib/types";
+                    code={`import { AgentHandsClient } from "src/lib/types";
 
-const client = new MoroClient({
+const client = new AgentHandsClient({
   baseUrl: "${baseUrl}",
   accessToken: "ltk_YOUR_KEY"
 });
 
-// Create a variable in a project
-await client.variables.create("prj_xxx", {
+// Create a KV entry
+await client.kvStore.create({
   key: "greeting",
   value: "Hello World"
 });
 
 // Read it back
-const v = await client.variables.getByKey("prj_xxx", "greeting");
+const v = await client.kvStore.getByKey("greeting");
 console.log(v.value); // "Hello World"`}
                   />
                 )}
@@ -370,9 +329,7 @@ console.log(v.value); // "Hello World"`}
 
             {/* ── Authentication ───────────────────────────────────────── */}
             <section ref={setRef("authentication")} id="authentication">
-              <h2 className="font-display text-[26px] font-normal text-ink tracking-[-0.4px] mb-2">
-                Authentication
-              </h2>
+              <h2 className="font-display text-[26px] font-normal text-ink tracking-[-0.4px] mb-2">Authentication</h2>
               <p className="text-[14px] text-body mb-5 max-w-[640px] leading-relaxed">
                 All endpoints (except login/refresh) require authentication. Two methods available:
               </p>
@@ -390,10 +347,14 @@ console.log(v.value); // "Hello World"`}
                     <span className="font-mono text-[11px] font-medium text-ink">JWT Token</span>
                   </div>
                   <div className="px-4 py-3.5 border-l border-hairline-soft flex items-center">
-                    <code className="font-mono text-[12px] text-ink bg-canvas px-2 py-1 rounded-xs border border-hairline-soft">Authorization: Bearer eyJhbG...</code>
+                    <code className="font-mono text-[12px] text-ink bg-canvas px-2 py-1 rounded-xs border border-hairline-soft">
+                      Authorization: Bearer eyJhbG...
+                    </code>
                   </div>
                   <div className="px-4 py-3.5 border-l border-hairline-soft flex items-center">
-                    <span className="text-[13px] text-muted">Obtained via <code className="font-mono text-[12px] text-ink">/api/auth/login</code>, valid 1 hour</span>
+                    <span className="text-[13px] text-muted">
+                      Obtained via <code className="font-mono text-[12px] text-ink">/api/auth/login</code>, valid 1 hour
+                    </span>
                   </div>
                 </div>
                 {/* API Key — Bearer */}
@@ -402,42 +363,42 @@ console.log(v.value); // "Hello World"`}
                     <span className="font-mono text-[11px] font-medium text-ink">API Key</span>
                   </div>
                   <div className="px-4 py-3.5 border-l border-hairline-soft flex items-center">
-                    <code className="font-mono text-[12px] text-ink bg-canvas px-2 py-1 rounded-xs border border-hairline-soft">Authorization: Bearer ltk_AbCd...</code>
+                    <code className="font-mono text-[12px] text-ink bg-canvas px-2 py-1 rounded-xs border border-hairline-soft">
+                      Authorization: Bearer ltk_AbCd...
+                    </code>
                   </div>
                   <div className="px-4 py-3.5 border-l border-hairline-soft flex items-center" style={{ gridRow: "span 2" }}>
-                    <span className="text-[13px] text-muted">Created in <a href="/api-keys" className="text-ink underline decoration-hairline-strong underline-offset-2 hover:decoration-ink">API Keys</a>, no expiry</span>
+                    <span className="text-[13px] text-muted">
+                      Created in{" "}
+                      <a href="/api-keys" className="text-ink underline decoration-hairline-strong underline-offset-2 hover:decoration-ink">
+                        API Keys
+                      </a>
+                      , no expiry
+                    </span>
                   </div>
                 </div>
                 {/* API Key — X-API-Key */}
                 <div className="grid grid-cols-[120px_1fr_1fr] bg-surface-card">
                   <div className="px-4 py-3.5" />
                   <div className="px-4 py-3.5 border-l border-hairline-soft flex items-center">
-                    <code className="font-mono text-[12px] text-ink bg-canvas px-2 py-1 rounded-xs border border-hairline-soft">X-API-Key: ltk_AbCdEfGh...</code>
+                    <code className="font-mono text-[12px] text-ink bg-canvas px-2 py-1 rounded-xs border border-hairline-soft">
+                      X-API-Key: ltk_AbCdEfGh...
+                    </code>
                   </div>
                   <div className="px-4 py-3.5 border-l border-hairline-soft" />
                 </div>
               </div>
             </section>
 
-
             {/* ── API Groups — dynamically rendered from server data ──── */}
             {apiSections.map((group) => (
               <section key={group.id} ref={setRef(group.id)} id={group.id}>
-                <h2 className="font-display text-[26px] font-normal text-ink tracking-[-0.4px] mb-2">
-                  {group.label}
-                </h2>
-                <p className="text-[14px] text-body mb-5 max-w-[640px] leading-relaxed">
-                  {group.description}
-                </p>
+                <h2 className="font-display text-[26px] font-normal text-ink tracking-[-0.4px] mb-2">{group.label}</h2>
+                <p className="text-[14px] text-body mb-5 max-w-[640px] leading-relaxed">{group.description}</p>
 
                 <div className="flex flex-col gap-2">
                   {group.endpoints.map((ep, i) => (
-                    <EndpointCard
-                      key={`${ep.method}-${ep.path}-${i}`}
-                      endpoint={ep}
-                      basePrefix={group.basePrefix}
-                      baseUrl={baseUrl}
-                    />
+                    <EndpointCard key={`${ep.method}-${ep.path}-${i}`} endpoint={ep} basePrefix={group.basePrefix} baseUrl={baseUrl} />
                   ))}
                 </div>
               </section>
@@ -487,29 +448,18 @@ function EndpointCard({
   return (
     <div
       className={`border rounded-md overflow-hidden transition-all duration-200 ${
-        expanded
-          ? "border-hairline-strong bg-surface-card"
-          : "border-hairline bg-transparent hover:bg-surface-card"
+        expanded ? "border-hairline-strong bg-surface-card" : "border-hairline bg-transparent hover:bg-surface-card"
       }`}
     >
-      <div
-        className="flex items-center gap-3 py-3 px-4 cursor-pointer transition-colors duration-100"
-        onClick={() => setExpanded(!expanded)}
-      >
+      <div className="flex items-center gap-3 py-3 px-4 cursor-pointer transition-colors duration-100" onClick={() => setExpanded(!expanded)}>
         <div className="flex items-center gap-3 flex-1 min-w-0">
           <MethodBadge method={endpoint.method} />
           <code className="text-[13px] font-mono text-ink">{fullPath}</code>
         </div>
         <div className="flex items-center gap-3 shrink-0">
           <span className="text-[13px] text-muted hidden sm:inline">{endpoint.summary}</span>
-          {endpoint.auth !== "none" && (
-            <Lock size={11} className="text-muted-soft shrink-0" strokeWidth={1.5} />
-          )}
-          <ChevronRight
-            size={13}
-            className={`text-muted-soft transition-transform duration-200 ${expanded ? "rotate-90" : ""}`}
-            strokeWidth={1.5}
-          />
+          {endpoint.auth !== "none" && <Lock size={11} className="text-muted-soft shrink-0" strokeWidth={1.5} />}
+          <ChevronRight size={13} className={`text-muted-soft transition-transform duration-200 ${expanded ? "rotate-90" : ""}`} strokeWidth={1.5} />
         </div>
       </div>
 
@@ -526,9 +476,7 @@ function EndpointCard({
 
           {endpoint.queryParams && (
             <div className="mb-4">
-              <div className="font-mono text-[10px] uppercase tracking-[0.6px] text-muted-soft mb-2">
-                QUERY PARAMETERS
-              </div>
+              <div className="font-mono text-[10px] uppercase tracking-[0.6px] text-muted-soft mb-2">QUERY PARAMETERS</div>
               <p className="text-[13px] text-body">{endpoint.queryParams}</p>
             </div>
           )}
@@ -562,16 +510,7 @@ function EndpointCard({
                 </button>
               ))}
             </div>
-            {exampleTab === "curl" ? (
-              <CodeBlock code={curlExample} />
-            ) : (
-              <CodeBlock
-                code={
-                  jsExample ??
-                  `// See cURL example — JS client method TBD`
-                }
-              />
-            )}
+            {exampleTab === "curl" ? <CodeBlock code={curlExample} /> : <CodeBlock code={jsExample ?? `// See cURL example — JS client method TBD`} />}
           </div>
         </div>
       )}

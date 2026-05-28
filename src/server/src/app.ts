@@ -6,13 +6,12 @@ import { fileURLToPath } from "node:url";
 import apiDocsModule, { MODULE_PREFIX as API_DOCS_PREFIX } from "./modules/api-docs/api-doc.module.js";
 import apiKeysModule, { MODULE_PREFIX as API_KEYS_PREFIX } from "./modules/api-keys/api-key.module.js";
 import authModule, { MODULE_PREFIX as AUTH_PREFIX } from "./modules/auth/auth.module.js";
-import databasesModule, { MODULE_PREFIX as DATABASES_PREFIX } from "./modules/databases/database.module.js";
-import documentsModule, { MODULE_PREFIX as DOCUMENTS_PREFIX } from "./modules/documents/document.module.js";
+import datatablesModule, { MODULE_PREFIX as DATATABLES_PREFIX } from "./modules/datatables/datatable.module.js";
 import mcpToolServersModule, { MODULE_PREFIX as MCP_TOOL_SERVERS_PREFIX } from "./modules/mcp-tool-servers/mcp-tool-server.module.js";
 import s3Module, { MODULE_PREFIX as S3_PREFIX } from "./modules/s3/s3.module.js";
 import storageModule, { MODULE_PREFIX as STORAGE_PREFIX } from "./modules/storage/storage.module.js";
 import usersModule, { MODULE_PREFIX as USERS_PREFIX } from "./modules/users/user.module.js";
-import variablesModule, { MODULE_PREFIX as VARIABLES_PREFIX } from "./modules/variables/variables.module.js";
+import kvStoreModule, { MODULE_PREFIX as KV_STORE_PREFIX } from "./modules/kv-store/kv-store.module.js";
 import systemModule, { MODULE_PREFIX as SYSTEM_PREFIX } from "./modules/system/system.module.js";
 import dynamicApisModule, { MODULE_PREFIX as DYNAMIC_APIS_PREFIX } from "./modules/dynamic-apis/dynamic-api.module.js";
 import llmProvidersModule, { MODULE_PREFIX as LLM_PROVIDERS_PREFIX } from "./modules/llm-providers/llm-provider.module.js";
@@ -29,9 +28,102 @@ import {
 } from "fastify-type-provider-zod";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { createMcpServer } from "./common/mcp/server.js";
+import { requireAuth } from "./common/auth/middleware.js";
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { z } from "zod";
+import { getMcpServerById, listMcpTools } from "./modules/mcp-tool-servers/mcp-tool-server.service.js";
+import { executeMcpTool } from "./modules/mcp-tool-servers/mcp-tool-executor.js";
+import { createMcpToolLog } from "./modules/mcp-tool-servers/mcp-tool-server.service.js";
 
 // Session tracker for MCP (Streamable HTTP)
-const mcpStreamableSessions = new Map<string, { transport: StreamableHTTPServerTransport; mcpServer: ReturnType<typeof createMcpServer> }>();
+const mcpStreamableSessions = new Map<string, { transport: StreamableHTTPServerTransport; mcpServer: McpServer | ReturnType<typeof createMcpServer> }>();
+
+/**
+ * Create an MCP server for a custom MCP tool server.
+ * Dynamically loads tools from DB and registers them.
+ */
+async function createCustomMcpServer(serverId: string, authToken: string): Promise<McpServer | null> {
+  const serverRecord = await getMcpServerById(serverId);
+  if (!serverRecord || serverRecord.type === "builtin") return null;
+
+  const server = new McpServer({
+    name: serverRecord.name,
+    version: "1.0.0",
+  });
+
+  // Load all active tools for this server
+  const toolsResult = await listMcpTools(serverId, { page: 1, limit: 500 });
+  const activeTools = toolsResult.items.filter((t: { isActive: number }) => t.isActive);
+
+  for (const tool of activeTools) {
+    // Parse input schema to build Zod schema for MCP
+    let inputShape: Record<string, any> = {};
+    if (tool.inputSchema) {
+      try {
+        const schema = JSON.parse(tool.inputSchema);
+        if (schema.properties) {
+          for (const [key, prop] of Object.entries(schema.properties)) {
+            const p = prop as { type?: string; description?: string };
+            let zField: any = z.any();
+            if (p.type === "string") zField = z.string();
+            else if (p.type === "number" || p.type === "integer") zField = z.number();
+            else if (p.type === "boolean") zField = z.boolean();
+            if (p.description) zField = zField.describe(p.description);
+            const required = schema.required as string[] | undefined;
+            if (!required?.includes(key)) zField = zField.optional();
+            inputShape[key] = zField;
+          }
+        }
+      } catch {
+        // If schema parsing fails, accept any payload
+        inputShape = { payload: z.any().optional() };
+      }
+    }
+
+    const toolId = tool.id;
+    const toolCode = tool.code;
+    const toolServerId = serverId;
+
+    server.tool(
+      tool.name,
+      tool.description || `Custom tool: ${tool.name}`,
+      Object.keys(inputShape).length > 0 ? inputShape : {},
+      async (params: Record<string, unknown>) => {
+        const startTime = Date.now();
+        const result = await executeMcpTool(toolId, toolCode, params, {
+          timeoutMs: 30_000,
+          baseUrl: `http://127.0.0.1:${process.env.PORT ?? "18080"}`,
+          authToken,
+        });
+
+        // Log execution (fire-and-forget)
+        createMcpToolLog({
+          toolId,
+          serverId: toolServerId,
+          callerType: "mcp_agent",
+          callerInfo: "mcp_client",
+          inputParams: params,
+          outputResult: result.result,
+          status: result.success ? "success" : "error",
+          errorMessage: result.success ? undefined : (result.stderr || "Execution error"),
+          executionTimeMs: result.executionTimeMs,
+        }).catch(() => {});
+
+        if (!result.success) {
+          return {
+            content: [{ type: "text" as const, text: JSON.stringify({ error: result.result }) }],
+            isError: true,
+          };
+        }
+        return {
+          content: [{ type: "text" as const, text: JSON.stringify(result.result, null, 2) }],
+        };
+      },
+    );
+  }
+
+  return server;
+}
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -40,13 +132,12 @@ const MODULE_REGISTRY = [
   { name: "api-docs",         plugin: apiDocsModule,         prefix: API_DOCS_PREFIX },
   { name: "api-keys",         plugin: apiKeysModule,         prefix: API_KEYS_PREFIX },
   { name: "auth",             plugin: authModule,             prefix: AUTH_PREFIX },
-  { name: "databases",        plugin: databasesModule,        prefix: DATABASES_PREFIX },
-  { name: "documents",        plugin: documentsModule,        prefix: DOCUMENTS_PREFIX },
+  { name: "datatables",       plugin: datatablesModule,       prefix: DATATABLES_PREFIX },
   { name: "mcp-tool-servers", plugin: mcpToolServersModule,   prefix: MCP_TOOL_SERVERS_PREFIX },
   { name: "s3",               plugin: s3Module,               prefix: S3_PREFIX },
   { name: "storage",          plugin: storageModule,          prefix: STORAGE_PREFIX },
   { name: "users",            plugin: usersModule,            prefix: USERS_PREFIX },
-  { name: "variables",        plugin: variablesModule,        prefix: VARIABLES_PREFIX },
+  { name: "kv-store",        plugin: kvStoreModule,          prefix: KV_STORE_PREFIX },
   { name: "system",           plugin: systemModule,           prefix: SYSTEM_PREFIX },
   { name: "dynamic-apis",     plugin: dynamicApisModule,      prefix: DYNAMIC_APIS_PREFIX },
   { name: "llm-providers",    plugin: llmProvidersModule,     prefix: LLM_PROVIDERS_PREFIX },
@@ -125,7 +216,7 @@ export async function createApp() {
 
     return {
       ok: true,
-      app: "moro-llm-toolkit",
+      app: "agent-hands",
       version,
       runtime: "bun",
       timestamp: Date.now(),
@@ -151,7 +242,7 @@ export async function createApp() {
   // construction time. So we must store the session AFTER handleRequest.
 
   // POST /api/mcp/:serverId — handle JSON-RPC messages (initialize, tool calls, etc.)
-  app.post("/api/mcp/:serverId", async (req, reply) => {
+  app.post("/api/mcp/:serverId", { preHandler: [requireAuth] }, async (req, reply) => {
     const sessionId = req.headers["mcp-session-id"] as string | undefined;
 
     // ── Existing session → reuse transport ──────────────────────────────────
@@ -166,7 +257,20 @@ export async function createApp() {
     }
 
     // ── No session header → this should be an "initialize" request ──────────
-    const mcpServer = createMcpServer();
+    const { serverId } = req.params as { serverId: string };
+
+    // Extract auth token for custom server context SDK
+    const authHeader = req.headers.authorization;
+    const authToken = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : "";
+
+    // Check if this is a custom server
+    let mcpServer: McpServer | ReturnType<typeof createMcpServer>;
+    const customServer = await createCustomMcpServer(serverId, authToken);
+    if (customServer) {
+      mcpServer = customServer;
+    } else {
+      mcpServer = createMcpServer();
+    }
     const transport = new StreamableHTTPServerTransport({
       sessionIdGenerator: () => crypto.randomUUID(),
     });
@@ -191,7 +295,7 @@ export async function createApp() {
   });
 
   // GET /api/mcp/:serverId — SSE stream for server-to-client notifications
-  app.get("/api/mcp/:serverId", async (req, reply) => {
+  app.get("/api/mcp/:serverId", { preHandler: [requireAuth] }, async (req, reply) => {
     const sessionId = req.headers["mcp-session-id"] as string | undefined;
     if (!sessionId) {
       return reply.code(400).send({ error: "bad_request", message: "Missing mcp-session-id header" });
@@ -208,7 +312,7 @@ export async function createApp() {
   });
 
   // DELETE /api/mcp/:serverId — close a session explicitly
-  app.delete("/api/mcp/:serverId", async (req, reply) => {
+  app.delete("/api/mcp/:serverId", { preHandler: [requireAuth] }, async (req, reply) => {
     const sessionId = req.headers["mcp-session-id"] as string | undefined;
     if (!sessionId) {
       return reply.code(400).send({ error: "bad_request", message: "Missing mcp-session-id header" });

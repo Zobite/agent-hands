@@ -1,11 +1,11 @@
 import type { HttpClient } from "../http";
 import type {
+  CreateDynamicApiInput,
   DynamicApiItem,
+  DynamicApiListQuery,
   DynamicApiListResult,
   DynamicApiLogListResult,
-  CreateDynamicApiInput,
   UpdateDynamicApiInput,
-  DynamicApiListQuery,
 } from "../types";
 
 export class DynamicApisResource {
@@ -20,9 +20,7 @@ export class DynamicApisResource {
     if (query?.page) params.set("page", String(query.page));
     if (query?.limit) params.set("limit", String(query.limit));
     const qs = params.toString();
-    return this.http.get<DynamicApiListResult>(
-      `/api/dynamic-apis${qs ? `?${qs}` : ""}`
-    );
+    return this.http.get<DynamicApiListResult>(`/api/dynamic-apis${qs ? `?${qs}` : ""}`);
   }
 
   /** Get dynamic API by ID */
@@ -36,10 +34,7 @@ export class DynamicApisResource {
   }
 
   /** Update dynamic API */
-  async update(
-    id: string,
-    input: UpdateDynamicApiInput
-  ): Promise<DynamicApiItem> {
+  async update(id: string, input: UpdateDynamicApiInput): Promise<DynamicApiItem> {
     return this.http.patch<DynamicApiItem>(`/api/dynamic-apis/${id}`, input);
   }
 
@@ -57,7 +52,7 @@ export class DynamicApisResource {
       endDate?: number;
       page?: number;
       limit?: number;
-    }
+    },
   ): Promise<DynamicApiLogListResult> {
     const params = new URLSearchParams();
     if (query?.status) params.set("status", query.status);
@@ -66,8 +61,6 @@ export class DynamicApisResource {
     if (query?.page) params.set("page", String(query.page));
     if (query?.limit) params.set("limit", String(query.limit));
     const qs = params.toString();
-    return this.http.get<DynamicApiLogListResult>(
-      `/api/dynamic-apis/${apiId}/logs${qs ? `?${qs}` : ""}`
-    );
+    return this.http.get<DynamicApiLogListResult>(`/api/dynamic-apis/${apiId}/logs${qs ? `?${qs}` : ""}`);
   }
 }

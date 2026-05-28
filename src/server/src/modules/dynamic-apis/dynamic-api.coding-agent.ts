@@ -1,7 +1,5 @@
-import { tool } from "@langchain/core/tools";
-import { StateGraph, MessagesAnnotation, START } from "@langchain/langgraph";
-import { ToolNode, toolsCondition } from "@langchain/langgraph/prebuilt";
-import { AIMessage as AIMessageClass, HumanMessage, SystemMessage, type BaseMessage } from "@langchain/core/messages";
+import { streamText, tool, stepCountIs } from "ai";
+import type { LanguageModel } from "ai";
 import { z } from "zod";
 import TurndownService from "turndown";
 import { getModelForProvider } from "../llm-providers/llm-provider.chat.js";
@@ -21,7 +19,7 @@ export interface CodingAgentRequest {
 }
 
 export interface AgentEvent {
-  type: "thinking" | "tool_call" | "tool_result" | "text" | "code" | "done" | "error";
+  type: "thinking" | "tool_call" | "tool_result" | "text" | "text_delta" | "code" | "done" | "error";
   message?: string;
   code?: string;
   toolName?: string;
@@ -129,7 +127,7 @@ async function fetchWebContent(url: string, mode: "raw" | "md" = "raw"): Promise
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 10000);
-    const res = await fetch(url, { signal: controller.signal, headers: { "User-Agent": "MoroAgent/1.0" } });
+    const res = await fetch(url, { signal: controller.signal, headers: { "User-Agent": "AgentHands/1.0" } });
     clearTimeout(timeout);
     if (!res.ok) return `HTTP Error ${res.status}: ${res.statusText}`;
     const contentType = res.headers.get("content-type") || "";
@@ -160,7 +158,7 @@ function extractCode(content: string): string | null {
 
 // ── System Prompts ────────────────────────────────────────────────────────────
 
-const SYSTEM_PROMPT = `You are a JavaScript API handler code generator for the Moro LLM Toolkit Dynamic API system.
+const SYSTEM_PROMPT = `You are a JavaScript API handler code generator for the Agent Hands Dynamic API system.
 
 Handler pattern:
 \`\`\`javascript
@@ -182,7 +180,7 @@ RULES:
 - You can use fetch() for external API calls
 - You can import npm packages (e.g. import _ from "lodash")
 - NEVER use process.env
-- Do NOT use context.variables unless explicitly asked
+- Do NOT use context.kv unless explicitly asked
 
 WORKFLOW:
 1. Analyze the user's request. If you already know how to implement it, go DIRECTLY to step 2.
@@ -192,75 +190,160 @@ WORKFLOW:
    - You have already fetched sufficient information in this conversation
    - Maximum 2-3 fetch calls per conversation. Once you have enough info, STOP fetching and write code.
 3. Write the handler code and use test_code to run it — pick realistic test inputs for the API.
-   CRITICAL: If the route has path params (e.g. :videoId), you MUST pass them in the params argument of test_code.
-   Example for route /videos/:videoId: test_code({ code: "...", params: { videoId: "abc123" } })
+   ⚠️ CRITICAL: When calling test_code, you MUST ALWAYS check if the route has path params.
+   - If the route is /videos/:videoId → you MUST pass params: { videoId: "dQw4w9WgXcQ" }
+   - If the route is /users/:userId/posts/:postId → you MUST pass params: { userId: "user_123", postId: "post_456" }
+   - NEVER call test_code without params when the route has :paramName placeholders.
+   - Omitting params will cause the test to fail with "Missing parameter" errors.
 4. Fix any errors and test again until the test passes (status < 400, no error)
 5. When the test passes, respond with ONLY a \`\`\`javascript code block. No explanation, no other text.
 
 IMPORTANT: Prefer writing and testing code over fetching. Most tasks can be solved without any fetch_web calls.`;
 
-const SUMMARY_SYSTEM_PROMPT = `You are a concise technical assistant. Write a short summary only — no code blocks.`;
+const SUMMARY_SYSTEM_PROMPT = `You are a concise technical assistant. Write a short summary only — no code blocks. IMPORTANT: Always respond in the same language the user used in their original prompt.`;
 
-// ── Define LangChain tools ──────────────────────────────────────────────────
+// ── Shared tool factory ──────────────────────────────────────────────────────
 
-function createLangChainTools(
+function createTools(
   reqData: CodingAgentRequest,
   fetchWebCount: { count: number },
-  onEvent: (event: AgentEvent) => void,
   codeTracker: { current: string },
+  codeChangedThisTurn: { value: boolean },
+  onEvent: (event: AgentEvent) => void,
 ) {
-  const fetchWebTool = tool(
-    async ({ url, mode }) => {
-      fetchWebCount.count++;
-      if (fetchWebCount.count > 3) {
-        return `[LIMIT REACHED] You have already made 3 fetch_web calls. Use the information you have to write the code. Do NOT call fetch_web again.`;
-      }
-      const result = await fetchWebContent(url, mode ?? "raw");
-      return result;
-    },
-    {
-      name: "fetch_web",
+  return {
+    fetch_web: tool({
       description:
         "Fetch content from a URL. Use ONLY when you need to inspect a specific target URL or read unknown API documentation. Do NOT use for well-known APIs you already know. mode='raw' for HTML, mode='md' for readable Markdown.",
-      schema: z.object({
+      inputSchema: z.object({
         url: z.string().url(),
         mode: z.enum(["raw", "md"]).optional(),
       }),
-    },
-  );
-
-  const testCodeTool = tool(
-    async ({ code, body, query, params, headers }) => {
-      // Track code and emit code event
-      codeTracker.current = code;
-      onEvent({ type: "code", code });
-
-      const testResult = await dryRunCode(code, reqData.apiId, reqData.method, reqData.path, {
-        body,
-        query,
-        params,
-        headers,
-      });
-      return JSON.stringify(testResult);
-    },
-    {
-      name: "test_code",
+      execute: async ({ url, mode }) => {
+        fetchWebCount.count++;
+        if (fetchWebCount.count > 3) {
+          return `[LIMIT REACHED] You have already made 3 fetch_web calls. Use the information you have to write the code. Do NOT call fetch_web again.`;
+        }
+        return await fetchWebContent(url, mode ?? "raw");
+      },
+    }),
+    test_code: tool({
       description:
-        "Execute and test the handler code. Returns status, body, consoleLogs, error, and executionTimeMs. IMPORTANT: If the API path has parameters (e.g. /items/:id), you MUST provide matching values in the `params` object (e.g. params: { id: \"test123\" }).",
-      schema: z.object({
+        "Execute and test the handler code. Returns status, body, consoleLogs, error, and executionTimeMs. REQUIRED: If the route has path params (e.g. /items/:id), you MUST provide the `params` object with matching values. Omitting params for a route like /videos/:videoId will cause an error.",
+      inputSchema: z.object({
         code: z.string().describe("The JavaScript handler code to test"),
         body: z.record(z.unknown()).optional().describe("Request body (for POST/PUT/PATCH)"),
         query: z.record(z.string()).optional().describe("Query string params (e.g. ?page=1)"),
-        params: z.record(z.string()).optional().describe("URL path params — MUST match route pattern placeholders like :id, :videoId etc."),
+        params: z.record(z.string()).optional().describe("URL path params — REQUIRED when route has :paramName placeholders. Example: { videoId: 'abc123' } for route /videos/:videoId"),
         headers: z.record(z.string()).optional().describe("Request headers"),
       }),
-    },
-  );
+      execute: async ({ code, body, query, params, headers }) => {
+        // Track code and emit code event
+        codeTracker.current = code;
+        codeChangedThisTurn.value = true;
+        onEvent({ type: "code", code });
 
-  return [fetchWebTool, testCodeTool];
+        const testResult = await dryRunCode(code, reqData.apiId, reqData.method, reqData.path, {
+          body,
+          query,
+          params,
+          headers,
+        });
+        return testResult;
+      },
+    }),
+  };
 }
 
-// ── Run Agent (LangGraph) ────────────────────────────────────────────────────
+// ── Stream agent and emit events from fullStream ─────────────────────────────
+
+async function streamAgentLoop(
+  model: LanguageModel,
+  messages: Array<{ role: "system" | "user" | "assistant"; content: string }>,
+  aiTools: ReturnType<typeof createTools>,
+  maxSteps: number,
+  onEvent: (event: AgentEvent) => void,
+): Promise<{ text: string }> {
+  const result = streamText({
+    model,
+    messages,
+    tools: aiTools,
+    stopWhen: stepCountIs(maxSteps),
+    temperature: 0.2,
+    onError({ error }) {
+      console.error("[CodingAgent] streamText error:", error);
+    },
+  });
+
+  let accumulatedText = "";
+  let isInTextBlock = false;
+
+  for await (const part of result.fullStream) {
+    switch (part.type) {
+      case "text-delta": {
+        accumulatedText += part.text;
+        // Stream text deltas to client in real-time
+        onEvent({ type: "text_delta", message: part.text });
+        if (!isInTextBlock) {
+          isInTextBlock = true;
+        }
+        break;
+      }
+
+      case "tool-call": {
+        // Tool call has been fully formed, about to execute
+        if (isInTextBlock) {
+          isInTextBlock = false;
+        }
+        const toolName = part.toolName as string;
+        const displayArgs = { ...(part.input as Record<string, unknown>) };
+        if (toolName === "test_code" && displayArgs.code) {
+          displayArgs.code = `(${(displayArgs.code as string).length} chars)`;
+        }
+        onEvent({ type: "tool_call", toolName, toolArgs: displayArgs });
+        break;
+      }
+
+      case "tool-result": {
+        const toolName = part.toolName as string;
+        let toolResult: unknown = part.output;
+        if (toolName === "fetch_web" && typeof part.output === "string") {
+          toolResult = part.output.slice(0, 300) + (part.output.length > 300 ? "…" : "");
+        }
+        onEvent({ type: "tool_result", toolName, toolResult });
+        break;
+      }
+
+      case "start-step": {
+        // New step starting (LLM call) — emit thinking
+        onEvent({ type: "thinking", message: "Analyzing and planning next step…" });
+        break;
+      }
+
+      case "finish-step": {
+        // Step completed — reset text tracking for next step
+        if (isInTextBlock) {
+          isInTextBlock = false;
+        }
+        break;
+      }
+
+      case "error": {
+        onEvent({ type: "error", message: String(part.error) });
+        break;
+      }
+
+      // Ignore: text-start, text-end, tool-input-start, tool-input-delta, tool-input-end,
+      // reasoning-*, source, file, raw, start, finish, abort, etc.
+      default:
+        break;
+    }
+  }
+
+  return { text: accumulatedText };
+}
+
+// ── Run Agent (AI SDK v6 — streamText) ───────────────────────────────────────
 
 export async function runCodingAgent(
   reqData: CodingAgentRequest,
@@ -270,91 +353,18 @@ export async function runCodingAgent(
 
   const fetchWebCount = { count: 0 };
   const codeTracker = { current: reqData.currentCode || "" };
-  // Track whether test_code was already called by the LLM during the agent loop
-  const testedViaToolCall = { value: false };
-  // Track whether code was updated via tool_call (update_code or test_code)
   const codeChangedThisTurn = { value: false };
   const initialCode = reqData.currentCode || "";
 
-  const tools = createLangChainTools(reqData, fetchWebCount, onEvent, codeTracker);
+  // ── Build messages ──────────────────────────────────────────────────────
 
-  // Bind tools to the model
-  const llmWithTools = model.bindTools!(tools);
-
-  // ── Build the LangGraph ─────────────────────────────────────────────────
-
-  // Agent node: calls the LLM
-  const callModel = async (state: typeof MessagesAnnotation.State) => {
-    onEvent({ type: "thinking", message: "Analyzing and planning next step…" });
-    const response = await llmWithTools.invoke(state.messages);
-
-    // Emit tool_call events for any tool calls in the response
-    const aiMsg = response as AIMessageClass;
-    if (aiMsg.tool_calls && aiMsg.tool_calls.length > 0) {
-      for (const tc of aiMsg.tool_calls) {
-        // Track that test_code was called by LLM
-        if (tc.name === "test_code") testedViaToolCall.value = true;
-        if (tc.name === "test_code" || tc.name === "update_code") codeChangedThisTurn.value = true;
-        // Filter out code from args for display
-        const displayArgs = { ...tc.args };
-        if (tc.name === "test_code" && displayArgs.code) {
-          displayArgs.code = `(${(displayArgs.code as string).length} chars)`;
-        }
-        onEvent({ type: "tool_call", toolName: tc.name, toolArgs: displayArgs });
-      }
-    }
-
-    return { messages: [response] };
-  };
-
-  // Tool node with event emission wrapper
-  const toolNodeInner = new ToolNode(tools);
-  const toolNode = async (state: typeof MessagesAnnotation.State) => {
-    const result = await toolNodeInner.invoke(state);
-    // Emit tool_result events
-    const resultMessages = result.messages as BaseMessage[];
-    for (const msg of resultMessages) {
-      const toolName = (msg as unknown as Record<string, unknown>).name as string;
-      let toolResult: unknown = msg.content;
-
-      // Parse JSON results for test_code
-      if (toolName === "test_code" && typeof msg.content === "string") {
-        try {
-          toolResult = JSON.parse(msg.content);
-        } catch {
-          /* keep as string */
-        }
-      } else if (toolName === "fetch_web" && typeof msg.content === "string") {
-        toolResult = msg.content.slice(0, 300) + (msg.content.length > 300 ? "…" : "");
-      }
-      onEvent({ type: "tool_result", toolName, toolResult });
-    }
-    return result;
-  };
-
-  // Build the graph
-  const graph = new StateGraph(MessagesAnnotation)
-    .addNode("agent", callModel)
-    .addNode("tools", toolNode)
-    .addEdge(START, "agent")
-    .addConditionalEdges("agent", toolsCondition)
-    .addEdge("tools", "agent")
-    .compile();
-
-  // ── Build initial messages ──────────────────────────────────────────────
-
-  const messages: BaseMessage[] = [
-    new SystemMessage(SYSTEM_PROMPT),
+  const messages: Array<{ role: "system" | "user" | "assistant"; content: string }> = [
+    { role: "system", content: SYSTEM_PROMPT },
   ];
 
   // Add history
   for (const msg of reqData.history ?? []) {
-    if (msg.role === "user") {
-      messages.push(new HumanMessage(msg.content));
-    } else {
-      // For assistant history, use AIMessage
-      messages.push(new AIMessageClass(msg.content));
-    }
+    messages.push({ role: msg.role, content: msg.content });
   }
 
   // Build user message with rich API context
@@ -367,8 +377,10 @@ export async function runCodingAgent(
   userMsg += `\n\nAPI: ${reqData.method} ${reqData.path}`;
 
   if (pathParams.length > 0) {
-    userMsg += `\nPath parameters: ${pathParams.map((p) => `\`:${p}\``).join(", ")}`;
-    userMsg += `\nIMPORTANT: When calling test_code, you MUST provide the \`params\` object with realistic values for these path parameters. For example: params: { ${pathParams.map((p) => `${p}: "example_${p}"`).join(", ")} }`;
+    userMsg += `\n\n⚠️ PATH PARAMETERS (REQUIRED for test_code):`;
+    userMsg += `\nThis route has the following path parameters: ${pathParams.map((p) => `\`:${p}\``).join(", ")}`;
+    userMsg += `\nWhen calling test_code, you MUST include: params: { ${pathParams.map((p) => `${p}: "<realistic_value>"`).join(", ")} }`;
+    userMsg += `\nDo NOT omit params — the test will fail with a "Missing parameter" error if you do.`;
   }
 
   if (["POST", "PUT", "PATCH"].includes(reqData.method)) {
@@ -378,29 +390,31 @@ export async function runCodingAgent(
   if (reqData.method === "GET" || reqData.method === "DELETE") {
     userMsg += `\nThis endpoint uses ${reqData.method}. Data is typically passed via \`request.query\` or \`request.params\`.`;
   }
-  messages.push(new HumanMessage(userMsg));
+  messages.push({ role: "user", content: userMsg });
+
+  // ── Create tools ────────────────────────────────────────────────────────
+
+  const aiTools = createTools(reqData, fetchWebCount, codeTracker, codeChangedThisTurn, onEvent);
 
   try {
-    // Run the graph
-    const result = await graph.invoke(
-      { messages },
-      { recursionLimit: 50 },
+    // ── Stream the agent loop ─────────────────────────────────────────────
+    const { text: finalText } = await streamAgentLoop(
+      model as LanguageModel,
+      messages,
+      aiTools,
+      25,
+      onEvent,
     );
 
-    // Extract final response
-    const finalMessages = result.messages as BaseMessage[];
-    const lastMsg = finalMessages[finalMessages.length - 1];
-    const lastContent = typeof lastMsg.content === "string" ? lastMsg.content : "";
+    // ── Process final response ───────────────────────────────────────────
 
-    // Check if final message has code
-    const code = extractCode(lastContent);
+    // Check if final response has code
+    const code = extractCode(finalText);
 
-    // Only force-test if:
-    // 1. Code was extracted from the final message
-    // 2. Code is genuinely different from what we started with AND from what was already tested
-    // 3. The LLM did NOT already call test_code during the agent loop
+    // If there's new code in the final response that wasn't already tested
     const isNewCode = code && code !== initialCode && code !== codeTracker.current;
-    if (isNewCode && !testedViaToolCall.value) {
+
+    if (isNewCode) {
       codeTracker.current = code;
       codeChangedThisTurn.value = true;
       onEvent({ type: "code", code });
@@ -411,50 +425,66 @@ export async function runCodingAgent(
       onEvent({ type: "tool_result", toolName: "test_code", toolResult: testResult });
 
       if (testResult.error || testResult.status >= 400) {
-        // If test fails, try to fix via a second graph invocation
+        // If test fails, try to fix via a second stream
         onEvent({ type: "thinking", message: "Test failed — fixing code…" });
-        const fixMessages: BaseMessage[] = [
-          ...finalMessages,
-          new HumanMessage(
-            `Test failed:\n${JSON.stringify({ status: testResult.status, error: testResult.error, body: testResult.body, consoleLogs: testResult.consoleLogs }, null, 2)}\n\nOriginal requirement: ${reqData.prompt}\n\nFix the handler code.`,
-          ),
+
+        const fixMessages = [
+          ...messages,
+          { role: "assistant" as const, content: finalText },
+          {
+            role: "user" as const,
+            content: `Test failed:\n${JSON.stringify({ status: testResult.status, error: testResult.error, body: testResult.body, consoleLogs: testResult.consoleLogs }, null, 2)}\n\nOriginal requirement: ${reqData.prompt}\n\nFix the handler code.`,
+          },
         ];
 
-        const fixResult = await graph.invoke(
-          { messages: fixMessages },
-          { recursionLimit: 30 },
+        const { text: fixText } = await streamAgentLoop(
+          model as LanguageModel,
+          fixMessages,
+          aiTools,
+          15,
+          onEvent,
         );
 
-        const fixFinalMsgs = fixResult.messages as BaseMessage[];
-        const fixLastMsg = fixFinalMsgs[fixFinalMsgs.length - 1];
-        const fixContent = typeof fixLastMsg.content === "string" ? fixLastMsg.content : "";
-        const fixCode = extractCode(fixContent);
+        const fixCode = extractCode(fixText);
         if (fixCode) {
           codeTracker.current = fixCode;
           onEvent({ type: "code", code: fixCode });
         }
       }
-    } else if (code && !isNewCode) {
-      // Code in response is same as existing — just a re-statement, emit as text
-      onEvent({ type: "text", message: lastContent });
-    } else if (lastContent && !code) {
-      // Text-only response (no code block at all)
-      onEvent({ type: "text", message: lastContent });
+    } else if (finalText && !code) {
+      // Text-only response — mark end of streaming text
+      onEvent({ type: "text", message: "" });
     }
 
     // Generate summary ONLY if code was actually changed during this turn
     if (codeChangedThisTurn.value && codeTracker.current) {
       onEvent({ type: "thinking", message: "Generating summary…" });
       const summaryModel = await getModelForProvider(reqData.providerId, reqData.model);
-      const summaryMessages: BaseMessage[] = [
-        new SystemMessage(SUMMARY_SYSTEM_PROMPT),
-        new HumanMessage(
-          `The following handler code was generated:\n\`\`\`javascript\n${codeTracker.current}\n\`\`\`\n\nWrite a concise summary: what the handler does, what test inputs were used, and what the test result was.`,
-        ),
-      ];
-      const summaryResult = await summaryModel.invoke(summaryMessages);
-      const summary = typeof summaryResult.content === "string" ? summaryResult.content.trim() : "";
-      if (summary) onEvent({ type: "text", message: summary });
+
+      // Stream the summary too
+      const summaryStream = streamText({
+        model: summaryModel as LanguageModel,
+        messages: [
+          { role: "system", content: SUMMARY_SYSTEM_PROMPT },
+          {
+            role: "user",
+            content: `User's original prompt: "${reqData.prompt}"
+
+The following handler code was generated:
+\`\`\`javascript
+${codeTracker.current}
+\`\`\`
+
+Write a concise summary: what the handler does, what test inputs were used, and what the test result was. Respond in the same language as the user's prompt above.`,
+          },
+        ],
+      });
+
+      for await (const delta of summaryStream.textStream) {
+        onEvent({ type: "text_delta", message: delta });
+      }
+      // Signal end of text block
+      onEvent({ type: "text", message: "" });
     }
   } catch (err) {
     const errObj = err as Record<string, unknown>;

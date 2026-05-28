@@ -1,36 +1,32 @@
 import type { HttpClient } from "../http";
-import type {
-  DatabaseItem,
-  CreateDatabaseInput,
-  UpdateDatabaseInput,
-} from "../types";
+import type { CreateProjectInput, ProjectItem, UpdateProjectInput } from "../types";
 
-export class DatabasesResource {
+export class ProjectsResource {
   constructor(private http: HttpClient) {}
 
-  /** List all databases */
-  async list(): Promise<DatabaseItem[]> {
-    const res = await this.http.get<{ items: DatabaseItem[]; meta: { total: number } }>("/api/databases");
+  /** List all projects */
+  async list(): Promise<ProjectItem[]> {
+    const res = await this.http.get<{ items: ProjectItem[]; meta: { total: number } }>("/api/datatables");
     return res.items;
   }
 
-  /** Get database by ID */
-  async get(id: string): Promise<DatabaseItem> {
-    return this.http.get<DatabaseItem>(`/api/databases/${id}`);
+  /** Get project by ID */
+  async get(id: string): Promise<ProjectItem> {
+    return this.http.get<ProjectItem>(`/api/datatables/${id}`);
   }
 
-  /** Create a new database */
-  async create(input: CreateDatabaseInput): Promise<DatabaseItem> {
-    return this.http.post<DatabaseItem>("/api/databases", input);
+  /** Create a new project */
+  async create(input: CreateProjectInput): Promise<ProjectItem> {
+    return this.http.post<ProjectItem>("/api/datatables", input);
   }
 
-  /** Update database metadata */
-  async update(id: string, input: UpdateDatabaseInput): Promise<DatabaseItem> {
-    return this.http.patch<DatabaseItem>(`/api/databases/${id}`, input);
+  /** Update project metadata */
+  async update(id: string, input: UpdateProjectInput): Promise<ProjectItem> {
+    return this.http.patch<ProjectItem>(`/api/datatables/${id}`, input);
   }
 
-  /** Delete database (tables are unlinked, not deleted) */
+  /** Delete project (cascades tables + rows) */
   async delete(id: string): Promise<void> {
-    await this.http.delete(`/api/databases/${id}`);
+    await this.http.delete(`/api/datatables/${id}`);
   }
 }

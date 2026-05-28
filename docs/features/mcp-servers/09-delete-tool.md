@@ -1,34 +1,34 @@
 <feature>
   <meta>
     <id>mcp_delete_tool</id>
-    <title>Xoá tool</title>
+    <title>Delete tool</title>
     <group>MCP Servers</group>
-    <status>planned</status>
+    <status>done</status>
     <priority>p0</priority>
   </meta>
 
   <overview>
-       User xoá một tool khỏi custom MCP server. Tool bị xoá sẽ không còn
-    available cho AI agents. System tools (built-in) không thể xoá.
+    User deletes a tool from a custom MCP server. Deleted tool will no longer
+    be available to AI agents. System tools (built-in) cannot be deleted.
   </overview>
 
   <user-stories>
     <story id="US-01">
       <actor>User</actor>
-      <action>click Delete trên một tool</action>
-      <benefit>gỡ bỏ tool không còn cần thiết</benefit>
+      <action>click Delete on a tool</action>
+      <benefit>remove a tool that is no longer needed</benefit>
     </story>
   </user-stories>
 </feature>
 
 ## Server
-- [ ] Confirm → xoá tool khỏi DB, cập nhật danh sách.
-- [ ] Xoá tool đồng thời xoá sandbox cache (venv) liên quan nếu có.
+- [ ] Confirm → delete tool from DB, update list.
+- [ ] Deleting a tool also removes related sandbox cache (node_modules in mcp-tool-sandboxes/) if any.
 - [ ] API: DELETE /api/mcp-servers/:serverId/tools/:toolId.
 
 ## Web
-- [ ] Nút Delete trên mỗi custom tool (icon hoặc dropdown menu).
-- [ ] System tools KHÔNG có nút Delete.
+- [ ] Delete button on each custom tool (icon or dropdown menu).
+- [ ] System tools do NOT have a Delete button.
 - [ ] Click Delete → confirmation dialog.
-- [ ] Nếu là system tool → 403 forbidden.
-- [ ] Nếu tool không tồn tại → 400 not_found.
+- [ ] If system tool → 403 forbidden.
+- [ ] If tool does not exist → 400 not_found.

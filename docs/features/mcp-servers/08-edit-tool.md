@@ -1,23 +1,23 @@
 <feature>
   <meta>
     <id>mcp_edit_tool</id>
-    <title>Chỉnh sửa tool</title>
+    <title>Edit tool</title>
     <group>MCP Servers</group>
-    <status>planned</status>
+    <status>done</status>
     <priority>p0</priority>
   </meta>
 
   <overview>
-       User chỉnh sửa tool đã tạo: cập nhật name, description, input schema,
-    hoặc Python code. Thay đổi có hiệu lực ngay — AI agent gọi tool lần sau sẽ
-    chạy code mới.
+    User edits an existing tool: update name, description, input schema,
+    or JavaScript code. Changes take effect immediately — next AI agent tool
+    call will run the new code.
   </overview>
 
   <user-stories>
     <story id="US-01">
       <actor>User</actor>
-      <action>click vào tool trong danh sách để mở editor</action>
-      <benefit>cập nhật logic hoặc mô tả tool mà không cần tạo lại</benefit>
+      <action>click on a tool in the list to open editor</action>
+      <benefit>update tool logic or description without recreating</benefit>
     </story>
   </user-stories>
 </feature>
@@ -26,10 +26,10 @@
 - [ ] API: PATCH /api/mcp-servers/:serverId/tools/:toolId → { name?, description?, inputSchema?, code? }.
 
 ## Web
-- [ ] Click tool name → navigate tới trang edit: /mcp-servers/:serverId/tools/:toolId.
-- [ ] Trang edit hiển thị tất cả trường giống trang tạo: Name, Description, Input Schema, Code.
-- [ ] Code editor giữ nguyên nội dung code hiện tại.
-- [ ] Validation cùng rules với tạo mới (name unique, snake_case, etc.).
-- [ ] Save → cập nhật tool, toast thành công. Code mới có hiệu lực ngay.
-- [ ] Nếu tool không tồn tại → 400 not_found.
-- [ ] Không cho edit system tools của built-in server → 403 forbidden.
+- [ ] Click tool name → navigate to edit page: /mcp-servers/:serverId/tools/:toolId.
+- [ ] Edit page displays all fields same as creation page: Name, Description, Input Schema, Code.
+- [ ] Code editor retains current JavaScript code content.
+- [ ] Validation same rules as creation (name unique, snake_case, etc.).
+- [ ] Save → update tool, success toast. New code takes effect immediately.
+- [ ] If tool does not exist → 400 not_found.
+- [ ] Cannot edit system tools of built-in server → 403 forbidden.

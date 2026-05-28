@@ -1,9 +1,9 @@
-import { BrowserRouter } from "react-router-dom";
-import { ConfigProvider, theme, App as AntApp } from "antd";
 import { AllCommunityModule } from "ag-grid-community";
 import { AgGridProvider } from "ag-grid-react";
-import { AppRoutes } from "./router";
+import { App as AntApp, ConfigProvider, theme } from "antd";
+import { BrowserRouter } from "react-router-dom";
 import { useAuthInit } from "./common/hooks/useAuthInit";
+import { AppRoutes } from "./router";
 
 const agGridModules = [AllCommunityModule];
 
@@ -31,8 +31,7 @@ export default function App() {
           borderRadius: 8,
 
           /* Typography */
-          fontFamily:
-            "'Inter', system-ui, 'Helvetica Neue', Helvetica, Arial, sans-serif",
+          fontFamily: "'Inter', system-ui, 'Helvetica Neue', Helvetica, Arial, sans-serif",
 
           /* Surfaces — warm cream canvas, white cards */
           colorBgContainer: "#ffffff",

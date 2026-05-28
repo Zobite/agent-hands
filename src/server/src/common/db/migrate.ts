@@ -131,6 +131,6 @@ export function runMigrations(dataDir: string) {
 
 if (import.meta.main) {
   const dataDir =
-    process.env.DATA_DIR ?? `${process.env.HOME}/.moro-llm-toolkit`;
+    process.env.DATA_DIR ?? `${process.env.HOME}/.agent-hands`;
   runMigrations(dataDir);
 }

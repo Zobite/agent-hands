@@ -9,25 +9,25 @@
   </meta>
 
   <overview>
-    LLM Providers cho phép người dùng quản lý các nhà cung cấp LLM
-    (Large Language Model) trong hệ thống. Mỗi provider entry chứa:
-    - Provider type (openrouter, openai, gemini, anthropic, ollama, v.v.)
+    LLM Providers allows users to manage LLM (Large Language Model) providers
+    in the system. Each provider entry contains:
+    - Provider type (openrouter, openai, gemini, anthropic, ollama, etc.)
     - API Key
-    - Base URL tuỳ chỉnh (rỗng → dùng default của provider)
-    - Danh sách models được fetch và lưu sẵn tại thời điểm tạo
+    - Custom Base URL (empty → use provider's default)
+    - Models list fetched and stored at creation time
 
-    Khi tạo mới một provider, hệ thống sẽ dùng API key + base URL
-    để fetch danh sách models từ provider đó. Nếu fetch thất bại
-    (sai key, sai URL, provider không phản hồi) → không cho tạo, trả lỗi.
-    Danh sách models được lưu trực tiếp vào DB entry, các lần sử dụng
-    sau lấy từ DB mà không cần gọi lại provider.
+    When creating a new provider, the system uses the API key + base URL
+    to fetch the models list from that provider. If fetch fails (wrong key,
+    wrong URL, provider unresponsive) → creation is rejected with an error.
+    The models list is stored directly in the DB entry, subsequent uses
+    read from DB without calling the provider again.
 
-    Hỗ trợ CRUD đầy đủ: tạo, xem, sửa, xoá provider.
+    Supports full CRUD: create, view, edit, delete provider.
   </overview>
 </feature>
 
-## Tính năng (atomic — theo thứ tự ưu tiên)
+## Features (atomic — in priority order)
 
-| #  | Tính năng                         | File                                                            | Status     | Priority |
+| #  | Feature                           | File                                                            | Status     | Priority |
 |----|-----------------------------------|-----------------------------------------------------------------|------------|----------|
 | 01 | CRUD LLM Provider                 | [01-llm-provider-crud.md](01-llm-provider-crud.md)              | ⬜ Planned | p0       |

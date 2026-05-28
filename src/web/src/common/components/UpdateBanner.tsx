@@ -1,5 +1,5 @@
+import { AlertCircle, ArrowUpCircle, CheckCircle2, RefreshCw, Sparkles, X } from "lucide-react";
 import { useState } from "react";
-import { ArrowUpCircle, X, RefreshCw, AlertCircle, CheckCircle2, Sparkles } from "lucide-react";
 import type { VersionInfo } from "src/lib/resources/system";
 
 interface UpdateBannerProps {
@@ -12,13 +12,7 @@ interface UpdateBannerProps {
 
 type Phase = "prompt" | "confirming" | "updating" | "restarting" | "error";
 
-export function UpdateBanner({
-  versionInfo,
-  isUpdating,
-  updateError,
-  onUpdate,
-  onDismiss,
-}: UpdateBannerProps) {
+export function UpdateBanner({ versionInfo, isUpdating, updateError, onUpdate, onDismiss }: UpdateBannerProps) {
   const [phase, setPhase] = useState<Phase>("prompt");
 
   const handleUpdateClick = () => setPhase("confirming");
@@ -47,26 +41,18 @@ export function UpdateBanner({
     >
       {phase === "prompt" && (
         <div className="flex items-center gap-4 px-5 py-4">
-          <div
-            className="shrink-0 w-9 h-9 rounded-lg flex items-center justify-center"
-            style={{ background: "rgba(99,102,241,0.12)" }}
-          >
+          <div className="shrink-0 w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: "rgba(99,102,241,0.12)" }}>
             <Sparkles size={16} className="text-indigo-500" />
           </div>
 
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
               <span className="text-[13px] font-semibold text-ink">New version available</span>
-              <span
-                className="px-1.5 py-0.5 rounded text-[10px] font-mono font-medium"
-                style={{ background: "rgba(99,102,241,0.15)", color: "#6366f1" }}
-              >
+              <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-medium" style={{ background: "rgba(99,102,241,0.15)", color: "#6366f1" }}>
                 v{versionInfo.latest}
               </span>
             </div>
-            <p className="text-[12px] text-muted mt-0.5">
-              You're running v{versionInfo.current}. Update to get the latest features and fixes.
-            </p>
+            <p className="text-[12px] text-muted mt-0.5">You're running v{versionInfo.current}. Update to get the latest features and fixes.</p>
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
@@ -98,17 +84,12 @@ export function UpdateBanner({
 
       {phase === "confirming" && (
         <div className="flex items-center gap-4 px-5 py-4">
-          <div
-            className="shrink-0 w-9 h-9 rounded-lg flex items-center justify-center"
-            style={{ background: "rgba(99,102,241,0.12)" }}
-          >
+          <div className="shrink-0 w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: "rgba(99,102,241,0.12)" }}>
             <ArrowUpCircle size={16} className="text-indigo-500" />
           </div>
           <div className="flex-1 min-w-0">
             <span className="text-[13px] font-semibold text-ink">Confirm update to v{versionInfo.latest}?</span>
-            <p className="text-[12px] text-muted mt-0.5">
-              The server will restart automatically. This takes about 10–30 seconds.
-            </p>
+            <p className="text-[12px] text-muted mt-0.5">The server will restart automatically. This takes about 10–30 seconds.</p>
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <button

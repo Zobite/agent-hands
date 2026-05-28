@@ -19,7 +19,7 @@ import { customAlphabet } from "nanoid";
 const MAX_FILE_SIZE = Number(process.env.STORAGE_MAX_FILE_SIZE ?? 104857600); // 100MB default
 
 export function getStoragePath(): string {
-  const dataDir = process.env.DATA_DIR ?? `${process.env.HOME}/.moro-llm-toolkit`;
+  const dataDir = process.env.DATA_DIR ?? `${process.env.HOME}/.agent-hands`;
   const storagePath = process.env.STORAGE_PATH ?? join(dataDir, "storage");
   mkdirSync(storagePath, { recursive: true });
   return storagePath;
@@ -418,7 +418,7 @@ export function isPubliclyAccessible(objMeta: { isPublic: boolean; bucketIsPubli
 
 // ── Presigned URL ───────────────────────────────────────────────────────────────
 
-const PRESIGN_SECRET = process.env.STORAGE_PRESIGN_SECRET ?? process.env.JWT_SECRET ?? "moro-storage-presign-fallback";
+const PRESIGN_SECRET = process.env.STORAGE_PRESIGN_SECRET ?? process.env.JWT_SECRET ?? "agent-hands-presign-fallback";
 
 export async function createPresignedUrl(
   bucketName: string,

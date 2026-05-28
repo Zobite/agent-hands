@@ -174,6 +174,7 @@ export function registerDynamicApiRoutes(app: FastifyInstance) {
           body: result.body,
           consoleLogs: result.consoleLogs,
           executionTimeMs: result.executionTimeMs,
+          executionMode: "isolated",
           error: result.error,
         });
       }
@@ -226,6 +227,7 @@ export function registerDynamicApiRoutes(app: FastifyInstance) {
             body: (result as Record<string, unknown>).body ?? null,
             consoleLogs,
             executionTimeMs,
+            executionMode: "fast",
           });
         }
 
@@ -234,6 +236,7 @@ export function registerDynamicApiRoutes(app: FastifyInstance) {
           body: result,
           consoleLogs,
           executionTimeMs,
+          executionMode: "fast",
         });
       } catch (err: unknown) {
         const error = err as Error;

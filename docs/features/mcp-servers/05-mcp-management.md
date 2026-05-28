@@ -3,32 +3,32 @@
     <id>mcp_management_page</id>
     <title>MCP server management page</title>
     <group>MCP Servers</group>
-    <status>planned</status>
+    <status>done</status>
     <priority>p0</priority>
   </meta>
 
   <overview>
-       Trang quản lý tập trung cho tất cả MCP servers. Hiển thị danh sách
-    servers (builtin + custom), số lượng tools trong mỗi server, trạng thái
-    active/inactive, và actions CRUD.
+    Central management page for all MCP servers. Displays list of servers
+    (builtin + custom), tool count per server, active/inactive status,
+    and CRUD actions.
   </overview>
 
   <user-stories>
     <story id="US-01">
       <actor>User</actor>
-      <action>navigate tới trang MCP Servers từ sidebar</action>
-      <benefit>xem toàn bộ MCP servers và quản lý tools</benefit>
+      <action>navigate to MCP Servers page from sidebar</action>
+      <benefit>view all MCP servers and manage tools</benefit>
     </story>
   </user-stories>
 </feature>
 
 ## Server
-- [ ] Route: /mcp-servers. Sidebar menu item "MCP Servers" với icon phù hợp.
-- [ ] Danh sách hiển thị dạng cards hoặc list: - Server name - Badge: "System" (builtin) hoặc "Custom" - Description - Số lượng tools - Status: Active / Inactive - MCP endpoint URL (copyable) - Actions: Edit, Delete (chỉ custom), Toggle active
+- [ ] Route: /mcp-servers. Sidebar menu item "MCP Servers" with appropriate icon.
+- [ ] List displays as cards or list: - Server name - Badge: "System" (builtin) or "Custom" - Description - Tool count - Status: Active / Inactive - MCP endpoint URL (copyable) - Actions: Edit, Delete (custom only), Toggle active
 - [ ] API: GET /api/mcp-servers → { items: McpServer[], meta: { total } }.
 
 ## Web
-- [ ] Built-in server luôn hiển thị đầu tiên, pinned on top.
-- [ ] Nút "New MCP Server" ở góc trên phải.
-- [ ] Click vào server → navigate tới trang detail: /mcp-servers/:id (hiển thị danh sách tools của server đó).
-- [ ] Empty state khi chưa có custom server: hướng dẫn tạo server đầu tiên.
+- [ ] Built-in server always displayed first, pinned on top.
+- [ ] "New MCP Server" button in top-right corner.
+- [ ] Click server → navigate to detail page: /mcp-servers/:id (displays tool list for that server).
+- [ ] Empty state when no custom servers exist: guide to create first server.

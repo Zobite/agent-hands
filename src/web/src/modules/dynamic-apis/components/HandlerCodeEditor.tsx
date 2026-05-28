@@ -231,7 +231,7 @@ function registerProviders(monaco: Monaco) {
 declare var context: {
   log(...args: any[]): void;
 };`,
-    "handler-globals.d.ts"
+    "handler-globals.d.ts",
   );
 
   // Disable TS-based completions and hovers (we use our own providers)
@@ -416,11 +416,7 @@ export function HandlerCodeEditor({ value, onChange, pendingCode, onAcceptPendin
       <div className="flex items-center justify-between shrink-0 px-3 py-2">
         <div className="flex items-center gap-2">
           <label className="font-mono text-[10px] text-muted-soft uppercase tracking-wider">Handler Code (JavaScript)</label>
-          {hasPending && (
-            <span className="font-mono text-[10px] text-[#8b5cf6] bg-[#8b5cf620] px-1.5 py-0.5 rounded">
-              AI Changes Pending
-            </span>
-          )}
+          {hasPending && <span className="font-mono text-[10px] text-[#8b5cf6] bg-[#8b5cf620] px-1.5 py-0.5 rounded">AI Changes Pending</span>}
         </div>
         <div className="flex items-center gap-1.5">
           {hasPending && (
@@ -526,4 +522,3 @@ export function HandlerCodeEditor({ value, onChange, pendingCode, onAcceptPendin
     </div>
   );
 }
-

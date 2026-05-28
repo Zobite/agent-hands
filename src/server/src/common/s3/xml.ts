@@ -46,7 +46,7 @@ export interface S3BucketEntry {
   createdAt: number;
 }
 
-export function listAllMyBucketsXml(bucketList: S3BucketEntry[], ownerId = "moro"): string {
+export function listAllMyBucketsXml(bucketList: S3BucketEntry[], ownerId = "zobite"): string {
   const bucketsXml = bucketList
     .map(
       (b) => `    <Bucket>

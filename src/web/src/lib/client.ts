@@ -1,31 +1,27 @@
-import { HttpClient, type ClientOptions } from "./http";
-import { AuthResource } from "./resources/auth";
-import { UsersResource } from "./resources/user";
-import { VariablesResource } from "./resources/variable";
-import { TablesResource } from "./resources/table";
-import { DatabasesResource } from "./resources/database";
-import { ApiKeysResource } from "./resources/api-key";
-import { ProjectsResource } from "./resources/project";
-import { DocumentsResource } from "./resources/document";
+import { type ClientOptions, HttpClient } from "./http";
 import { ApiDocsResource } from "./resources/api-doc";
-import { StorageResource } from "./resources/storage";
-import { McpToolServersResource } from "./resources/mcp-tool-server";
-import { SystemResource } from "./resources/system";
-import { DynamicApisResource } from "./resources/dynamic-api";
-import { LlmProvidersResource } from "./resources/llm-provider";
+import { ApiKeysResource } from "./resources/api-key";
+import { AuthResource } from "./resources/auth";
 import { ConfigurationsResource } from "./resources/configuration";
+import { ProjectsResource } from "./resources/database";
+import { DynamicApisResource } from "./resources/dynamic-api";
+import { KvStoreResource } from "./resources/kv-store";
+import { LlmProvidersResource } from "./resources/llm-provider";
+import { McpToolServersResource } from "./resources/mcp-tool-server";
+import { StorageResource } from "./resources/storage";
+import { SystemResource } from "./resources/system";
+import { TablesResource } from "./resources/table";
+import { UsersResource } from "./resources/user";
 
-class MoroClient {
+class AgentHandsClient {
   private http: HttpClient;
 
   public readonly auth: AuthResource;
   public readonly users: UsersResource;
-  public readonly variables: VariablesResource;
+  public readonly kvStore: KvStoreResource;
   public readonly tables: TablesResource;
-  public readonly databases: DatabasesResource;
-  public readonly apiKeys: ApiKeysResource;
   public readonly projects: ProjectsResource;
-  public readonly documents: DocumentsResource;
+  public readonly apiKeys: ApiKeysResource;
   public readonly apiDocs: ApiDocsResource;
   public readonly storage: StorageResource;
   public readonly mcpToolServers: McpToolServersResource;
@@ -38,12 +34,10 @@ class MoroClient {
     this.http = new HttpClient(options);
     this.auth = new AuthResource(this.http);
     this.users = new UsersResource(this.http);
-    this.variables = new VariablesResource(this.http);
+    this.kvStore = new KvStoreResource(this.http);
     this.tables = new TablesResource(this.http);
-    this.databases = new DatabasesResource(this.http);
-    this.apiKeys = new ApiKeysResource(this.http);
     this.projects = new ProjectsResource(this.http);
-    this.documents = new DocumentsResource(this.http);
+    this.apiKeys = new ApiKeysResource(this.http);
     this.apiDocs = new ApiDocsResource(this.http);
     this.storage = new StorageResource(this.http);
     this.mcpToolServers = new McpToolServersResource(this.http);
@@ -64,7 +58,7 @@ class MoroClient {
 
 export const API_BASE = import.meta.env.VITE_API_URL || "";
 
-export const client = new MoroClient({
+export const client = new AgentHandsClient({
   baseUrl: API_BASE,
   onTokenChange: ({ accessToken, refreshToken }) => {
     if (accessToken) {

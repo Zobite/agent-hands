@@ -217,6 +217,7 @@ export async function updateMcpTool(
   if (data.description !== undefined) updates.description = data.description;
   if (data.inputSchema !== undefined) updates.inputSchema = data.inputSchema;
   if (data.code !== undefined) updates.code = data.code;
+  if (data.draftCode !== undefined) updates.draftCode = data.draftCode;
   if (data.isActive !== undefined) updates.isActive = data.isActive ? 1 : 0;
 
   await db.update(mcpTools).set(updates).where(eq(mcpTools.id, toolId));

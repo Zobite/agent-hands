@@ -1,32 +1,32 @@
 <feature>
   <meta>
     <id>user_roles</id>
-    <title>Phân quyền (Roles)</title>
+    <title>Roles (authorization)</title>
     <group>Users</group>
     <status>done</status>
     <priority>p2</priority>
   </meta>
 
   <overview>
-    Hệ thống phân quyền dựa trên role: superadmin, admin, member.
-    Mỗi role có tập hợp quyền khác nhau, kiểm tra ở cả API và UI.
+    Role-based authorization system: superadmin, admin, member.
+    Each role has different permission sets, checked at both API and UI levels.
   </overview>
 
   <user-stories>
     <story id="US-01">
       <actor>Super Admin</actor>
-      <action>gán role cho user</action>
-      <benefit>kiểm soát quyền truy cập của từng người dùng</benefit>
+      <action>assign role to user</action>
+      <benefit>control access permissions for each user</benefit>
     </story>
   </user-stories>
 </feature>
 
 ## Server
-- [x] 3 roles: superadmin (toàn quyền), admin (quản lý users + mọi tính năng), member (sử dụng tính năng, không quản lý users)
-- [x] API middleware kiểm tra role trước khi xử lý request
-- [x] superadmin role không thể bị gán hoặc thu hồi qua API — chỉ tồn tại từ seed. Zod schema chỉ chấp nhận admin/member
-- [x] Trả 403 Forbidden nếu user không đủ quyền
+- [x] 3 roles: superadmin (full access), admin (manage users + all features), member (use features, cannot manage users)
+- [x] API middleware checks role before processing request
+- [x] superadmin role cannot be assigned or revoked via API — only exists from seed. Zod schema only accepts admin/member
+- [x] Return 403 Forbidden if user lacks permission
 
 ## Web
-- [x] UI ẩn/disable các nút/menu mà user không có quyền
-- [x] Role dropdown khi create/edit user chỉ hiện admin/member (không có superadmin)
+- [x] UI hides/disables buttons/menus that user doesn't have permission for
+- [x] Role dropdown when create/edit user only shows admin/member (no superadmin)

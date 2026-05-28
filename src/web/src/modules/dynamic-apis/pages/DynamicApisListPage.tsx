@@ -1,29 +1,10 @@
+import { Dropdown, Form, Input, Modal, Select, Spin, Switch, message } from "antd";
+import { AlertTriangle, ChevronRight, Copy, MoreVertical, Pencil, Plus, Search, Trash2, Zap } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  Modal,
-  Form,
-  Input,
-  Select,
-  Switch,
-  message,
-  Spin,
-  Dropdown,
-} from "antd";
-import {
-  Plus,
-  Zap,
-  Trash2,
-  Pencil,
-  AlertTriangle,
-  MoreVertical,
-  ChevronRight,
-  Search,
-  Copy,
-} from "lucide-react";
-import type { DynamicApiItem, CreateDynamicApiInput } from "src/lib/types";
-import { MoroError } from "src/lib/http";
-import { client, API_BASE } from "src/lib/client";
+import { API_BASE, client } from "src/lib/client";
+import { AgentHandsError } from "src/lib/http";
+import type { CreateDynamicApiInput, DynamicApiItem } from "src/lib/types";
 
 const { confirm } = Modal;
 
@@ -49,8 +30,6 @@ function MethodBadge({ method }: { method: string }) {
     </span>
   );
 }
-
-
 
 // ══════════════════════════════════════════════════════════════════════════════
 //  DYNAMIC APIS LIST PAGE
@@ -98,7 +77,7 @@ export default function DynamicApisListPage() {
           setApis((prev) => prev.filter((a) => a.id !== api.id));
           message.success(`Deleted "${api.name}"`);
         } catch (err) {
-          if (err instanceof MoroError) message.error(err.message);
+          if (err instanceof AgentHandsError) message.error(err.message);
         }
       },
     });
@@ -110,11 +89,9 @@ export default function DynamicApisListPage() {
         isActive: !api.isActive,
       });
       setApis((prev) => prev.map((a) => (a.id === api.id ? updated : a)));
-      message.success(
-        `${updated.name} is now ${updated.isActive ? "active" : "inactive"}`
-      );
+      message.success(`${updated.name} is now ${updated.isActive ? "active" : "inactive"}`);
     } catch (err) {
-      if (err instanceof MoroError) message.error(err.message);
+      if (err instanceof AgentHandsError) message.error(err.message);
     }
   };
 
@@ -133,14 +110,10 @@ export default function DynamicApisListPage() {
       <div className="px-8 pt-10 pb-6 shrink-0 border-b border-hairline">
         <div className="flex items-center gap-2 mb-3">
           <Zap size={16} className="text-muted" />
-          <span className="font-mono text-[11px] uppercase tracking-wide text-muted">
-            Dynamic APIs
-          </span>
+          <span className="font-mono text-[11px] uppercase tracking-wide text-muted">Dynamic APIs</span>
         </div>
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-          <h1 className="font-display text-[32px] font-normal text-ink tracking-[-0.64px] m-0 leading-tight">
-            Dynamic APIs
-          </h1>
+          <h1 className="font-display text-[32px] font-normal text-ink tracking-[-0.64px] m-0 leading-tight">Dynamic APIs</h1>
           <button
             className="flex items-center gap-2 h-[36px] px-4 rounded-md bg-ink text-canvas font-medium text-[13px] hover:bg-opacity-90 transition-opacity cursor-pointer border-none"
             onClick={() => setCreateModalOpen(true)}
@@ -154,10 +127,7 @@ export default function DynamicApisListPage() {
       {/* Filters */}
       <div className="px-8 py-4 border-b border-hairline flex flex-wrap items-center gap-3 shrink-0">
         <div className="relative flex-1 min-w-[200px] max-w-[360px]">
-          <Search
-            size={14}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-soft pointer-events-none"
-          />
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-soft pointer-events-none" />
           <input
             type="text"
             placeholder="Search by name or path..."
@@ -197,14 +167,8 @@ export default function DynamicApisListPage() {
           </div>
         ) : apis.length === 0 ? (
           <div className="flex flex-col items-center justify-center min-h-[300px] border border-dashed border-hairline-strong rounded-md bg-transparent m-auto max-w-[600px]">
-            <Zap
-              size={32}
-              className="text-muted-soft mb-4"
-              strokeWidth={1.5}
-            />
-            <div className="font-mono text-[12px] text-muted-soft uppercase tracking-wide mb-6">
-              NO ENDPOINTS
-            </div>
+            <Zap size={32} className="text-muted-soft mb-4" strokeWidth={1.5} />
+            <div className="font-mono text-[12px] text-muted-soft uppercase tracking-wide mb-6">NO ENDPOINTS</div>
             <button
               onClick={() => setCreateModalOpen(true)}
               className="bg-transparent border border-hairline-strong text-ink px-4 py-2 rounded-md font-medium text-[13px] hover:border-ink transition-colors cursor-pointer"
@@ -226,33 +190,18 @@ export default function DynamicApisListPage() {
 
                 {/* Path + Name */}
                 <div className="flex-1 flex items-center gap-2.5 min-w-0 overflow-hidden">
-                  <span className="font-mono text-[13px] text-ink font-medium shrink-0">
-                    {api.path}
-                  </span>
+                  <span className="font-mono text-[13px] text-ink font-medium shrink-0">{api.path}</span>
                   <span className="text-[10px] text-muted-soft select-none shrink-0">·</span>
-                  <span className="text-[12px] text-muted truncate">
-                    {api.name}
-                  </span>
+                  <span className="text-[12px] text-muted truncate">{api.name}</span>
                 </div>
 
-
-
                 {/* Status */}
-                <div
-                  className="flex items-center gap-1.5 min-w-[50px]"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <Switch
-                    size="small"
-                    checked={api.isActive}
-                    onChange={() => handleToggle(api)}
-                  />
+                <div className="flex items-center gap-1.5 min-w-[50px]" onClick={(e) => e.stopPropagation()}>
+                  <Switch size="small" checked={api.isActive} onChange={() => handleToggle(api)} />
                 </div>
 
                 {/* Date */}
-                <span className="font-mono text-[10px] text-muted-soft tracking-wider uppercase shrink-0">
-                  {formatDate(api.updatedAt)}
-                </span>
+                <span className="font-mono text-[10px] text-muted-soft tracking-wider uppercase shrink-0">{formatDate(api.updatedAt)}</span>
 
                 {/* Actions */}
                 <Dropdown
@@ -261,9 +210,7 @@ export default function DynamicApisListPage() {
                       {
                         key: "edit",
                         icon: <Pencil size={14} />,
-                        label: (
-                          <span className="font-mono text-[12px]">Edit</span>
-                        ),
+                        label: <span className="font-mono text-[12px]">Edit</span>,
                         onClick: (info) => {
                           info.domEvent.stopPropagation();
                           navigate(`/dynamic-apis/${api.id}`);
@@ -272,11 +219,7 @@ export default function DynamicApisListPage() {
                       {
                         key: "copy",
                         icon: <Copy size={14} />,
-                        label: (
-                          <span className="font-mono text-[12px]">
-                            Copy URL
-                          </span>
-                        ),
+                        label: <span className="font-mono text-[12px]">Copy URL</span>,
                         onClick: (info) => {
                           info.domEvent.stopPropagation();
                           copyUrl(api);
@@ -286,9 +229,7 @@ export default function DynamicApisListPage() {
                       {
                         key: "delete",
                         icon: <Trash2 size={14} />,
-                        label: (
-                          <span className="font-mono text-[12px]">Delete</span>
-                        ),
+                        label: <span className="font-mono text-[12px]">Delete</span>,
                         danger: true,
                         onClick: (info) => {
                           info.domEvent.stopPropagation();
@@ -307,10 +248,7 @@ export default function DynamicApisListPage() {
                   </button>
                 </Dropdown>
 
-                <ChevronRight
-                  size={14}
-                  className="text-muted-soft shrink-0 transition-transform duration-150 group-hover:translate-x-1 group-hover:text-ink"
-                />
+                <ChevronRight size={14} className="text-muted-soft shrink-0 transition-transform duration-150 group-hover:translate-x-1 group-hover:text-ink" />
               </div>
             ))}
           </div>
@@ -356,7 +294,7 @@ function CreateApiModal({
       form.resetFields();
       message.success(`API "${api.name}" created`);
     } catch (err) {
-      if (err instanceof MoroError) {
+      if (err instanceof AgentHandsError) {
         message.error(err.message);
       } else {
         message.error("Failed to create API");
@@ -367,14 +305,7 @@ function CreateApiModal({
   };
 
   return (
-    <Modal
-      title="New API Endpoint"
-      open={open}
-      onCancel={onClose}
-      footer={null}
-      destroyOnHidden
-      width={520}
-    >
+    <Modal title="New API Endpoint" open={open} onCancel={onClose} footer={null} destroyOnHidden width={520}>
       <Form<CreateDynamicApiInput>
         form={form}
         layout="vertical"
@@ -395,12 +326,7 @@ function CreateApiModal({
         </Form.Item>
 
         <div className="flex gap-3">
-          <Form.Item
-            name="method"
-            label="Method"
-            style={{ width: 130 }}
-            rules={[{ required: true }]}
-          >
+          <Form.Item name="method" label="Method" style={{ width: 130 }} rules={[{ required: true }]}>
             <Select
               options={["GET", "POST", "PUT", "PATCH", "DELETE"].map((m) => ({
                 label: m,

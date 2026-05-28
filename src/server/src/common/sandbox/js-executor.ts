@@ -174,7 +174,7 @@ export interface IsolatedRunOptions {
 
 function getSandboxDir(apiId: string): string {
   const dataDir =
-    process.env.DATA_DIR ?? `${process.env.HOME}/.moro-llm-toolkit`;
+    process.env.DATA_DIR ?? `${process.env.HOME}/.agent-hands`;
   return join(dataDir, "api-sandboxes", apiId);
 }
 
@@ -458,7 +458,7 @@ export function invalidateSandboxDeps(apiId: string): void {
  */
 export function cleanupStaleSandboxes(maxAgeDays = 7): number {
   const dataDir =
-    process.env.DATA_DIR ?? `${process.env.HOME}/.moro-llm-toolkit`;
+    process.env.DATA_DIR ?? `${process.env.HOME}/.agent-hands`;
   const baseDir = join(dataDir, "api-sandboxes");
   if (!existsSync(baseDir)) return 0;
 

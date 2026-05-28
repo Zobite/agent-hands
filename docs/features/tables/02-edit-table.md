@@ -1,30 +1,30 @@
 <feature>
   <meta>
     <id>table_edit</id>
-    <title>Chỉnh sửa bảng (tên, mô tả)</title>
+    <title>Edit table (name, description)</title>
     <group>Dynamic Table</group>
     <status>done</status>
     <priority>p0</priority>
   </meta>
 
   <overview>
-    User chỉnh sửa metadata của bảng: tên, mô tả, icon.
+    User edits table metadata: name, description, icon.
   </overview>
 
   <user-stories>
     <story id="US-01">
       <actor>User</actor>
-      <action>click vào tên bảng hoặc icon "Edit" trên header</action>
-      <benefit>cập nhật thông tin bảng mà không ảnh hưởng dữ liệu</benefit>
+      <action>click on table name or "Edit" icon on header</action>
+      <benefit>update table information without affecting data</benefit>
     </story>
   </user-stories>
 </feature>
 
 ## Server
 - [x] PATCH /api/databases/:dbId/tables/:id { name?, description?, icon? }
-- [x] Tên bảng validate unique
+- [x] Table name validated for uniqueness
 
 ## Web
-- [x] Click tên bảng trên header → inline edit hoặc dialog
-- [x] Chỉnh sửa: tên, mô tả, icon
-- [x] Save → cập nhật ngay trên UI
+- [x] Click table name on header → inline edit or dialog
+- [x] Edit: name, description, icon
+- [x] Save → UI updates immediately

@@ -1,15 +1,15 @@
 import { Suspense } from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
-import type { ModuleRoute, ModuleNav } from "src/common/types/router";
+import { Navigate, Route, Routes } from "react-router-dom";
 import { AuthGuard, GuestGuard } from "src/common/components/AuthGuard";
 import LoadingScreen from "src/common/components/LoadingScreen";
+import type { ModuleNav, ModuleRoute } from "src/common/types/router";
 import AppLayout from "src/layouts/AppLayout";
 
 // Vite glob import — auto scan all module index files
 const moduleFiles = import.meta.glob<{
   routes: ModuleRoute[];
   nav?: ModuleNav;
-}>("./modules/*/index.ts", { eager: true });
+}>("./modules/*/route.ts", { eager: true });
 
 // Collect all routes & nav items
 interface LoadedModule {
@@ -22,7 +22,7 @@ export const loadedModules: LoadedModule[] = Object.entries(moduleFiles)
   .map(([path, mod]) => ({
     routes: mod.routes,
     nav: mod.nav,
-    moduleName: path.match(/\.\/modules\/(.+)\/index\.ts/)![1],
+    moduleName: path.match(/\.\/modules\/(.+)\/route\.ts/)![1],
   }))
   .sort((a, b) => (a.nav?.order ?? 99) - (b.nav?.order ?? 99));
 
@@ -34,13 +34,9 @@ const allNavItems = loadedModules
     path: m.nav!.path ?? m.routes[0]?.path ?? "/",
   }));
 
-export const mainNavItems = allNavItems
-  .filter((item) => (item.group ?? "main") === "main")
-  .sort((a, b) => a.order - b.order);
+export const mainNavItems = allNavItems.filter((item) => (item.group ?? "main") === "main").sort((a, b) => a.order - b.order);
 
-export const adminNavItems = allNavItems
-  .filter((item) => item.group === "admin")
-  .sort((a, b) => a.order - b.order);
+export const adminNavItems = allNavItems.filter((item) => item.group === "admin").sort((a, b) => a.order - b.order);
 
 // Combined for backwards compat
 export const navItems = [...mainNavItems, ...adminNavItems];
@@ -65,17 +61,9 @@ function renderRoute(r: ModuleRoute) {
 
 // Render routes
 export function AppRoutes() {
-  const authRoutes = loadedModules.flatMap((m) =>
-    m.routes.filter(
-      (r) => (r.guard ?? "auth") === "auth" && (r.layout ?? "app") === "app"
-    )
-  );
-  const guestRoutes = loadedModules.flatMap((m) =>
-    m.routes.filter((r) => r.guard === "guest")
-  );
-  const noLayoutRoutes = loadedModules.flatMap((m) =>
-    m.routes.filter((r) => r.layout === "none" && r.guard !== "guest")
-  );
+  const authRoutes = loadedModules.flatMap((m) => m.routes.filter((r) => (r.guard ?? "auth") === "auth" && (r.layout ?? "app") === "app"));
+  const guestRoutes = loadedModules.flatMap((m) => m.routes.filter((r) => r.guard === "guest"));
+  const noLayoutRoutes = loadedModules.flatMap((m) => m.routes.filter((r) => r.layout === "none" && r.guard !== "guest"));
 
   return (
     <Suspense fallback={<LoadingScreen />}>

@@ -1,10 +1,10 @@
 services:
-  moro-llm-toolkit:
+  agent-hands:
     build:
       context: ..
       dockerfile: docker/Dockerfile
-    image: moro-llm-toolkit:latest
-    container_name: moro-llm-toolkit
+    image: agent-hands:latest
+    container_name: agent-hands
     restart: unless-stopped
     ports:
       - "18080:18080"

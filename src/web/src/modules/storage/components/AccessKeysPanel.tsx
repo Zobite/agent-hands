@@ -1,39 +1,10 @@
-import { useCallback, useEffect, useState } from "react";
-import {
-  Table,
-  Button,
-  Modal,
-  Form,
-  Input,
-  message,
-  Space,
-  Typography,
-  Tag,
-  Tooltip,
-  Empty,
-  Alert,
-} from "antd";
-import {
-  Plus,
-  Trash2,
-  Copy,
-  AlertTriangle,
-  Key,
-  Eye,
-  EyeOff,
-  Shield,
-  Power,
-  PowerOff,
-  RefreshCw,
-  Terminal,
-} from "lucide-react";
-import type {
-  StorageAccessKeyItem,
-  StorageAccessKeyCreated,
-} from "src/lib/types";
-import { MoroError } from "src/lib/http";
-import { client } from "src/lib/client";
+import { Alert, Button, Empty, Form, Input, Modal, Space, Table, Tag, Tooltip, Typography, message } from "antd";
 import type { ColumnsType } from "antd/es/table";
+import { AlertTriangle, Copy, Eye, EyeOff, Key, Plus, Power, PowerOff, RefreshCw, Shield, Terminal, Trash2 } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { client } from "src/lib/client";
+import { AgentHandsError } from "src/lib/http";
+import type { StorageAccessKeyCreated, StorageAccessKeyItem } from "src/lib/types";
 
 const { Text } = Typography;
 const { confirm } = Modal;
@@ -76,7 +47,7 @@ export default function AccessKeysPanel() {
       message.success(key.isActive ? "Key disabled" : "Key enabled");
       fetchKeys();
     } catch (err) {
-      if (err instanceof MoroError) message.error(err.message);
+      if (err instanceof AgentHandsError) message.error(err.message);
     }
   };
 
@@ -93,7 +64,7 @@ export default function AccessKeysPanel() {
           message.success("Access key deleted");
           fetchKeys();
         } catch (err) {
-          if (err instanceof MoroError) message.error(err.message);
+          if (err instanceof AgentHandsError) message.error(err.message);
         }
       },
     });
@@ -113,7 +84,11 @@ export default function AccessKeysPanel() {
       title: "Label",
       dataIndex: "label",
       key: "label",
-      render: (label: string) => <Text strong style={{ fontSize: 13 }}>{label || "—"}</Text>,
+      render: (label: string) => (
+        <Text strong style={{ fontSize: 13 }}>
+          {label || "—"}
+        </Text>
+      ),
     },
     {
       title: "Access Key",
@@ -121,7 +96,9 @@ export default function AccessKeysPanel() {
       key: "accessKey",
       render: (ak: string) => (
         <Space size={4}>
-          <Text code style={{ fontSize: 12 }}>{ak}</Text>
+          <Text code style={{ fontSize: 12 }}>
+            {ak}
+          </Text>
           <Tooltip title="Copy">
             <Button type="text" size="small" icon={<Copy size={12} />} onClick={() => handleCopy(ak, "Access Key")} />
           </Tooltip>
@@ -135,9 +112,13 @@ export default function AccessKeysPanel() {
       width: 100,
       render: (active: boolean) =>
         active ? (
-          <Tag color="green" icon={<Power size={10} style={{ marginRight: 4 }} />}>Active</Tag>
+          <Tag color="green" icon={<Power size={10} style={{ marginRight: 4 }} />}>
+            Active
+          </Tag>
         ) : (
-          <Tag color="default" icon={<PowerOff size={10} style={{ marginRight: 4 }} />}>Disabled</Tag>
+          <Tag color="default" icon={<PowerOff size={10} style={{ marginRight: 4 }} />}>
+            Disabled
+          </Tag>
         ),
     },
     {
@@ -145,7 +126,11 @@ export default function AccessKeysPanel() {
       dataIndex: "createdAt",
       key: "createdAt",
       width: 180,
-      render: (ts: number) => <Text type="secondary" style={{ fontSize: 12 }}>{formatDate(ts)}</Text>,
+      render: (ts: number) => (
+        <Text type="secondary" style={{ fontSize: 12 }}>
+          {formatDate(ts)}
+        </Text>
+      ),
     },
     {
       title: "",
@@ -172,14 +157,18 @@ export default function AccessKeysPanel() {
       {/* Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
         <div>
-          <Text strong style={{ fontSize: 15 }}>Access Keys</Text>
+          <Text strong style={{ fontSize: 15 }}>
+            Access Keys
+          </Text>
           <br />
           <Text type="secondary" style={{ fontSize: 12 }}>
             Manage access key pairs for S3-compatible API authentication
           </Text>
         </div>
         <Space>
-          <Button size="small" icon={<RefreshCw size={14} />} onClick={fetchKeys}>Refresh</Button>
+          <Button size="small" icon={<RefreshCw size={14} />} onClick={fetchKeys}>
+            Refresh
+          </Button>
           <Button type="primary" size="small" icon={<Plus size={14} />} onClick={() => setCreateModalOpen(true)}>
             Create Access Key
           </Button>
@@ -192,15 +181,22 @@ export default function AccessKeysPanel() {
         description={
           <div style={{ fontSize: 12 }}>
             <div style={{ marginBottom: 8 }}>
-              Create an access key below, then connect from any S3-compatible client.
-              The S3 endpoint is at <Text code>{s3Endpoint}</Text>
+              Create an access key below, then connect from any S3-compatible client. The S3 endpoint is at <Text code>{s3Endpoint}</Text>
             </div>
-            <pre style={{
-              background: "var(--color-surface-dark)", borderRadius: 8, padding: "10px 14px",
-              fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--color-on-dark)",
-              lineHeight: 1.7, overflowX: "auto", margin: 0,
-            }}>
-{`// @aws-sdk/client-s3
+            <pre
+              style={{
+                background: "var(--color-surface-dark)",
+                borderRadius: 8,
+                padding: "10px 14px",
+                fontFamily: "var(--font-mono)",
+                fontSize: 11,
+                color: "var(--color-on-dark)",
+                lineHeight: 1.7,
+                overflowX: "auto",
+                margin: 0,
+              }}
+            >
+              {`// @aws-sdk/client-s3
 const s3 = new S3Client({
   endpoint: "${s3Endpoint}",
   forcePathStyle: true,
@@ -233,7 +229,11 @@ const s3 = new S3Client({
       <CreateAccessKeyModal
         open={createModalOpen}
         onClose={() => setCreateModalOpen(false)}
-        onCreated={(key) => { setCreateModalOpen(false); setCreatedKey(key); fetchKeys(); }}
+        onCreated={(key) => {
+          setCreateModalOpen(false);
+          setCreatedKey(key);
+          fetchKeys();
+        }}
       />
 
       {createdKey && <SecretKeyModal keyData={createdKey} onClose={() => setCreatedKey(null)} />}
@@ -243,7 +243,11 @@ const s3 = new S3Client({
 
 // ── Create Access Key Modal ─────────────────────────────────────────────────────
 
-function CreateAccessKeyModal({ open, onClose, onCreated }: {
+function CreateAccessKeyModal({
+  open,
+  onClose,
+  onCreated,
+}: {
   open: boolean;
   onClose: () => void;
   onCreated: (key: StorageAccessKeyCreated) => void;
@@ -258,7 +262,7 @@ function CreateAccessKeyModal({ open, onClose, onCreated }: {
       onCreated(result);
       form.resetFields();
     } catch (err) {
-      if (err instanceof MoroError) message.error(err.message);
+      if (err instanceof AgentHandsError) message.error(err.message);
       else message.error("Failed to create access key");
     } finally {
       setLoading(false);
@@ -267,7 +271,12 @@ function CreateAccessKeyModal({ open, onClose, onCreated }: {
 
   return (
     <Modal
-      title={<Space><Key size={18} />Create Access Key</Space>}
+      title={
+        <Space>
+          <Key size={18} />
+          Create Access Key
+        </Space>
+      }
       open={open}
       onCancel={onClose}
       footer={null}
@@ -275,14 +284,20 @@ function CreateAccessKeyModal({ open, onClose, onCreated }: {
       width={460}
     >
       <Form<{ label: string }> form={form} layout="vertical" onFinish={handleSubmit} requiredMark={false} style={{ marginTop: 16 }}>
-        <Form.Item name="label" label="Label" rules={[{ required: true, message: "Label is required" }]}
-          extra="A descriptive label to identify this key (e.g., 'My App', 'CI/CD Pipeline')">
+        <Form.Item
+          name="label"
+          label="Label"
+          rules={[{ required: true, message: "Label is required" }]}
+          extra="A descriptive label to identify this key (e.g., 'My App', 'CI/CD Pipeline')"
+        >
           <Input autoFocus placeholder="My Application" />
         </Form.Item>
         <Form.Item style={{ marginBottom: 0 }}>
           <Space style={{ float: "right" }}>
             <Button onClick={onClose}>Cancel</Button>
-            <Button type="primary" htmlType="submit" loading={loading}>Create Key</Button>
+            <Button type="primary" htmlType="submit" loading={loading}>
+              Create Key
+            </Button>
           </Space>
         </Form.Item>
       </Form>
@@ -308,10 +323,19 @@ function SecretKeyModal({ keyData, onClose }: { keyData: StorageAccessKeyCreated
 
   return (
     <Modal
-      title={<Space><Shield size={18} style={{ color: "var(--color-warning)" }} />Access Key Created</Space>}
+      title={
+        <Space>
+          <Shield size={18} style={{ color: "var(--color-warning)" }} />
+          Access Key Created
+        </Space>
+      }
       open
       onCancel={onClose}
-      footer={<Button type="primary" onClick={onClose}>I've saved my keys</Button>}
+      footer={
+        <Button type="primary" onClick={onClose}>
+          I've saved my keys
+        </Button>
+      }
       width={560}
       closable={false}
       maskClosable={false}
@@ -326,20 +350,28 @@ function SecretKeyModal({ keyData, onClose }: { keyData: StorageAccessKeyCreated
       />
 
       <div style={{ marginBottom: 16 }}>
-        <Text type="secondary" style={{ fontSize: 12, display: "block", marginBottom: 4 }}>Label</Text>
+        <Text type="secondary" style={{ fontSize: 12, display: "block", marginBottom: 4 }}>
+          Label
+        </Text>
         <Text strong>{keyData.label}</Text>
       </div>
 
       <div style={{ marginBottom: 16 }}>
-        <Text type="secondary" style={{ fontSize: 12, display: "block", marginBottom: 4 }}>Access Key</Text>
+        <Text type="secondary" style={{ fontSize: 12, display: "block", marginBottom: 4 }}>
+          Access Key
+        </Text>
         <Space>
-          <Text code style={{ fontSize: 13, userSelect: "all" }}>{keyData.accessKey}</Text>
+          <Text code style={{ fontSize: 13, userSelect: "all" }}>
+            {keyData.accessKey}
+          </Text>
           <Button type="text" size="small" icon={<Copy size={12} />} onClick={() => handleCopy(keyData.accessKey, "Access Key")} />
         </Space>
       </div>
 
       <div style={{ marginBottom: 16 }}>
-        <Text type="secondary" style={{ fontSize: 12, display: "block", marginBottom: 4 }}>Secret Key</Text>
+        <Text type="secondary" style={{ fontSize: 12, display: "block", marginBottom: 4 }}>
+          Secret Key
+        </Text>
         <Space>
           <Text code style={{ fontSize: 13, userSelect: "all", filter: showSecret ? "none" : "blur(4px)", transition: "filter 0.2s" }}>
             {keyData.secretKey}
@@ -349,12 +381,20 @@ function SecretKeyModal({ keyData, onClose }: { keyData: StorageAccessKeyCreated
         </Space>
       </div>
 
-      <pre style={{
-        background: "var(--color-surface-dark)", borderRadius: 8, padding: "10px 14px",
-        fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--color-on-dark)",
-        lineHeight: 1.7, overflowX: "auto", margin: 0,
-      }}>
-{`// S3 client configuration
+      <pre
+        style={{
+          background: "var(--color-surface-dark)",
+          borderRadius: 8,
+          padding: "10px 14px",
+          fontFamily: "var(--font-mono)",
+          fontSize: 11,
+          color: "var(--color-on-dark)",
+          lineHeight: 1.7,
+          overflowX: "auto",
+          margin: 0,
+        }}
+      >
+        {`// S3 client configuration
 const s3 = new S3Client({
   endpoint: "${s3Endpoint}",
   forcePathStyle: true,

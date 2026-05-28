@@ -2,7 +2,7 @@ import { eq, desc, sql, and, like, or } from "drizzle-orm";
 import { getDb } from "../../common/db/client.js";
 import { dynamicApis, dynamicApiLogs } from "../../common/db/schema.js";
 import { genId, now, paginate } from "../../common/utils.js";
-import { removeSandbox, invalidateSandboxDeps } from "../../common/sandbox/js-executor.js";
+import { removeSandbox, invalidateSandboxDeps, hasNpmImports } from "../../common/sandbox/js-executor.js";
 import type {
   CreateDynamicApiBody,
   UpdateDynamicApiBody,
@@ -446,5 +446,6 @@ function formatApi(row: typeof dynamicApis.$inferSelect) {
     isActive: row.isActive === 1,
     isPublic: row.isPublic === 1,
     dependencies: deps,
+    executionMode: hasNpmImports(row.code) ? "isolated" as const : "fast" as const,
   };
 }

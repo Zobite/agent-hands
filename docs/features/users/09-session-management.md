@@ -8,15 +8,15 @@
   </meta>
 
   <overview>
-    Quản lý phiên đăng nhập: JWT token với refresh mechanism, auto-logout
-    khi hết hạn, và WebSocket authentication.
+    Login session management: JWT token with refresh mechanism, auto-logout
+    on expiration, and WebSocket authentication.
   </overview>
 
   <user-stories>
     <story id="US-01">
       <actor>User</actor>
-      <action>đăng nhập và làm việc liên tục</action>
-      <benefit>không bị logout đột ngột nhờ token refresh tự động</benefit>
+      <action>log in and work continuously</action>
+      <benefit>not unexpectedly logged out thanks to automatic token refresh</benefit>
     </story>
   </user-stories>
 </feature>
@@ -24,9 +24,9 @@
 ## Server
 - [x] JWT access token TTL 1h, refresh token TTL 7d
 - [x] POST /api/auth/refresh → rotate refresh token
-- [x] WebSocket connection gửi token khi handshake, server validate
-- [x] Khi admin xoá user hoặc reset password → tất cả token bị revoke
+- [x] WebSocket connection sends token during handshake, server validates
+- [x] When admin deletes user or resets password → all tokens are revoked
 
 ## Web
-- [x] Client tự động gọi refresh endpoint khi access token sắp hết hạn
-- [x] Hết hạn cả access + refresh → redirect về trang login
+- [x] Client automatically calls refresh endpoint when access token is about to expire
+- [x] Both access + refresh expired → redirect to login page

@@ -1,6 +1,5 @@
-
-import { Streamdown } from "streamdown";
 import { code as codePlugin } from "@streamdown/code";
+import { Streamdown } from "streamdown";
 import "streamdown/styles.css";
 import {
   ArrowLeft,
@@ -63,7 +62,7 @@ function useElapsedTimer(active: boolean) {
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 interface AgentEvent {
-  type: "thinking" | "tool_call" | "tool_result" | "text" | "code" | "done" | "error";
+  type: "thinking" | "tool_call" | "tool_result" | "text" | "text_delta" | "code" | "done" | "error";
   message?: string;
   code?: string;
   toolName?: string;
@@ -131,9 +130,7 @@ function eventsToTimeline(events: AgentEvent[], isLive = false): TimelineStep[] 
       }
       const resultEvent = events[j];
       const hasResult = resultEvent?.type === "tool_result";
-      const durationMs = hasResult && ev.receivedAt && resultEvent.receivedAt
-        ? resultEvent.receivedAt - ev.receivedAt
-        : undefined;
+      const durationMs = hasResult && ev.receivedAt && resultEvent.receivedAt ? resultEvent.receivedAt - ev.receivedAt : undefined;
       steps.push({
         kind: "tool",
         name: ev.toolName || "tool",
@@ -145,8 +142,27 @@ function eventsToTimeline(events: AgentEvent[], isLive = false): TimelineStep[] 
       i = hasResult ? j + 1 : j;
     } else if (ev.type === "tool_result") {
       i++;
+    } else if (ev.type === "text_delta") {
+      // Accumulate consecutive text_delta events into a single streaming text block
+      let accumulated = ev.message || "";
+      let j = i + 1;
+      while (j < events.length && events[j].type === "text_delta") {
+        accumulated += events[j].message || "";
+        j++;
+      }
+      // Check if followed by a "text" end-marker
+      const hasEnd = j < events.length && events[j].type === "text";
+      // Strip markdown code blocks — they are shown separately via "code" events
+      const stripped = accumulated.replace(/```(?:javascript|js|typescript|ts)?\n[\s\S]*?```/g, "").trim();
+      if (stripped) {
+        steps.push({ kind: "text", message: stripped });
+      }
+      i = hasEnd ? j + 1 : j;
     } else if (ev.type === "text" && ev.message) {
       steps.push({ kind: "text", message: ev.message });
+      i++;
+    } else if (ev.type === "text") {
+      // Empty text event = end-of-stream marker, skip
       i++;
     } else if (ev.type === "error" && ev.message) {
       steps.push({ kind: "error", message: ev.message });
@@ -226,9 +242,7 @@ function TestResultDetail({ result }: { result: Record<string, unknown> }) {
   return (
     <div className="space-y-1 mt-1">
       <div className="flex items-center gap-2 font-mono text-[11px]">
-        <span className={status != null && status < 400 ? "text-semantic-success" : "text-semantic-error"}>
-          Status {status ?? "?"}
-        </span>
+        <span className={status != null && status < 400 ? "text-semantic-success" : "text-semantic-error"}>Status {status ?? "?"}</span>
         {execTime != null && <span className="text-muted-soft">{formatDuration(execTime)}</span>}
       </div>
       {error && (
@@ -237,13 +251,12 @@ function TestResultDetail({ result }: { result: Record<string, unknown> }) {
         </pre>
       )}
       {body != null && !error && (
-        <pre className="font-mono text-[11px] leading-[1.4] text-body whitespace-pre-wrap m-0 max-h-[100px] overflow-y-auto">
-          {rawText(body, 300)}
-        </pre>
+        <pre className="font-mono text-[11px] leading-[1.4] text-body whitespace-pre-wrap m-0 max-h-[100px] overflow-y-auto">{rawText(body, 300)}</pre>
       )}
       {logs && logs.length > 0 && (
         <div className="font-mono text-[11px] text-muted-soft">
-          logs: {logs.slice(0, 3).join(" | ")}{logs.length > 3 ? ` (+${logs.length - 3} more)` : ""}
+          logs: {logs.slice(0, 3).join(" | ")}
+          {logs.length > 3 ? ` (+${logs.length - 3} more)` : ""}
         </div>
       )}
     </div>
@@ -253,16 +266,17 @@ function TestResultDetail({ result }: { result: Record<string, unknown> }) {
 function ToolDetail({ step }: { step: Extract<TimelineStep, { kind: "tool" }> }) {
   const [open, setOpen] = useState(false);
 
-  const testStatus = step.name === "test_code" && !step.running && step.result != null
-    ? (() => {
-        const r = step.result as Record<string, unknown>;
-        const status = r?.status as number | undefined;
-        const hasError = !!r?.error;
-        if (!hasError && status != null && status < 400) return "pass" as const;
-        if (hasError || (status != null && status >= 400)) return "fail" as const;
-        return null;
-      })()
-    : null;
+  const testStatus =
+    step.name === "test_code" && !step.running && step.result != null
+      ? (() => {
+          const r = step.result as Record<string, unknown>;
+          const status = r?.status as number | undefined;
+          const hasError = !!r?.error;
+          if (!hasError && status != null && status < 400) return "pass" as const;
+          if (hasError || (status != null && status >= 400)) return "fail" as const;
+          return null;
+        })()
+      : null;
 
   const argsSummary = (() => {
     const args = step.args;
@@ -297,32 +311,17 @@ function ToolDetail({ step }: { step: Extract<TimelineStep, { kind: "tool" }> })
 
   return (
     <div>
-      <button
-        type="button"
-        onClick={() => setOpen(!open)}
-        className="cot-detail-toggle"
-      >
-        <ChevronRight
-          size={12}
-          className={`text-muted-soft shrink-0 transition-transform duration-200 ${open ? "rotate-90" : ""}`}
-        />
-        {argsSummary && (
-          <span className="font-mono text-[11px] text-muted truncate">{argsSummary}</span>
-        )}
+      <button type="button" onClick={() => setOpen(!open)} className="cot-detail-toggle">
+        <ChevronRight size={12} className={`text-muted-soft shrink-0 transition-transform duration-200 ${open ? "rotate-90" : ""}`} />
+        {argsSummary && <span className="font-mono text-[11px] text-muted truncate">{argsSummary}</span>}
         {resultSummary && !step.running && (
           <>
             <span className="text-muted-soft text-[11px]">→</span>
-            <span className={`font-mono text-[11px] ${testStatus === "fail" ? "text-semantic-error" : "text-semantic-success"}`}>
-              {resultSummary}
-            </span>
+            <span className={`font-mono text-[11px] ${testStatus === "fail" ? "text-semantic-error" : "text-semantic-success"}`}>{resultSummary}</span>
           </>
         )}
-        {testStatus === "pass" && (
-          <span className="cot-badge cot-badge-pass">PASS</span>
-        )}
-        {testStatus === "fail" && (
-          <span className="cot-badge cot-badge-fail">FAIL</span>
-        )}
+        {testStatus === "pass" && <span className="cot-badge cot-badge-pass">PASS</span>}
+        {testStatus === "fail" && <span className="cot-badge cot-badge-fail">FAIL</span>}
       </button>
 
       <div className="cot-collapsible" style={{ gridTemplateRows: open ? "1fr" : "0fr" }}>
@@ -388,11 +387,7 @@ function CoTStep({ step, isLast, isLive }: { step: TimelineStep; isLast: boolean
   if (step.kind === "text") {
     return (
       <div className="py-1 ai-streamdown cot-fade-in">
-        <Streamdown
-          className="ai-streamdown-content"
-          plugins={{ code: codePlugin }}
-          isAnimating={isLive}
-        >
+        <Streamdown className="ai-streamdown-content" plugins={{ code: codePlugin }} isAnimating={isLive}>
           {step.message}
         </Streamdown>
       </div>
@@ -407,26 +402,15 @@ function CoTStep({ step, isLast, isLive }: { step: TimelineStep; isLast: boolean
       </div>
       <div className="flex-1 min-w-0 pb-2">
         <div className="cot-step-header">
-          <Icon
-            size={13}
-            className={`shrink-0 ${
-              status === "active" ? "text-amber-500" :
-              status === "error" ? "text-semantic-error" :
-              "text-muted"
-            }`}
-          />
+          <Icon size={13} className={`shrink-0 ${status === "active" ? "text-amber-500" : status === "error" ? "text-semantic-error" : "text-muted"}`} />
           <span
             className={`font-mono text-[12px] leading-[1.4] ${
-              status === "error" ? "text-semantic-error" :
-              status === "active" ? "text-body italic" :
-              "text-body"
+              status === "error" ? "text-semantic-error" : status === "active" ? "text-body italic" : "text-body"
             }`}
           >
             {label}
           </span>
-          {step.kind === "tool" && step.running && (
-            <span className="font-mono text-[11px] text-amber-500/80">Running…</span>
-          )}
+          {step.kind === "tool" && step.running && <span className="font-mono text-[11px] text-amber-500/80">Running…</span>}
           {step.kind === "tool" && !step.running && step.durationMs != null && (
             <span className="font-mono text-[11px] text-muted-soft">{formatDuration(step.durationMs)}</span>
           )}
@@ -437,32 +421,18 @@ function CoTStep({ step, isLast, isLive }: { step: TimelineStep; isLast: boolean
   );
 }
 
-// ── Chain of Thought (collapsible container) ──────────────────────────────────
+// ── Chain of Thought (flat list) ──────────────────────────────────────────────
 
 function ChainOfThought({
   events,
   isLive = false,
-  defaultOpen = true,
 }: {
   events: AgentEvent[];
   isLive?: boolean;
   defaultOpen?: boolean;
 }) {
-  const [open, setOpen] = useState(defaultOpen);
   const steps = eventsToTimeline(events, isLive);
-
   const total = steps.length;
-  const completed = steps.filter(
-    (s) =>
-      s.kind === "text" ||
-      s.kind === "code" ||
-      (s.kind === "tool" && !s.running) ||
-      s.kind === "error",
-  ).length;
-  const hasError = steps.some((s) => s.kind === "error");
-
-  const reasoningSteps = steps.filter((s) => s.kind !== "text");
-  const textSteps = steps.filter((s) => s.kind === "text");
 
   if (total === 0 && !isLive) return null;
 
@@ -478,79 +448,37 @@ function ChainOfThought({
   }
 
   return (
-    <div>
-      {reasoningSteps.length > 0 && (
-        <div className="mb-1">
-          <button
-            type="button"
-            onClick={() => setOpen(!open)}
-            className="cot-toggle"
-          >
-            <ChevronDown
-              size={14}
-              className={`text-muted-soft shrink-0 transition-transform duration-200 ${open ? "" : "-rotate-90"}`}
-            />
-            {isLive && reasoningSteps.some((s) => s.kind === "thinking" || (s.kind === "tool" && s.running)) ? (
-              <span className="cot-toggle-label">
-                <Loader2 size={12} className="animate-spin" />
-                Reasoning…
-              </span>
-            ) : hasError ? (
-              <span className="cot-toggle-label cot-toggle-error">
-                <XCircle size={12} />
-                Error
-              </span>
-            ) : (
-              <span className="cot-toggle-label cot-toggle-done">
-                <CircleCheck size={12} className="text-semantic-success" />
-                {completed} step{completed !== 1 ? "s" : ""} completed
-              </span>
-            )}
-          </button>
-
-          <div className="cot-collapsible" style={{ gridTemplateRows: open ? "1fr" : "0fr" }}>
-            <div className="min-h-0 overflow-hidden">
-              <div className="pt-1 pb-0.5 pl-1">
-                {reasoningSteps.map((step, i) => {
-                  const isLast = i === reasoningSteps.length - 1 && !isLive;
-                  const key =
-                    step.kind === "thinking"
-                      ? `thinking-${i}`
-                      : step.kind === "code"
-                        ? `code-${i}`
-                        : step.kind === "tool"
-                          ? `tool-${step.name}-${i}`
-                          : `error-${i}`;
-                  return <CoTStep key={key} step={step} isLast={isLast} isLive={isLive} />;
-                })}
-                {isLive && reasoningSteps.length > 0 && (() => {
-                  const last = reasoningSteps[reasoningSteps.length - 1];
-                  const needsTrailing = last.kind !== "thinking" && !(last.kind === "tool" && last.running);
-                  if (!needsTrailing) return null;
-                  return (
-                    <div className="cot-step cot-fade-in">
-                      <StepStatusIcon status="active" />
-                      <div className="cot-step-header">
-                        <Brain size={13} className="text-amber-500 shrink-0" />
-                        <span className="font-mono text-[11px] text-muted-soft italic">Thinking…</span>
-                      </div>
-                    </div>
-                  );
-                })()}
+    <div className="pt-1 pb-0.5 pl-1">
+      {steps.map((step, i) => {
+        const isLast = i === steps.length - 1 && !isLive;
+        const key =
+          step.kind === "thinking"
+            ? `thinking-${i}`
+            : step.kind === "code"
+              ? `code-${i}`
+              : step.kind === "tool"
+                ? `tool-${step.name}-${i}`
+                : step.kind === "text"
+                  ? `text-${i}`
+                  : `error-${i}`;
+        return <CoTStep key={key} step={step} isLast={isLast} isLive={isLive} />;
+      })}
+      {isLive &&
+        steps.length > 0 &&
+        (() => {
+          const last = steps[steps.length - 1];
+          const needsTrailing = last.kind !== "thinking" && !(last.kind === "tool" && last.running) && last.kind !== "text";
+          if (!needsTrailing) return null;
+          return (
+            <div className="cot-step cot-fade-in">
+              <StepStatusIcon status="active" />
+              <div className="cot-step-header">
+                <Brain size={13} className="text-amber-500 shrink-0" />
+                <span className="font-mono text-[11px] text-muted-soft italic">Thinking…</span>
               </div>
             </div>
-          </div>
-        </div>
-      )}
-
-      {textSteps.map((step, i) => (
-        <CoTStep
-          key={`text-${(step as Extract<TimelineStep, { kind: "text" }>).message.slice(0, 20)}-${i}`}
-          step={step}
-          isLast={i === textSteps.length - 1}
-          isLive={isLive}
-        />
-      ))}
+          );
+        })()}
     </div>
   );
 }
@@ -597,9 +525,7 @@ function ModelPickerPopover({
 
   const currentProvider = providers.find((p) => p.id === selectedProviderId);
   const activeProviderData = providers.find((p) => p.id === activeProvider);
-  const filteredModels = activeProviderData?.models.filter((m) =>
-    m.toLowerCase().includes(search.toLowerCase()),
-  ) ?? [];
+  const filteredModels = activeProviderData?.models.filter((m) => m.toLowerCase().includes(search.toLowerCase())) ?? [];
 
   const handleToggle = () => {
     setOpen(!open);
@@ -629,9 +555,7 @@ function ModelPickerPopover({
   };
 
   // Display label
-  const displayLabel = currentProvider
-    ? `${currentProvider.name} / ${selectedModel || "—"}`
-    : "Select model…";
+  const displayLabel = currentProvider ? `${currentProvider.name} / ${selectedModel || "—"}` : "Select model…";
 
   return (
     <div className="relative" ref={popoverRef}>
@@ -642,13 +566,8 @@ function ModelPickerPopover({
         className="w-full flex items-center gap-2 px-3 py-2 rounded-md border border-hairline bg-surface-card hover:border-hairline-strong transition-colors cursor-pointer text-left min-w-0"
       >
         <Bot size={14} className="text-muted-soft shrink-0" />
-        <span className="flex-1 min-w-0 font-mono text-[12px] text-ink truncate">
-          {displayLabel}
-        </span>
-        <ChevronDown
-          size={14}
-          className={`text-muted-soft shrink-0 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
-        />
+        <span className="flex-1 min-w-0 font-mono text-[12px] text-ink truncate">{displayLabel}</span>
+        <ChevronDown size={14} className={`text-muted-soft shrink-0 transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
       </button>
 
       {/* Popover */}
@@ -658,9 +577,7 @@ function ModelPickerPopover({
             /* Panel 1: Provider list */
             <div>
               <div className="px-3 py-2 border-b border-hairline">
-                <span className="font-mono text-[10px] uppercase tracking-[0.88px] text-muted-soft font-semibold">
-                  SELECT PROVIDER
-                </span>
+                <span className="font-mono text-[10px] uppercase tracking-[0.88px] text-muted-soft font-semibold">SELECT PROVIDER</span>
               </div>
               <div className="max-h-[240px] overflow-y-auto py-1">
                 {providers.map((p) => (
@@ -674,9 +591,7 @@ function ModelPickerPopover({
                   >
                     <span className="font-mono text-[12px] text-ink truncate">{p.name}</span>
                     <div className="flex items-center gap-1.5 shrink-0">
-                      <span className="font-mono text-[11px] text-muted-soft">
-                        {p.models.length}
-                      </span>
+                      <span className="font-mono text-[11px] text-muted-soft">{p.models.length}</span>
                       <ChevronRight size={12} className="text-muted-soft" />
                     </div>
                   </button>
@@ -694,9 +609,7 @@ function ModelPickerPopover({
                   className="flex items-center gap-1.5 text-left cursor-pointer border-none bg-transparent hover:text-ink transition-colors text-muted py-0.5"
                 >
                   <ArrowLeft size={13} />
-                  <span className="font-mono text-[12px] font-medium truncate">
-                    {activeProviderData?.name || "Back"}
-                  </span>
+                  <span className="font-mono text-[12px] font-medium truncate">{activeProviderData?.name || "Back"}</span>
                 </button>
                 <div className="relative">
                   <Search size={13} className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-soft pointer-events-none" />
@@ -713,9 +626,7 @@ function ModelPickerPopover({
               <div className="max-h-[240px] overflow-y-auto py-1">
                 {filteredModels.length === 0 ? (
                   <div className="px-3 py-4 text-center">
-                    <span className="font-mono text-[11px] uppercase tracking-[0.6px] text-muted-soft">
-                      NO MODELS FOUND
-                    </span>
+                    <span className="font-mono text-[11px] uppercase tracking-[0.6px] text-muted-soft">NO MODELS FOUND</span>
                   </div>
                 ) : (
                   filteredModels.map((m) => (
@@ -724,9 +635,7 @@ function ModelPickerPopover({
                       type="button"
                       onClick={() => handleSelectModel(m)}
                       className={`w-full flex items-center gap-2 px-3 py-2 text-left cursor-pointer border-none bg-transparent hover:bg-canvas-soft transition-colors ${
-                        m === selectedModel && activeProvider === selectedProviderId
-                          ? "bg-canvas-soft"
-                          : ""
+                        m === selectedModel && activeProvider === selectedProviderId ? "bg-canvas-soft" : ""
                       }`}
                     >
                       <span className="font-mono text-[12px] text-ink truncate">{m}</span>
@@ -747,13 +656,7 @@ function ModelPickerPopover({
 
 // ── Main Component ────────────────────────────────────────────────────────────
 
-export function AiCodingPanel({
-  apiId,
-  method,
-  path,
-  currentCode,
-  onApplyCode,
-}: AiCodingPanelProps) {
+export function AiCodingPanel({ apiId, method, path, currentCode, onApplyCode }: AiCodingPanelProps) {
   const [providers, setProviders] = useState<LlmProviderItem[]>([]);
   const [loadingProviders, setLoadingProviders] = useState(true);
   const [selectedProviderId, setSelectedProviderId] = useState<string>("");
@@ -769,7 +672,9 @@ export function AiCodingPanel({
   const textareaRef = useAutoResize(prompt);
   const elapsedStr = useElapsedTimer(running);
 
-  useEffect(() => { latestCodeRef.current = currentCode; }, [currentCode]);
+  useEffect(() => {
+    latestCodeRef.current = currentCode;
+  }, [currentCode]);
 
   // ── Load providers + saved model config ──────────────────────────────────
 
@@ -777,10 +682,7 @@ export function AiCodingPanel({
     let cancelled = false;
     (async () => {
       try {
-        const [items, savedConfig] = await Promise.all([
-          client.llmProviders.list(),
-          client.configurations.get("CODING_AGENT_LLM_MODEL"),
-        ]);
+        const [items, savedConfig] = await Promise.all([client.llmProviders.list(), client.configurations.get("CODING_AGENT_LLM_MODEL")]);
         if (cancelled) return;
         setProviders(items);
 
@@ -803,7 +705,9 @@ export function AiCodingPanel({
         if (!cancelled) setLoadingProviders(false);
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // ── Auto-scroll ───────────────────────────────────────────────────────────
@@ -812,7 +716,6 @@ export function AiCodingPanel({
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: running ? "instant" : "smooth" });
   }, [chatMessages, currentEvents, running]);
-
 
   const saveModelConfig = (providerId: string, model: string) => {
     if (providerId && model) {
@@ -882,10 +785,7 @@ export function AiCodingPanel({
         };
         collectedEvents.push(errEvent);
         setCurrentEvents((prev) => [...prev, errEvent]);
-        setChatMessages((prev) => [
-          ...prev,
-          { role: "assistant", content: errEvent.message || "Error", events: [errEvent] },
-        ]);
+        setChatMessages((prev) => [...prev, { role: "assistant", content: errEvent.message || "Error", events: [errEvent] }]);
         return;
       }
 
@@ -917,7 +817,10 @@ export function AiCodingPanel({
             setCurrentEvents((prev) => [...prev, event]);
 
             if (event.code) finalCode = event.code;
-            if (event.type === "text" && event.message) {
+            if (event.type === "text_delta" && event.message) {
+              // Accumulate streaming text deltas
+              assistantText += event.message;
+            } else if (event.type === "text" && event.message) {
               assistantText += (assistantText ? "\n" : "") + event.message;
             }
           } catch {
@@ -959,15 +862,14 @@ export function AiCodingPanel({
       }
 
       const content = assistantText || (finalCode ? "Code generated successfully." : "Done.");
-      setChatMessages((prev) => [
-        ...prev,
-        { role: "assistant", content, events: collectedEvents, code: finalCode || undefined },
-      ]);
+      setChatMessages((prev) => [...prev, { role: "assistant", content, events: collectedEvents, code: finalCode || undefined }]);
       setCurrentEvents([]);
     }
   }, [prompt, selectedProviderId, selectedModel, apiId, method, path, running, buildHistory, onApplyCode]);
 
-  const handleStop = () => { abortRef.current?.abort(); };
+  const handleStop = () => {
+    abortRef.current?.abort();
+  };
 
   // ── No providers configured ───────────────────────────────────────────────
 
@@ -977,12 +879,8 @@ export function AiCodingPanel({
         <div className="w-16 h-16 rounded-lg border border-dashed border-hairline-strong flex items-center justify-center mb-5">
           <Bot size={28} className="text-muted-soft" />
         </div>
-        <span className="font-mono text-[11px] uppercase tracking-[0.88px] text-muted-soft mb-2">
-          NO LLM PROVIDER CONFIGURED
-        </span>
-        <p className="text-[13px] text-muted leading-relaxed mb-5 max-w-[280px]">
-          Configure at least one LLM provider to enable the AI coding assistant.
-        </p>
+        <span className="font-mono text-[11px] uppercase tracking-[0.88px] text-muted-soft mb-2">NO LLM PROVIDER CONFIGURED</span>
+        <p className="text-[13px] text-muted leading-relaxed mb-5 max-w-[280px]">Configure at least one LLM provider to enable the AI coding assistant.</p>
         <a
           href="/ui/llm-providers"
           className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-md bg-ink text-canvas text-[13px] font-medium hover:opacity-90 transition-opacity no-underline"
@@ -1010,14 +908,8 @@ export function AiCodingPanel({
       {/* Header */}
       <div className="shrink-0 px-4 py-3 border-b border-hairline">
         <div className="flex items-center gap-2 mb-2.5">
-          <span className="font-mono text-[11px] uppercase tracking-[0.88px] text-muted-soft font-semibold">
-            AI AGENT
-          </span>
-          {running && (
-            <span className="font-mono text-[11px] text-amber-400/80 tabular-nums">
-              {elapsedStr}
-            </span>
-          )}
+          <span className="font-mono text-[11px] uppercase tracking-[0.88px] text-muted-soft font-semibold">AI AGENT</span>
+          {running && <span className="font-mono text-[11px] text-amber-400/80 tabular-nums">{elapsedStr}</span>}
         </div>
         <ModelPickerPopover
           providers={providers}
@@ -1038,12 +930,8 @@ export function AiCodingPanel({
             <div className="w-14 h-14 rounded-lg border border-dashed border-hairline-strong flex items-center justify-center mb-4">
               <Sparkles size={22} strokeWidth={1.5} className="text-muted-soft" />
             </div>
-            <span className="font-mono text-[11px] uppercase tracking-[0.88px] text-muted-soft font-semibold">
-              DESCRIBE WHAT TO BUILD
-            </span>
-            <span className="text-[12px] text-muted mt-2 max-w-[240px] leading-relaxed">
-              Agent will use tools to code, test, and fix autonomously
-            </span>
+            <span className="font-mono text-[11px] uppercase tracking-[0.88px] text-muted-soft font-semibold">DESCRIBE WHAT TO BUILD</span>
+            <span className="text-[12px] text-muted mt-2 max-w-[240px] leading-relaxed">Agent will use tools to code, test, and fix autonomously</span>
           </div>
         )}
 

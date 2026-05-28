@@ -1,63 +1,59 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  Table,
+  Breadcrumb,
   Button,
-  Modal,
+  Dropdown,
   Form,
   Input,
-  Switch,
-  message,
-  Space,
-  Typography,
-  Tooltip,
-  Tag,
-  Upload,
-  Progress,
-  Dropdown,
-  Spin,
-  Breadcrumb,
   InputNumber,
+  Modal,
+  Progress,
+  Space,
+  Spin,
+  Switch,
+  Table,
+  Tag,
+  Tooltip,
+  Typography,
+  Upload,
+  message,
 } from "antd";
-import AccessKeysPanel from "../components/AccessKeysPanel";
+import type { MenuProps } from "antd";
+import type { ColumnsType } from "antd/es/table";
+import type { UploadFile } from "antd/es/upload";
 import {
-  Plus,
-  Trash2,
-  Search,
-  Copy,
   AlertTriangle,
-  Upload as UploadIcon,
+  Archive,
+  ArrowLeft,
+  ChevronRight,
+  Copy,
+  Database,
   Download,
-  Globe,
-  Lock,
-  MoreHorizontal,
-  Link,
+  ExternalLink,
   FileIcon,
-  Image,
   FileText,
   Film,
-  Music,
-  Archive,
-  HardDrive,
-  FolderOpen,
-  ChevronRight,
-  RefreshCw,
-  ExternalLink,
-  Key,
-  Database,
   FolderClosed,
-  ArrowLeft,
+  FolderOpen,
+  Globe,
+  HardDrive,
+  Image,
+  Key,
   Layers,
+  Link,
+  Lock,
+  MoreHorizontal,
+  Music,
+  Plus,
+  RefreshCw,
+  Search,
+  Trash2,
+  Upload as UploadIcon,
 } from "lucide-react";
-import type {
-  Bucket,
-  StorageObject,
-  CreateBucketInput,
-} from "src/lib/types";
-import { MoroError } from "src/lib/http";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { client } from "src/lib/client";
-import type { ColumnsType } from "antd/es/table";
-import type { MenuProps } from "antd";
-import type { UploadFile } from "antd/es/upload";
+import { AgentHandsError } from "src/lib/http";
+import type { Bucket, CreateBucketInput, StorageObject } from "src/lib/types";
+import AccessKeysPanel from "../components/AccessKeysPanel";
 
 const { Text } = Typography;
 const { confirm } = Modal;
@@ -86,15 +82,8 @@ function getFileIcon(contentType: string, size?: number) {
   if (contentType.startsWith("image/")) return <Image size={s} />;
   if (contentType.startsWith("video/")) return <Film size={s} />;
   if (contentType.startsWith("audio/")) return <Music size={s} />;
-  if (contentType.startsWith("text/") || contentType.includes("json") || contentType.includes("xml"))
-    return <FileText size={s} />;
-  if (
-    contentType.includes("zip") ||
-    contentType.includes("gzip") ||
-    contentType.includes("tar") ||
-    contentType.includes("rar")
-  )
-    return <Archive size={s} />;
+  if (contentType.startsWith("text/") || contentType.includes("json") || contentType.includes("xml")) return <FileText size={s} />;
+  if (contentType.includes("zip") || contentType.includes("gzip") || contentType.includes("tar") || contentType.includes("rar")) return <Archive size={s} />;
   return <FileIcon size={s} />;
 }
 
@@ -238,7 +227,7 @@ export default function StoragePage() {
           fetchBuckets();
           fetchStats();
         } catch (err) {
-          if (err instanceof MoroError) message.error(err.message);
+          if (err instanceof AgentHandsError) message.error(err.message);
         }
       },
     });
@@ -253,7 +242,7 @@ export default function StoragePage() {
         setSelectedBucket({ ...bucket, isPublic: !bucket.isPublic });
       }
     } catch (err) {
-      if (err instanceof MoroError) message.error(err.message);
+      if (err instanceof AgentHandsError) message.error(err.message);
     }
   };
 
@@ -275,7 +264,7 @@ export default function StoragePage() {
           fetchBuckets();
           fetchStats();
         } catch (err) {
-          if (err instanceof MoroError) message.error(err.message);
+          if (err instanceof AgentHandsError) message.error(err.message);
         }
       },
     });
@@ -299,7 +288,7 @@ export default function StoragePage() {
           fetchBuckets();
           fetchStats();
         } catch (err) {
-          if (err instanceof MoroError) message.error(err.message);
+          if (err instanceof AgentHandsError) message.error(err.message);
         }
       },
     });
@@ -312,7 +301,7 @@ export default function StoragePage() {
       message.success(`File is now ${obj.isPublic ? "private" : "public"}`);
       fetchObjects();
     } catch (err) {
-      if (err instanceof MoroError) message.error(err.message);
+      if (err instanceof AgentHandsError) message.error(err.message);
     }
   };
 
@@ -428,25 +417,23 @@ export default function StoragePage() {
         <div className="p-2 flex flex-col gap-0.5">
           <button
             className={`flex items-center gap-2 py-2 px-3 rounded-lg text-[13px] font-medium cursor-pointer border-none w-full text-left transition-all duration-150 ease-in-out font-sans ${
-              viewMode === "buckets" || viewMode === "objects"
-                ? "bg-primary/12 text-primary"
-                : "bg-transparent text-muted hover:bg-surface-card hover:text-ink"
+              viewMode === "buckets" || viewMode === "objects" ? "bg-primary/12 text-primary" : "bg-transparent text-muted hover:bg-surface-card hover:text-ink"
             }`}
             onClick={handleBackToBuckets}
           >
             <Database size={15} />
             <span>Buckets</span>
-            <span className={`ml-auto text-[11px] font-semibold px-1.5 rounded-full leading-[18px] ${
-              viewMode === "buckets" || viewMode === "objects"
-                ? "bg-primary/15 text-primary"
-                : "bg-surface-card text-muted"
-            }`}>{stats.bucketCount}</span>
+            <span
+              className={`ml-auto text-[11px] font-semibold px-1.5 rounded-full leading-[18px] ${
+                viewMode === "buckets" || viewMode === "objects" ? "bg-primary/15 text-primary" : "bg-surface-card text-muted"
+              }`}
+            >
+              {stats.bucketCount}
+            </span>
           </button>
           <button
             className={`flex items-center gap-2 py-2 px-3 rounded-lg text-[13px] font-medium cursor-pointer border-none w-full text-left transition-all duration-150 ease-in-out font-sans ${
-              viewMode === "access-keys"
-                ? "bg-primary/12 text-primary"
-                : "bg-transparent text-muted hover:bg-surface-card hover:text-ink"
+              viewMode === "access-keys" ? "bg-primary/12 text-primary" : "bg-transparent text-muted hover:bg-surface-card hover:text-ink"
             }`}
             onClick={() => setViewMode("access-keys")}
           >
@@ -481,7 +468,10 @@ export default function StoragePage() {
             onDeleteBucket={handleDeleteBucket}
             onTogglePublic={handleToggleBucketPublic}
             onCreateBucket={() => setCreateBucketOpen(true)}
-            onRefresh={() => { fetchBuckets(); fetchStats(); }}
+            onRefresh={() => {
+              fetchBuckets();
+              fetchStats();
+            }}
           />
         ) : selectedBucket ? (
           <ObjectBrowserView
@@ -495,11 +485,16 @@ export default function StoragePage() {
             pagination={pagination}
             breadcrumbParts={breadcrumbParts}
             onBack={handleBackToBuckets}
-            onSearchChange={(v) => { setSearchText(v); setPagination((p) => ({ ...p, page: 1 })); }}
+            onSearchChange={(v) => {
+              setSearchText(v);
+              setPagination((p) => ({ ...p, page: 1 }));
+            }}
             onNavigatePrefix={navigateToPrefix}
             onSelectedRowKeysChange={setSelectedRowKeys}
             onPaginationChange={(page, limit) => setPagination((p) => ({ ...p, page, limit }))}
-            onRefresh={() => { fetchObjects(); }}
+            onRefresh={() => {
+              fetchObjects();
+            }}
             onUpload={() => setUploadModalOpen(true)}
             onBulkDelete={handleBulkDelete}
             onDownload={handleDownload}
@@ -535,11 +530,7 @@ export default function StoragePage() {
       )}
 
       {presignModalOpen && selectedBucket && (
-        <PresignModal
-          object={presignModalOpen}
-          bucketName={selectedBucket.name}
-          onClose={() => setPresignModalOpen(null)}
-        />
+        <PresignModal object={presignModalOpen} bucketName={selectedBucket.name} onClose={() => setPresignModalOpen(null)} />
       )}
     </div>
   );
@@ -572,20 +563,10 @@ function BucketsView({
           <h2 className="font-display text-xl font-normal text-ink tracking-[-0.3px] m-0">Buckets</h2>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <Button
-            size="small"
-            icon={<RefreshCw size={13} />}
-            onClick={onRefresh}
-            style={{ color: "var(--color-muted)" }}
-          >
+          <Button size="small" icon={<RefreshCw size={13} />} onClick={onRefresh} style={{ color: "var(--color-muted)" }}>
             Refresh
           </Button>
-          <Button
-            type="primary"
-            size="small"
-            icon={<Plus size={14} />}
-            onClick={onCreateBucket}
-          >
+          <Button type="primary" size="small" icon={<Plus size={14} />} onClick={onCreateBucket}>
             Create Bucket
           </Button>
         </div>
@@ -603,12 +584,7 @@ function BucketsView({
           <Text type="secondary" style={{ marginTop: 4, fontSize: 13 }}>
             Create your first bucket to start storing objects
           </Text>
-          <Button
-            type="primary"
-            icon={<Plus size={14} />}
-            onClick={onCreateBucket}
-            style={{ marginTop: 16 }}
-          >
+          <Button type="primary" icon={<Plus size={14} />} onClick={onCreateBucket} style={{ marginTop: 16 }}>
             Create Bucket
           </Button>
         </div>
@@ -632,14 +608,22 @@ function BucketsView({
                   <div className="flex items-center justify-center w-[34px] h-[34px] rounded-lg bg-primary/8 text-primary shrink-0">
                     <Database size={16} />
                   </div>
-                  <Text strong style={{ fontSize: 13, color: "var(--color-ink)" }}>{name}</Text>
+                  <Text strong style={{ fontSize: 13, color: "var(--color-ink)" }}>
+                    {name}
+                  </Text>
                   {record.isPublic ? (
                     <Tag color="green" style={{ fontSize: 10, lineHeight: "16px", margin: 0, padding: "0 6px" }}>
-                      <Space size={3} align="center"><Globe size={10} />Public</Space>
+                      <Space size={3} align="center">
+                        <Globe size={10} />
+                        Public
+                      </Space>
                     </Tag>
                   ) : (
                     <Tag style={{ fontSize: 10, lineHeight: "16px", margin: 0, padding: "0 6px", color: "var(--color-muted)" }}>
-                      <Space size={3} align="center"><Lock size={10} />Private</Space>
+                      <Space size={3} align="center">
+                        <Lock size={10} />
+                        Private
+                      </Space>
                     </Tag>
                   )}
                 </Space>
@@ -691,13 +675,19 @@ function BucketsView({
                         key: "browse",
                         icon: <FolderOpen size={14} />,
                         label: "Browse",
-                        onClick: ({ domEvent }) => { domEvent.stopPropagation(); onSelectBucket(record); },
+                        onClick: ({ domEvent }) => {
+                          domEvent.stopPropagation();
+                          onSelectBucket(record);
+                        },
                       },
                       {
                         key: "toggle",
                         icon: record.isPublic ? <Lock size={14} /> : <Globe size={14} />,
                         label: record.isPublic ? "Make Private" : "Make Public",
-                        onClick: ({ domEvent }) => { domEvent.stopPropagation(); onTogglePublic(record); },
+                        onClick: ({ domEvent }) => {
+                          domEvent.stopPropagation();
+                          onTogglePublic(record);
+                        },
                       },
                       { type: "divider" as const },
                       {
@@ -705,7 +695,10 @@ function BucketsView({
                         icon: <Trash2 size={14} />,
                         label: "Delete Bucket",
                         danger: true,
-                        onClick: ({ domEvent }) => { domEvent.stopPropagation(); onDeleteBucket(record); },
+                        onClick: ({ domEvent }) => {
+                          domEvent.stopPropagation();
+                          onDeleteBucket(record);
+                        },
                       },
                     ],
                   }}
@@ -808,12 +801,8 @@ function ObjectBrowserView({
         const fileName = record.data.key.slice(currentPrefix.length);
         return (
           <Space size={8} align="center">
-            <span style={{ color: "var(--color-muted-soft)", display: "inline-flex" }}>
-              {getFileIcon(record.data.contentType)}
-            </span>
-            <Text style={{ fontSize: 13, color: "var(--color-body-strong)" }}>
-              {fileName}
-            </Text>
+            <span style={{ color: "var(--color-muted-soft)", display: "inline-flex" }}>{getFileIcon(record.data.contentType)}</span>
+            <Text style={{ fontSize: 13, color: "var(--color-body-strong)" }}>{fileName}</Text>
             {record.data.isPublic && (
               <Tooltip title="Public">
                 <Globe size={11} style={{ color: "var(--color-success)" }} />
@@ -828,8 +817,17 @@ function ObjectBrowserView({
       key: "size",
       width: 100,
       render: (_: unknown, record: BrowserRow) => {
-        if (record.type === "folder") return <Text type="secondary" style={{ fontSize: 12 }}>—</Text>;
-        return <Text type="secondary" style={{ fontSize: 12 }}>{formatBytes(record.data.size)}</Text>;
+        if (record.type === "folder")
+          return (
+            <Text type="secondary" style={{ fontSize: 12 }}>
+              —
+            </Text>
+          );
+        return (
+          <Text type="secondary" style={{ fontSize: 12 }}>
+            {formatBytes(record.data.size)}
+          </Text>
+        );
       },
     },
     {
@@ -837,7 +835,12 @@ function ObjectBrowserView({
       key: "type",
       width: 150,
       render: (_: unknown, record: BrowserRow) => {
-        if (record.type === "folder") return <Text type="secondary" style={{ fontSize: 12 }}>Folder</Text>;
+        if (record.type === "folder")
+          return (
+            <Text type="secondary" style={{ fontSize: 12 }}>
+              Folder
+            </Text>
+          );
         return (
           <Tag color={getContentTypeColor(record.data.contentType)} style={{ fontSize: 11, margin: 0 }}>
             {record.data.contentType.length > 22 ? record.data.contentType.slice(0, 22) + "…" : record.data.contentType}
@@ -878,21 +881,10 @@ function ObjectBrowserView({
         return (
           <Space size={2}>
             <Tooltip title="Download">
-              <Button
-                type="text"
-                size="small"
-                icon={<Download size={13} />}
-                onClick={() => onDownload(record.data)}
-                style={{ color: "var(--color-muted)" }}
-              />
+              <Button type="text" size="small" icon={<Download size={13} />} onClick={() => onDownload(record.data)} style={{ color: "var(--color-muted)" }} />
             </Tooltip>
             <Dropdown menu={{ items: getObjectMenuItems(record.data) }} trigger={["click"]}>
-              <Button
-                type="text"
-                size="small"
-                icon={<MoreHorizontal size={13} />}
-                style={{ color: "var(--color-muted)" }}
-              />
+              <Button type="text" size="small" icon={<MoreHorizontal size={13} />} style={{ color: "var(--color-muted)" }} />
             </Dropdown>
           </Space>
         );
@@ -941,7 +933,10 @@ function ObjectBrowserView({
         />
         {bucket.isPublic && (
           <Tag color="green" style={{ fontSize: 10, lineHeight: "16px", margin: 0, marginLeft: 8, padding: "0 6px" }}>
-            <Space size={3} align="center"><Globe size={10} />Public</Space>
+            <Space size={3} align="center">
+              <Globe size={10} />
+              Public
+            </Space>
           </Tag>
         )}
       </div>
@@ -959,31 +954,16 @@ function ObjectBrowserView({
             style={{ width: 240 }}
           />
           {selectedRowKeys.length > 0 && (
-            <Button
-              danger
-              size="small"
-              icon={<Trash2 size={13} />}
-              onClick={onBulkDelete}
-            >
+            <Button danger size="small" icon={<Trash2 size={13} />} onClick={onBulkDelete}>
               Delete ({selectedRowKeys.length})
             </Button>
           )}
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <Button
-            size="small"
-            icon={<RefreshCw size={13} />}
-            onClick={onRefresh}
-            style={{ color: "var(--color-muted)" }}
-          >
+          <Button size="small" icon={<RefreshCw size={13} />} onClick={onRefresh} style={{ color: "var(--color-muted)" }}>
             Refresh
           </Button>
-          <Button
-            type="primary"
-            size="small"
-            icon={<UploadIcon size={13} />}
-            onClick={onUpload}
-          >
+          <Button type="primary" size="small" icon={<UploadIcon size={13} />} onClick={onUpload}>
             Upload
           </Button>
         </div>
@@ -1029,13 +1009,7 @@ function ObjectBrowserView({
               <Text type="secondary" style={{ fontSize: 13 }}>
                 {currentPrefix ? "No objects in this prefix" : "This bucket is empty"}
               </Text>
-              <Button
-                type="primary"
-                size="small"
-                icon={<UploadIcon size={13} />}
-                onClick={onUpload}
-                style={{ marginTop: 12 }}
-              >
+              <Button type="primary" size="small" icon={<UploadIcon size={13} />} onClick={onUpload} style={{ marginTop: 12 }}>
                 Upload Files
               </Button>
             </div>
@@ -1069,7 +1043,7 @@ function CreateBucketModal({
       onCreated();
       form.resetFields();
     } catch (err) {
-      if (err instanceof MoroError) message.error(err.message);
+      if (err instanceof AgentHandsError) message.error(err.message);
       else message.error("Failed to create bucket");
     } finally {
       setLoading(false);
@@ -1156,7 +1130,7 @@ function UploadModal({
       setFileList([]);
       onUploaded();
     } catch (err) {
-      if (err instanceof MoroError) message.error(err.message);
+      if (err instanceof AgentHandsError) message.error(err.message);
       else message.error("Upload failed");
     } finally {
       setUploading(false);
@@ -1209,13 +1183,7 @@ function UploadModal({
           <Button onClick={onClose} disabled={uploading}>
             Cancel
           </Button>
-          <Button
-            type="primary"
-            onClick={handleUpload}
-            loading={uploading}
-            disabled={fileList.length === 0}
-            icon={<UploadIcon size={14} />}
-          >
+          <Button type="primary" onClick={handleUpload} loading={uploading} disabled={fileList.length === 0} icon={<UploadIcon size={14} />}>
             Upload {fileList.length > 0 ? `(${fileList.length})` : ""}
           </Button>
         </div>
@@ -1245,7 +1213,7 @@ function PresignModal({
       const result = await client.storage.presignUrl(bucketName, object.key, expiresIn);
       setUrl(result.url);
     } catch (err) {
-      if (err instanceof MoroError) message.error(err.message);
+      if (err instanceof AgentHandsError) message.error(err.message);
       else message.error("Failed to generate presigned URL");
     } finally {
       setLoading(false);
@@ -1285,14 +1253,7 @@ function PresignModal({
 
         <div style={{ marginTop: 16, display: "flex", alignItems: "center", gap: 12 }}>
           <Text style={{ fontSize: 13 }}>Expires in:</Text>
-          <InputNumber
-            value={expiresIn}
-            onChange={(v) => setExpiresIn(v ?? 3600)}
-            min={1}
-            max={604800}
-            addonAfter="seconds"
-            style={{ width: 200 }}
-          />
+          <InputNumber value={expiresIn} onChange={(v) => setExpiresIn(v ?? 3600)} min={1} max={604800} addonAfter="seconds" style={{ width: 200 }} />
           <Text type="secondary" style={{ fontSize: 12 }}>
             ({Math.floor(expiresIn / 3600)}h {Math.floor((expiresIn % 3600) / 60)}m)
           </Text>
@@ -1308,12 +1269,7 @@ function PresignModal({
 
         {url && (
           <div style={{ marginTop: 16 }}>
-            <Input.TextArea
-              value={url}
-              readOnly
-              rows={3}
-              style={{ fontFamily: "var(--font-mono)", fontSize: 12 }}
-            />
+            <Input.TextArea value={url} readOnly rows={3} style={{ fontFamily: "var(--font-mono)", fontSize: 12 }} />
             <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
               <Button icon={<Copy size={14} />} onClick={handleCopy}>
                 Copy URL

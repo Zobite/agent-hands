@@ -1,30 +1,30 @@
 <feature>
   <meta>
     <id>user_logout</id>
-    <title>Đăng xuất (Logout)</title>
+    <title>Logout</title>
     <group>Users</group>
     <status>done</status>
     <priority>p0</priority>
   </meta>
 
   <overview>
-    User đăng xuất khỏi hệ thống. Token/session bị xoá, user quay về trang login.
+    User logs out of the system. Token/session is cleared, user returns to login page.
   </overview>
 
   <user-stories>
     <story id="US-01">
       <actor>User</actor>
-      <action>click nút Logout trên navigation/header</action>
-      <benefit>thoát phiên làm việc an toàn, bảo vệ tài khoản</benefit>
+      <action>click Logout button on navigation/header</action>
+      <benefit>safely end session, protect account</benefit>
     </story>
   </user-stories>
 </feature>
 
 ## Server
-- [x] Server invalidate session/token (nếu dùng token blacklist)
+- [x] Server invalidate session/token (if using token blacklist)
 
 ## Web
-- [x] Nút Logout hiển thị trên header/user menu khi đã đăng nhập
-- [x] Click Logout → xoá token/cookie khỏi client
-- [x] Redirect về trang login sau khi logout
-- [x] Sau logout, truy cập route yêu cầu auth → redirect về login
+- [x] Logout button displayed on header/user menu when logged in
+- [x] Click Logout → clear token/cookie from client
+- [x] Redirect to login page after logout
+- [x] After logout, accessing auth-required routes → redirect to login

@@ -1,26 +1,18 @@
 {
-  "name": "moro-llm-toolkit",
-  "version": "0.2.7",
+  "name": "agent-hands",
+  "version": "0.2.8",
   "type": "module",
-  "description": "Moro LLM Toolkit — LLM-first knowledge base. Docs, Datatable, MCP server, S3-compatible file store.",
-  "author": "devlangla0x01@gmail.com",
+  "description": "Agent Hands — LLM-first knowledge base. Docs, Datatable, MCP server, S3-compatible file store.",
+  "author": "Zobite",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/devlangla/moro-llm-toolkit.git"
+    "url": "git+https://github.com/Zobite/agent-hands.git"
   },
-  "homepage": "https://github.com/devlangla/moro-llm-toolkit#readme",
+  "homepage": "https://github.com/Zobite/agent-hands#readme",
   "bugs": {
-    "url": "https://github.com/devlangla/moro-llm-toolkit/issues"
+    "url": "https://github.com/Zobite/agent-hands/issues"
   },
-  "bin": {
-    "moro-llm-toolkit": "./bin/moro-llm-toolkit.js"
-  },
-  "files": ["bin/", "dist/", "public/", "README.md"],
-  "engines": {
-    "bun": ">=1.2.0"
-  },
-  "packageManager": "bun@1.2.0",
   "workspaces": ["src/server", "src/web"],
   "scripts": {
     "dev:server": "NODE_ENV=development bun --watch src/server/src/index.ts",

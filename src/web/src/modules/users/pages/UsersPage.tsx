@@ -1,28 +1,9 @@
+import { Dropdown, Form, Input, Modal, Select, Spin, message } from "antd";
+import { AlertTriangle, KeyRound, MoreVertical, Pencil, Plus, Shield, ShieldCheck, Trash2, User as UserIcon, Users } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import {
-  Modal,
-  Form,
-  Input,
-  Select,
-  message,
-  Spin,
-  Dropdown,
-} from "antd";
-import {
-  Plus,
-  Trash2,
-  Pencil,
-  KeyRound,
-  AlertTriangle,
-  Users,
-  MoreVertical,
-  Shield,
-  ShieldCheck,
-  User as UserIcon,
-} from "lucide-react";
-import type { User, CreateUserInput, UpdateUserInput } from "src/lib/types";
-import { MoroError } from "src/lib/http";
 import { client } from "src/lib/client";
+import { AgentHandsError } from "src/lib/http";
+import type { CreateUserInput, UpdateUserInput, User } from "src/lib/types";
 
 const { confirm } = Modal;
 
@@ -85,7 +66,7 @@ export default function UsersPage() {
           setUsers((prev) => prev.filter((u) => u.id !== user.id));
           message.success("User account purged");
         } catch (err) {
-          if (err instanceof MoroError) {
+          if (err instanceof AgentHandsError) {
             message.error(err.message);
           }
         }
@@ -103,14 +84,10 @@ export default function UsersPage() {
       <div className="px-8 pt-10 pb-6 shrink-0 border-b border-hairline">
         <div className="flex items-center gap-2 mb-3">
           <Users size={16} className="text-muted" />
-          <span className="font-mono text-[11px] uppercase tracking-wide text-muted">
-            Identity / User Accounts
-          </span>
+          <span className="font-mono text-[11px] uppercase tracking-wide text-muted">Identity / User Accounts</span>
         </div>
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-          <h1 className="font-display text-[32px] font-normal text-ink tracking-[-0.64px] m-0 leading-tight">
-            User Directory
-          </h1>
+          <h1 className="font-display text-[32px] font-normal text-ink tracking-[-0.64px] m-0 leading-tight">User Directory</h1>
           <button
             className="flex items-center gap-2 h-[36px] px-4 rounded-md bg-ink text-canvas font-medium text-[13px] hover:bg-opacity-90 transition-opacity cursor-pointer border-none shrink-0"
             onClick={() => setCreateModalOpen(true)}
@@ -131,9 +108,7 @@ export default function UsersPage() {
           /* ── Empty State ─────────────────────────────── */
           <div className="flex flex-col items-center justify-center min-h-[300px] flex-1 border border-dashed border-hairline-strong rounded-md bg-transparent m-auto max-w-[600px]">
             <Users size={32} className="text-muted-soft mb-4" strokeWidth={1.5} />
-            <div className="font-mono text-[12px] text-muted-soft uppercase tracking-wide mb-6">
-              NO ACCOUNTS FOUND
-            </div>
+            <div className="font-mono text-[12px] text-muted-soft uppercase tracking-wide mb-6">NO ACCOUNTS FOUND</div>
             <button
               onClick={() => setCreateModalOpen(true)}
               className="bg-transparent border border-hairline-strong text-ink px-4 py-2 rounded-md font-medium text-[13px] hover:border-ink transition-colors cursor-pointer"
@@ -146,21 +121,11 @@ export default function UsersPage() {
           <div className="flex flex-col gap-3">
             {/* Column headers */}
             <div className="grid grid-cols-[1fr_140px_200px_100px_100px_40px] gap-4 px-5 py-2">
-              <span className="font-mono text-[10px] text-muted-soft uppercase tracking-wider font-semibold">
-                Identity
-              </span>
-              <span className="font-mono text-[10px] text-muted-soft uppercase tracking-wider font-semibold">
-                Handle
-              </span>
-              <span className="font-mono text-[10px] text-muted-soft uppercase tracking-wider font-semibold">
-                Email
-              </span>
-              <span className="font-mono text-[10px] text-muted-soft uppercase tracking-wider font-semibold">
-                Role
-              </span>
-              <span className="font-mono text-[10px] text-muted-soft uppercase tracking-wider font-semibold">
-                Created
-              </span>
+              <span className="font-mono text-[10px] text-muted-soft uppercase tracking-wider font-semibold">Identity</span>
+              <span className="font-mono text-[10px] text-muted-soft uppercase tracking-wider font-semibold">Handle</span>
+              <span className="font-mono text-[10px] text-muted-soft uppercase tracking-wider font-semibold">Email</span>
+              <span className="font-mono text-[10px] text-muted-soft uppercase tracking-wider font-semibold">Role</span>
+              <span className="font-mono text-[10px] text-muted-soft uppercase tracking-wider font-semibold">Created</span>
               <span />
             </div>
 
@@ -179,33 +144,23 @@ export default function UsersPage() {
                     <div className="flex items-center justify-center w-8 h-8 rounded-full border border-hairline-soft bg-canvas text-muted shrink-0 font-mono text-[11px] font-semibold uppercase">
                       {user.name.charAt(0)}
                     </div>
-                    <span className="text-[14px] font-medium text-ink tracking-tight truncate">
-                      {user.name}
-                    </span>
+                    <span className="text-[14px] font-medium text-ink tracking-tight truncate">{user.name}</span>
                   </div>
 
                   {/* Username */}
-                  <span className="font-mono text-[12px] text-muted tracking-wide truncate">
-                    {user.username ?? "—"}
-                  </span>
+                  <span className="font-mono text-[12px] text-muted tracking-wide truncate">{user.username ?? "—"}</span>
 
                   {/* Email */}
-                  <span className="text-[13px] text-muted truncate">
-                    {user.email}
-                  </span>
+                  <span className="text-[13px] text-muted truncate">{user.email}</span>
 
                   {/* Role */}
                   <div className={`inline-flex items-center gap-1.5 ${roleStyle.className}`}>
                     <RoleIcon size={12} strokeWidth={1.5} />
-                    <span className="font-mono text-[10px] uppercase tracking-wider font-semibold">
-                      {roleStyle.label}
-                    </span>
+                    <span className="font-mono text-[10px] uppercase tracking-wider font-semibold">{roleStyle.label}</span>
                   </div>
 
                   {/* Created */}
-                  <span className="font-mono text-[11px] text-muted-soft tracking-wide">
-                    {formatDate(user.createdAt)}
-                  </span>
+                  <span className="font-mono text-[11px] text-muted-soft tracking-wide">{formatDate(user.createdAt)}</span>
 
                   {/* Actions dropdown */}
                   <Dropdown
@@ -275,17 +230,12 @@ export default function UsersPage() {
         user={editUser}
         onClose={() => setEditUser(null)}
         onUpdated={(updated) => {
-          setUsers((prev) =>
-            prev.map((u) => (u.id === updated.id ? updated : u))
-          );
+          setUsers((prev) => prev.map((u) => (u.id === updated.id ? updated : u)));
           setEditUser(null);
         }}
       />
 
-      <ResetPasswordModal
-        user={resetUser}
-        onClose={() => setResetUser(null)}
-      />
+      <ResetPasswordModal user={resetUser} onClose={() => setResetUser(null)} />
     </div>
   );
 }
@@ -312,7 +262,7 @@ function CreateUserModal({
       form.resetFields();
       message.success("Account initialized");
     } catch (err) {
-      if (err instanceof MoroError) {
+      if (err instanceof AgentHandsError) {
         message.error(err.message);
       } else {
         message.error("Failed to create account");
@@ -323,14 +273,7 @@ function CreateUserModal({
   };
 
   return (
-    <Modal
-      title={<span className="font-mono text-[14px]">Initialize Account</span>}
-      open={open}
-      onCancel={onClose}
-      footer={null}
-      destroyOnHidden
-      width={440}
-    >
+    <Modal title={<span className="font-mono text-[14px]">Initialize Account</span>} open={open} onCancel={onClose} footer={null} destroyOnHidden width={440}>
       <Form<CreateUserInput>
         form={form}
         layout="vertical"
@@ -339,11 +282,7 @@ function CreateUserModal({
         initialValues={{ role: "member" }}
         style={{ marginTop: 16 }}
       >
-        <Form.Item
-          name="name"
-          label="Display Name"
-          rules={[{ required: true, message: "Display name is required" }]}
-        >
+        <Form.Item name="name" label="Display Name" rules={[{ required: true, message: "Display name is required" }]}>
           <Input autoFocus placeholder="Jane Doe" />
         </Form.Item>
 
@@ -444,7 +383,7 @@ function EditUserModal({
       onUpdated(updated);
       message.success("Account configuration updated");
     } catch (err) {
-      if (err instanceof MoroError) {
+      if (err instanceof AgentHandsError) {
         message.error(err.message);
       } else {
         message.error("Failed to update account");
@@ -457,26 +396,9 @@ function EditUserModal({
   const isSuperAdmin = user?.role === "superadmin";
 
   return (
-    <Modal
-      title={<span className="font-mono text-[14px]">Configure Account</span>}
-      open={!!user}
-      onCancel={onClose}
-      footer={null}
-      destroyOnHidden
-      width={440}
-    >
-      <Form<UpdateUserInput>
-        form={form}
-        layout="vertical"
-        onFinish={handleSubmit}
-        requiredMark={false}
-        style={{ marginTop: 16 }}
-      >
-        <Form.Item
-          name="name"
-          label="Display Name"
-          rules={[{ required: true, message: "Display name is required" }]}
-        >
+    <Modal title={<span className="font-mono text-[14px]">Configure Account</span>} open={!!user} onCancel={onClose} footer={null} destroyOnHidden width={440}>
+      <Form<UpdateUserInput> form={form} layout="vertical" onFinish={handleSubmit} requiredMark={false} style={{ marginTop: 16 }}>
+        <Form.Item name="name" label="Display Name" rules={[{ required: true, message: "Display name is required" }]}>
           <Input />
         </Form.Item>
 
@@ -514,11 +436,7 @@ function EditUserModal({
 
         {isSuperAdmin && (
           <Form.Item label="Access Level">
-            <Input
-              value="SUPERADMIN"
-              disabled
-              style={{ fontFamily: "var(--font-mono)", letterSpacing: "0.05em" }}
-            />
+            <Input value="SUPERADMIN" disabled style={{ fontFamily: "var(--font-mono)", letterSpacing: "0.05em" }} />
           </Form.Item>
         )}
 
@@ -566,7 +484,7 @@ function ResetPasswordModal({
       form.resetFields();
       onClose();
     } catch (err) {
-      if (err instanceof MoroError) {
+      if (err instanceof AgentHandsError) {
         message.error(err.message);
       } else {
         message.error("Failed to reset passkey");
@@ -604,12 +522,7 @@ function ResetPasswordModal({
         </div>
       </div>
 
-      <Form
-        form={form}
-        layout="vertical"
-        onFinish={handleSubmit}
-        requiredMark={false}
-      >
+      <Form form={form} layout="vertical" onFinish={handleSubmit} requiredMark={false}>
         <Form.Item
           name="password"
           label="New Passkey"

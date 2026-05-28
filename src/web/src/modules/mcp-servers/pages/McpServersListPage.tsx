@@ -1,16 +1,10 @@
+import { Spin, message } from "antd";
+import { ChevronRight, Plug, Plus, Shield, Wrench } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { message, Spin } from "antd";
-import {
-  Plus,
-  Plug,
-  Wrench,
-  ChevronRight,
-  Shield,
-  Construction,
-} from "lucide-react";
-import type { McpToolServerItem } from "src/lib/types";
 import { client } from "src/lib/client";
+import type { McpToolServerItem } from "src/lib/types";
+import { CreateServerDialog } from "../components/CreateServerDialog";
 
 // ══════════════════════════════════════════════════════════════════════════════
 //  MCP SERVERS LIST PAGE
@@ -20,6 +14,7 @@ export default function McpServersListPage() {
   const navigate = useNavigate();
   const [servers, setServers] = useState<McpToolServerItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
   const fetchServers = useCallback(async () => {
     setLoading(true);
@@ -38,15 +33,7 @@ export default function McpServersListPage() {
   }, [fetchServers]);
 
   const handleNewServer = () => {
-    message.info({
-      content: (
-        <span className="flex items-center gap-2">
-          <Construction size={16} />
-          Custom MCP servers are under development — Coming Soon!
-        </span>
-      ),
-      duration: 3,
-    });
+    setCreateDialogOpen(true);
   };
 
   return (
@@ -54,21 +41,15 @@ export default function McpServersListPage() {
       <div className="px-8 pt-10 pb-6 shrink-0 border-b border-hairline">
         <div className="flex items-center gap-2 mb-3">
           <Plug size={16} className="text-muted" />
-          <span className="font-mono text-[11px] uppercase tracking-wide text-muted">
-            MCP Servers
-          </span>
+          <span className="font-mono text-[11px] uppercase tracking-wide text-muted">MCP Servers</span>
         </div>
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div>
-            <h1 className="font-display text-[32px] font-normal text-ink tracking-[-0.64px] m-0 leading-tight">
-              MCP Servers
-            </h1>
-            <p className="text-[13px] text-muted mt-1 m-0">
-              Model Context Protocol servers for AI agents to connect and use tools
-            </p>
+            <h1 className="font-display text-[32px] font-normal text-ink tracking-[-0.64px] m-0 leading-tight">MCP Servers</h1>
+            <p className="text-[13px] text-muted mt-1 m-0">Model Context Protocol servers for AI agents to connect and use tools</p>
           </div>
           <button
-            className="flex items-center gap-2 h-[36px] px-4 rounded-md bg-surface-strong text-muted font-medium text-[13px] hover:bg-opacity-90 transition-opacity cursor-pointer border border-hairline"
+            className="flex items-center gap-2 h-[36px] px-4 rounded-md bg-ink text-canvas font-medium text-[13px] hover:bg-opacity-90 transition-opacity cursor-pointer border-none"
             onClick={handleNewServer}
           >
             <Plus size={16} />
@@ -94,11 +75,7 @@ export default function McpServersListPage() {
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
                     <div className="flex items-center justify-center w-10 h-10 rounded-md border border-hairline-soft bg-canvas text-muted shrink-0">
-                      {srv.type === "builtin" ? (
-                        <Shield size={18} strokeWidth={1.5} />
-                      ) : (
-                        <Plug size={18} strokeWidth={1.5} />
-                      )}
+                      {srv.type === "builtin" ? <Shield size={18} strokeWidth={1.5} /> : <Plug size={18} strokeWidth={1.5} />}
                     </div>
                     <span className="font-mono text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#dfa88f]/30 text-[#8a5a3a]">
                       {srv.type === "builtin" ? "Built-in" : "Custom"}
@@ -107,27 +84,17 @@ export default function McpServersListPage() {
                 </div>
 
                 <div className="flex-1 min-w-0">
-                  <div className="text-[15px] font-medium text-ink tracking-tight whitespace-nowrap overflow-hidden text-ellipsis mb-1">
-                    {srv.name}
-                  </div>
-                  <div className="text-[13px] text-muted overflow-hidden text-ellipsis leading-relaxed min-h-[19px] line-clamp-2">
-                    {srv.description || "—"}
-                  </div>
+                  <div className="text-[15px] font-medium text-ink tracking-tight whitespace-nowrap overflow-hidden text-ellipsis mb-1">{srv.name}</div>
+                  <div className="text-[13px] text-muted overflow-hidden text-ellipsis leading-relaxed min-h-[19px] line-clamp-2">{srv.description || "—"}</div>
                 </div>
 
                 <div className="flex items-center justify-between border-t border-hairline-soft pt-4 mt-auto">
                   <div className="flex items-center gap-2">
                     <Wrench size={13} className="text-muted-soft" />
-                    <span className="font-mono text-[10px] text-muted-soft tracking-wider uppercase">
-                      {srv.toolCount} TOOLS
-                    </span>
+                    <span className="font-mono text-[10px] text-muted-soft tracking-wider uppercase">{srv.toolCount} TOOLS</span>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span
-                      className={`font-mono text-[10px] tracking-wider uppercase ${
-                        srv.isActive ? "text-[#1f8a65]" : "text-muted-soft"
-                      }`}
-                    >
+                    <span className={`font-mono text-[10px] tracking-wider uppercase ${srv.isActive ? "text-[#1f8a65]" : "text-muted-soft"}`}>
                       {srv.isActive ? "ACTIVE" : "INACTIVE"}
                     </span>
                     <ChevronRight
@@ -139,7 +106,7 @@ export default function McpServersListPage() {
               </div>
             ))}
 
-            {/* Coming Soon card */}
+            {/* New custom server card */}
             <div
               className="flex flex-col gap-4 p-5 border border-dashed border-hairline rounded-md bg-transparent cursor-pointer transition-colors duration-150 hover:border-hairline-strong opacity-0 animate-[fadeInUp_0.35s_cubic-bezier(0.16,1,0.3,1)_forwards]"
               style={{ animationDelay: `${servers.length * 0.04}s` }}
@@ -149,23 +116,19 @@ export default function McpServersListPage() {
                 <Plus size={18} strokeWidth={1.5} />
               </div>
               <div className="flex-1 min-w-0">
-                <div className="text-[15px] font-medium text-muted tracking-tight mb-1">
-                  Custom MCP Server
-                </div>
-                <div className="text-[12px] text-muted-soft leading-relaxed">
-                  Create custom MCP server with Python tools — Coming Soon
-                </div>
+                <div className="text-[15px] font-medium text-muted tracking-tight mb-1">Custom MCP Server</div>
+                <div className="text-[12px] text-muted-soft leading-relaxed">Create custom MCP server with JavaScript tools</div>
               </div>
               <div className="flex items-center gap-2 border-t border-hairline-soft pt-4 mt-auto">
-                <Construction size={13} className="text-muted-soft" />
-                <span className="font-mono text-[10px] text-muted-soft tracking-wider uppercase">
-                  IN DEVELOPMENT
-                </span>
+                <Plug size={13} className="text-muted-soft" />
+                <span className="font-mono text-[10px] text-muted-soft tracking-wider uppercase">CREATE NEW SERVER</span>
               </div>
             </div>
           </div>
         )}
       </div>
+
+      <CreateServerDialog open={createDialogOpen} onClose={() => setCreateDialogOpen(false)} />
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import type { HttpClient } from "../http";
-import type { LlmProviderItem, CreateLlmProviderInput, UpdateLlmProviderInput } from "../types";
+import type { CreateLlmProviderInput, LlmProviderItem, UpdateLlmProviderInput } from "../types";
 
 export class LlmProvidersResource {
   constructor(private http: HttpClient) {}

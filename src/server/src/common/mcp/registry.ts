@@ -30,10 +30,8 @@ interface CategoryMeta {
 }
 
 const CATEGORIES: CategoryMeta[] = [
-  { name: "Variables", description: "Key-value store with namespaces. Supports string, number, boolean, json types, TTL, and secrets.", order: 1 },
-  { name: "Variable Namespaces", description: "Organize variables into logical namespaces.", order: 2 },
+  { name: "Variables", description: "Flat key-value store. Supports string, number, boolean, json types, TTL. Use key prefixes for organization.", order: 1 },
   { name: "Databases & Tables", description: "Structured data with typed columns. Databases contain tables, tables contain rows.", order: 3 },
-  { name: "Documents", description: "Rich text documents organized by projects. Supports markdown.", order: 4 },
   { name: "Storage", description: "Object storage with buckets for file management.", order: 5 },
 ];
 
@@ -64,9 +62,9 @@ export function generateOverview(): string {
   }
 
   const lines: string[] = [
-    "# Moro LLM Toolkit — Available Actions",
+    "# Agent Hands — Available Actions",
     "",
-    "Call get_docs({ action: \"<name>\" }) for params & examples.",
+    "Call get_action_docs({ action: \"<name>\" }) for params & examples.",
     "Call execute({ action: \"<name>\", payload: {...} }) to run.",
     "",
   ];

@@ -3,17 +3,17 @@ import type {
   Bucket,
   BucketListResult,
   CreateBucketInput,
-  UpdateBucketInput,
-  StorageObject,
+  CreateStorageAccessKeyInput,
   ObjectListQuery,
   ObjectListResult,
-  UploadResult,
   PresignResult,
-  StorageAccessKeyItem,
   StorageAccessKeyCreated,
-  CreateStorageAccessKeyInput,
-  UpdateStorageAccessKeyInput,
+  StorageAccessKeyItem,
+  StorageObject,
   StorageStats,
+  UpdateBucketInput,
+  UpdateStorageAccessKeyInput,
+  UploadResult,
 } from "../types";
 
 export class StorageResource {
@@ -65,12 +65,7 @@ export class StorageResource {
   async upload(bucket: string, key: string, file: File | Blob): Promise<UploadResult> {
     const encodedKey = encodeURIComponent(key);
     const contentType = file.type || "application/octet-stream";
-    return this.http.requestBinary<UploadResult>(
-      "POST",
-      `/api/storage/buckets/${bucket}/upload?key=${encodedKey}`,
-      file,
-      contentType,
-    );
+    return this.http.requestBinary<UploadResult>("POST", `/api/storage/buckets/${bucket}/upload?key=${encodedKey}`, file, contentType);
   }
 
   /** Download a file (returns Response for streaming) */

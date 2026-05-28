@@ -9,43 +9,43 @@
   </meta>
 
   <overview>
-    Dynamic API cho phép user tạo, chỉnh sửa, xoá các HTTP API endpoints
-    tại runtime. Mỗi API endpoint là một file JavaScript/TypeScript code
-    được lưu trong DB. Khi có request gọi tới endpoint, hệ thống lấy code
-    từ DB và thực thi trên Bun runtime. User có thể tạo REST APIs tuỳ chỉnh
-    mà không cần deploy lại app.
+    Dynamic API allows users to create, edit, and delete HTTP API endpoints
+    at runtime. Each API endpoint is a JavaScript/TypeScript code file
+    stored in the DB. When a request hits the endpoint, the system fetches
+    the code from DB and executes it on Bun runtime. Users can create custom
+    REST APIs without redeploying the app.
 
-    Kiến trúc lấy cảm hứng từ Cloudflare Workers:
-    - **Warm Instances**: Handler được cache trong memory, chỉ reload khi code thay đổi.
-    - **Bindings pattern**: Code truy cập internal services (Variables, Tables, Docs, Files)
-      thông qua injected `context` object — giống Cloudflare env bindings.
-    - **Console capture**: Mọi console.log/error trong handler được capture → lưu logs.
+    Architecture inspired by Cloudflare Workers:
+    - **Warm Instances**: Handler cached in memory, only reloads when code changes.
+    - **Bindings pattern**: Code accesses internal services (Variables, Tables, Docs, Files)
+      through an injected `context` object — similar to Cloudflare env bindings.
+    - **Console capture**: All console.log/error in handler are captured → saved to logs.
     - **Execution limits**: Timeout + memory limit per endpoint.
 
-    Hai chế độ chạy:
-    - **Fast mode**: Endpoints không có external dependencies → chạy in-process (vm module),
+    Two execution modes:
+    - **Fast mode**: Endpoints without external dependencies → run in-process (vm module),
       cold start ~1-5ms.
-    - **Isolated mode**: Endpoints có npm dependencies → chạy subprocess riêng
-      (Bun.spawn) với node_modules riêng per endpoint, cold start ~20-50ms.
+    - **Isolated mode**: Endpoints with npm dependencies → run in separate subprocess
+      (Bun.spawn) with per-endpoint node_modules, cold start ~20-50ms.
   </overview>
 </feature>
 
-## Tính năng (atomic — theo thứ tự ưu tiên)
+## Features (atomic — in priority order)
 
-| #  | Tính năng                         | File                                                            | Status     | Priority |
+| #  | Feature                           | File                                                            | Status     | Priority |
 |----|-----------------------------------|-----------------------------------------------------------------|------------|----------|
-| 01 | Tạo API endpoint mới              | [01-create-api.md](01-create-api.md)                            | ✅ Done    | p0       |
-| 02 | Chỉnh sửa API endpoint            | [02-edit-api.md](02-edit-api.md)                                | ✅ Done    | p0       |
-| 03 | Xoá API endpoint                   | [03-delete-api.md](03-delete-api.md)                            | ✅ Done    | p0       |
-| 04 | Code editor cho API                | [04-api-code-editor.md](04-api-code-editor.md)                  | ✅ Done    | p0       |
-| 05 | JS/TS runtime cho API (Bun)       | [05-api-runtime.md](05-api-runtime.md)                          | ✅ Done    | p0       |
+| 01 | Create new API endpoint           | [01-create-api.md](01-create-api.md)                            | ✅ Done    | p0       |
+| 02 | Edit API endpoint                 | [02-edit-api.md](02-edit-api.md)                                | ✅ Done    | p0       |
+| 03 | Delete API endpoint               | [03-delete-api.md](03-delete-api.md)                            | ✅ Done    | p0       |
+| 04 | API code editor                   | [04-api-code-editor.md](04-api-code-editor.md)                  | ✅ Done    | p0       |
+| 05 | JS/TS runtime for API (Bun)       | [05-api-runtime.md](05-api-runtime.md)                          | ✅ Done    | p0       |
 | 06 | API request routing                | [06-api-routing.md](06-api-routing.md)                          | ✅ Done    | p0       |
 | 07 | API test panel                     | [07-api-test-panel.md](07-api-test-panel.md)                    | ✅ Done    | p1       |
 | 08 | Toggle active/inactive             | [08-toggle-api.md](08-toggle-api.md)                            | ✅ Done    | p1       |
 | 09 | API logs & monitoring              | [09-api-logs.md](09-api-logs.md)                                | ✅ Done    | p2       |
 | 10 | API management page                | [10-api-management.md](10-api-management.md)                    | ✅ Done    | p0       |
 
-## Kiến trúc tổng quan
+## Architecture Overview
 
 ```
 Request: POST /apis/users

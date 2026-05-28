@@ -8,26 +8,26 @@
   </meta>
 
   <overview>
-    Mỗi bảng có thể hiển thị dưới nhiều dạng view: Table (spreadsheet),
-    Board (kanban), List. Mỗi view lưu riêng sort/filter/column visibility.
+    Each table can be displayed in multiple view types: Table (spreadsheet),
+    Board (kanban), List. Each view stores its own sort/filter/column visibility settings.
   </overview>
 
   <user-stories>
     <story id="US-01">
       <actor>User</actor>
-      <action>chuyển đổi giữa các view (Table / Board / List)</action>
-      <benefit>xem cùng dữ liệu dưới các góc nhìn khác nhau</benefit>
+      <action>switch between views (Table / Board / List)</action>
+      <benefit>view the same data from different perspectives</benefit>
     </story>
   </user-stories>
 </feature>
 
 ## Server
-- [ ] API lưu trữ view config (sort, filter, column visibility, column order) per view
-- [ ] CRUD endpoints cho views: POST, GET, PATCH, DELETE
+- [ ] API to store view config (sort, filter, column visibility, column order) per view
+- [ ] CRUD endpoints for views: POST, GET, PATCH, DELETE
 
 ## Web
-- [ ] Tab bar view trên header bảng: click để chuyển view
-- [ ] Table view: dạng spreadsheet (mặc định)
-- [ ] Board view: kanban theo cột Select, drag-drop card giữa columns
-- [ ] List view: danh sách compact, title + vài cột chính
-- [ ] Thêm view mới: nút "+" → chọn loại view
+- [ ] Tab bar view on table header: click to switch view
+- [ ] Table view: spreadsheet format (default)
+- [ ] Board view: kanban by Select column, drag-drop cards between columns
+- [ ] List view: compact list, title + key columns
+- [ ] Add new view: "+" button → choose view type

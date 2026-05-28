@@ -19,7 +19,7 @@ export async function startServer(options: ServerOptions = {}): Promise<void> {
   const dataDir =
     options.dataDir ??
     process.env.DATA_DIR ??
-    `${process.env.HOME}/.moro-llm-toolkit`;
+    `${process.env.HOME}/.agent-hands`;
 
   process.env.DATA_DIR = dataDir;
 
@@ -39,7 +39,7 @@ export async function startServer(options: ServerOptions = {}): Promise<void> {
 
   try {
     await app.listen({ port, host });
-    console.log(`\n🤖 Moro LLM Toolkit API running at http://${host}:${port}`);
+    console.log(`\n🤖 Agent Hands API running at http://${host}:${port}`);
     console.log(`DEBUG: NODE_ENV=${process.env.NODE_ENV}`);
     if (process.env.NODE_ENV !== "development") {
       console.log(`   Web UI   : http://${host}:${port}/ui`);
@@ -66,10 +66,10 @@ export async function startServer(options: ServerOptions = {}): Promise<void> {
   process.on("SIGTERM", shutdown);
 }
 
-/** Create super admin — called by `moro init` */
+/** Create super admin — called by `agent-hands init` */
 export async function initSuperAdmin(): Promise<void> {
   const dataDir =
-    process.env.DATA_DIR ?? `${process.env.HOME}/.moro-llm-toolkit`;
+    process.env.DATA_DIR ?? `${process.env.HOME}/.agent-hands`;
 
   process.env.DATA_DIR = dataDir;
   runMigrations(dataDir);
@@ -80,7 +80,7 @@ export async function initSuperAdmin(): Promise<void> {
   const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
   const ask = (q: string) => new Promise<string>((res) => rl.question(q, res));
 
-  console.log("\n🤖 Moro LLM Toolkit — Create Super Admin\n");
+  console.log("\n🤖 Agent Hands — Create Super Admin\n");
 
   const username = await ask("   Username : ");
   const email = await ask("   Email    : ");
@@ -91,7 +91,7 @@ export async function initSuperAdmin(): Promise<void> {
   try {
     const user = await createSuperAdmin(username.trim(), email.trim(), password.trim(), name.trim());
     console.log(`\n✅ Super admin created: ${user.email} (${user.id})\n`);
-    console.log(`   Run 'moro-llm-toolkit start' to launch the server.\n`);
+    console.log(`   Run 'agent-hands start' to launch the server.\n`);
   } catch (err: any) {
     console.error(`\n❌ ${err.message}\n`);
     process.exit(1);

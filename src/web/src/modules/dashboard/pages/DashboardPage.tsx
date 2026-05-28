@@ -1,25 +1,13 @@
+import { ArrowRight, BookOpen, Braces, Database, HardDrive, KeyRound, Terminal } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useAuthStore } from "src/common/stores/auth.store";
-import {
-  Users,
-  Braces,
-  HardDrive,
-  FileText,
-  KeyRound,
-  BookOpen,
-  ArrowRight,
-  Terminal,
-  Database,
-} from "lucide-react";
-import { useUpdateChecker } from "src/common/hooks/useUpdateChecker";
 import { UpdateBanner } from "src/common/components/UpdateBanner";
+import { useUpdateChecker } from "src/common/hooks/useUpdateChecker";
+import { useAuthStore } from "src/common/stores/auth.store";
 
 const NAV_ITEMS = [
-  { icon: Database, title: "Databases", desc: "Tables & records", path: "/databases" },
-  { icon: HardDrive, title: "Storage", desc: "Buckets & files", path: "/storage" },
-  { icon: Braces, title: "Variables", desc: "Global configs", path: "/variables" },
-  { icon: FileText, title: "Documents", desc: "Projects & editor", path: "/documents" },
-  { icon: Users, title: "Users", desc: "Access control", path: "/users" },
+  { icon: Braces, title: "KV Store", desc: "Key-value store", path: "/kv-store" },
+  { icon: Database, title: "DataTables", desc: "Projects, tables & records", path: "/datatables" },
+  { icon: HardDrive, title: "Object Storage", desc: "Buckets & files", path: "/storage" },
   { icon: KeyRound, title: "API Keys", desc: "Manage credentials", path: "/api-keys" },
   { icon: Terminal, title: "MCP Servers", desc: "Tool servers", path: "/mcp-servers" },
   { icon: BookOpen, title: "Docs", desc: "API reference", path: "/docs" },
@@ -37,9 +25,7 @@ export default function DashboardPage() {
       <div className="mb-10 border-b border-hairline pb-8">
         <div className="flex items-center gap-2 mb-3">
           <Terminal size={18} className="text-muted" />
-          <span className="font-mono text-[13px] text-muted tracking-wide uppercase">
-            Dashboard
-          </span>
+          <span className="font-mono text-[13px] text-muted tracking-wide uppercase">Dashboard</span>
         </div>
         <div className="flex items-center justify-between">
           <h2 className="font-display text-[36px] font-normal tracking-[-0.72px] text-ink leading-tight">
@@ -80,44 +66,9 @@ export default function DashboardPage() {
               <div className="text-[14px] font-medium text-ink">{item.title}</div>
               <div className="text-[12px] text-muted-soft">{item.desc}</div>
             </div>
-            <ArrowRight
-              size={14}
-              className="text-muted opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
-            />
+            <ArrowRight size={14} className="text-muted opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
           </div>
         ))}
-      </div>
-
-      {/* Code snippet */}
-      <div className="mt-8 bg-surface-dark rounded-[12px] p-6 border border-hairline">
-        <div className="flex items-center gap-2 mb-4">
-          <div className="w-3 h-3 rounded-full bg-[#cf2d56]" />
-          <div className="w-3 h-3 rounded-full bg-[#c08532]" />
-          <div className="w-3 h-3 rounded-full bg-[#1f8a65]" />
-        </div>
-        <div
-          className="font-mono text-[13px] leading-relaxed"
-          style={{ color: "#a09c92" }}
-        >
-          <span style={{ color: "#c0a8dd" }}>import</span>
-          {" { "}MoroClient{" } "}
-          <span style={{ color: "#c0a8dd" }}>from</span>{" "}
-          <span style={{ color: "#9fc9a2" }}>"moro-llm-toolkit-client"</span>;
-          <br />
-          <br />
-          <span style={{ color: "#dfa88f" }}>const</span> client ={" "}
-          <span style={{ color: "#c0a8dd" }}>new</span>{" "}
-          <span style={{ color: "#9fbbe0" }}>MoroClient</span>
-          {"({ "}baseUrl, apiKey{" })"};
-          <br />
-          <span style={{ color: "#dfa88f" }}>const</span> tables ={" "}
-          <span style={{ color: "#c0a8dd" }}>await</span> client.tables.
-          <span style={{ color: "#9fbbe0" }}>list</span>();
-          <br />
-          <span className="opacity-50 mt-4 block text-[15px] animate-pulse">
-            _
-          </span>
-        </div>
       </div>
     </div>
   );

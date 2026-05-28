@@ -1,35 +1,35 @@
 <feature>
   <meta>
     <id>dynamic_api_edit</id>
-    <title>Chỉnh sửa API endpoint</title>
+    <title>Edit API endpoint</title>
     <group>Dynamic API</group>
     <status>done</status>
     <priority>p0</priority>
   </meta>
 
   <overview>
-       User chỉnh sửa thông tin, code, và dependencies của API endpoint. Thay
-    đổi code có hiệu lực ngay lập tức — warm instance được invalidate và
-    rebuild. Nếu dependencies thay đổi, hệ thống tự chạy `bun install` lại cho
-    endpoint đó.
+    User edits information, code, and dependencies of an API endpoint. Code
+    changes take effect immediately — warm instance is invalidated and rebuilt.
+    If dependencies change, the system automatically runs `bun install` for
+    that endpoint.
   </overview>
 
   <user-stories>
     <story id="US-01">
       <actor>User</actor>
-      <action>click vào API endpoint → chỉnh sửa code hoặc metadata</action>
-      <benefit>cập nhật logic xử lý API tại runtime</benefit>
+      <action>click on an API endpoint → edit code or metadata</action>
+      <benefit>update API processing logic at runtime</benefit>
     </story>
   </user-stories>
 </feature>
 
 ## Server
-- [x] Click API row → mở editor page/dialog.
-- [x] Save (Ctrl+S) → code cập nhật trong DB, warm instance invalidated, có hiệu lực ngay request tiếp theo.
-- [x] Nếu dependencies thay đổi → hệ thống chạy `bun install --cwd data/dynamic-apis/{id}/` → cập nhật node_modules riêng.
+- [x] Click API row → open editor page/dialog.
+- [x] Save (Ctrl+S) → code updated in DB, warm instance invalidated, takes effect on next request.
+- [x] If dependencies changed → system runs `bun install --cwd data/dynamic-apis/{id}/` → update per-endpoint node_modules.
 - [x] API: PATCH /api/dynamic-apis/:id.
 
 ## Web
-- [x] Chỉnh sửa được: Name, Method, Path, Description, Code, Dependencies.
-- [x] Code editor (Monaco) với JavaScript/TypeScript syntax highlight, autocomplete.
-- [x] Dirty check: cảnh báo nếu rời trang khi có thay đổi chưa save.
+- [x] Editable fields: Name, Method, Path, Description, Code, Dependencies.
+- [x] Code editor (Monaco) with JavaScript/TypeScript syntax highlight, autocomplete.
+- [x] Dirty check: warning if leaving page with unsaved changes.

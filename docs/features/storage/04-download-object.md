@@ -2,30 +2,30 @@
   <meta>
     <id>storage_download</id>
     <title>Download object</title>
-    <group>Storage</group>
+    <group>Object Storage</group>
     <status>done</status>
     <priority>p0</priority>
   </meta>
 
   <overview>
-    Download file từ bucket. Trả về binary content với đúng content-type.
+    Download files from a bucket. Returns binary content with correct content-type.
   </overview>
 
   <user-stories>
     <story id="US-01">
       <actor>User</actor>
-      <action>download file từ Storage</action>
-      <benefit>lấy file về máy local</benefit>
+      <action>download a file from Storage</action>
+      <benefit>retrieve files to local machine</benefit>
     </story>
   </user-stories>
 </feature>
 
 ## Server
 - [x] GET /api/storage/buckets/:bucketId/objects/:key/download → stream file binary
-- [x] Set Content-Type, Content-Disposition headers đúng
-- [x] Trả 404 nếu object không tồn tại
+- [x] Set Content-Type, Content-Disposition headers correctly
+- [x] Return 404 if object does not exist
 
 ## Web
-- [x] Nút Download trên mỗi file row
-- [x] Click → browser download file
-- [x] Preview inline cho images (hiển thị thumbnail)
+- [x] Download button on each file row
+- [x] Click → browser downloads file
+- [x] Inline preview for images (display thumbnail)

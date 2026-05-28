@@ -3,7 +3,7 @@
 @source "../node_modules/@streamdown/code/dist/*.js";
 
 /* ══════════════════════════════════════════════════════════════════════════════
-   MORO AGENT TOOLKIT — Design System (Cursor-inspired warm editorial aesthetic)
+   AGENT HANDS — Design System (Cursor-inspired warm editorial aesthetic)
    Tailwind v4 @theme tokens — Mapped from SKILL.md
    ══════════════════════════════════════════════════════════════════════════════ */
 
@@ -60,10 +60,8 @@
   --color-semantic-warning: #c08532;
 
   /* ── Typography ──────────────────────────────────────────────────────────── */
-  --font-display: "Inter", system-ui, "Helvetica Neue", Helvetica, Arial,
-    sans-serif;
-  --font-sans: "Inter", system-ui, "Helvetica Neue", Helvetica, Arial,
-    sans-serif;
+  --font-display: "Inter", system-ui, "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-sans: "Inter", system-ui, "Helvetica Neue", Helvetica, Arial, sans-serif;
   --font-mono: "JetBrains Mono", "Fira Code", monospace;
 
   /* ── Radius ──────────────────────────────────────────────────────────────── */
@@ -149,12 +147,16 @@
 
   /* ── Typography helpers ─────────────────────────────────────────────────── */
 
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     font-weight: 400;
     color: var(--color-ink);
   }
 }
-
 
 /* ══════════════════════════════════════════════════════════════════════════════
    ANT DESIGN OVERRIDES (require !important / nested selectors)
@@ -207,40 +209,70 @@
   height: auto;
 }
 
-
-
 /* ══════════════════════════════════════════════════════════════════════════════
    ANIMATIONS
    ══════════════════════════════════════════════════════════════════════════════ */
 
 @keyframes loginSlideUp {
-  from { opacity: 0; transform: translateY(16px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes slideUp {
-  from { opacity: 0; transform: translateY(10px) scale(0.98); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 @keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes docSpin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @keyframes cotFadeIn {
-  from { opacity: 0; transform: translateY(4px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .animate-fade-in-up {
@@ -301,13 +333,13 @@
    ══════════════════════════════════════════════════════════════════════════════ */
 
 .ai-streamdown-content {
-  font-size: 12px;
+  font-size: 14px;
   line-height: 1.7;
   color: var(--color-body);
 }
 
 .ai-streamdown-content [data-streamdown="heading-1"] {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 600;
   color: var(--color-ink);
   margin-bottom: 4px;
@@ -315,7 +347,7 @@
 }
 
 .ai-streamdown-content [data-streamdown="heading-2"] {
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 600;
   color: var(--color-ink);
   margin-bottom: 4px;
@@ -323,7 +355,7 @@
 }
 
 .ai-streamdown-content [data-streamdown="heading-3"] {
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--color-ink);
   margin-bottom: 4px;
@@ -362,7 +394,7 @@
 
 .ai-streamdown-content [data-streamdown="ordered-list"],
 .ai-streamdown-content [data-streamdown="unordered-list"] {
-  font-size: 12px;
+  font-size: 14px;
   color: var(--color-body);
   padding-left: 18px;
   margin-bottom: 6px;
@@ -381,7 +413,7 @@
 }
 
 .ai-streamdown-content p {
-  font-size: 12px;
+  font-size: 14px;
   color: var(--color-body);
   line-height: 1.7;
   margin-bottom: 6px;
@@ -415,10 +447,18 @@
   flex-shrink: 0;
 }
 
-.cot-status-complete { background-color: hsl(142 71% 45% / 0.12); }
-.cot-status-active   { background-color: hsl(38 92% 50% / 0.12); }
-.cot-status-error    { background-color: hsl(346 70% 44% / 0.12); }
-.cot-status-pending  { background-color: var(--color-surface-strong); }
+.cot-status-complete {
+  background-color: hsl(142 71% 45% / 0.12);
+}
+.cot-status-active {
+  background-color: hsl(38 92% 50% / 0.12);
+}
+.cot-status-error {
+  background-color: hsl(346 70% 44% / 0.12);
+}
+.cot-status-pending {
+  background-color: var(--color-surface-strong);
+}
 
 /* Step row */
 .cot-step {
@@ -515,12 +555,12 @@
 
 .cot-badge-pass {
   color: var(--color-semantic-success);
-  background-color: hsl(142 71% 45% / 0.10);
+  background-color: hsl(142 71% 45% / 0.1);
 }
 
 .cot-badge-fail {
   color: var(--color-semantic-error);
-  background-color: hsl(346 70% 44% / 0.10);
+  background-color: hsl(346 70% 44% / 0.1);
 }
 
 /* Fade-in animation for new steps */

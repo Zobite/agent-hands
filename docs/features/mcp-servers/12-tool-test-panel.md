@@ -3,33 +3,33 @@
     <id>mcp_tool_test_panel</id>
     <title>Tool test panel</title>
     <group>MCP Servers</group>
-    <status>planned</status>
+    <status>done</status>
     <priority>p1</priority>
   </meta>
 
   <overview>
-       Panel test nhúng trong trang tool editor. User nhập input params dạng
-    JSON, click "Run" → execute tool trong sandbox và hiển thị kết quả ngay trên
-    UI. Hỗ trợ debug tool mà không cần AI agent thật.
+    Test panel embedded in the tool editor page. User enters input params as
+    JSON, clicks "Run" → executes tool in sandbox and displays result directly
+    on the UI. Supports debugging tools without a real AI agent.
   </overview>
 
   <user-stories>
     <story id="US-01">
       <actor>User</actor>
-      <action>nhập test params và click Run trên tool editor page</action>
-      <benefit>kiểm tra tool hoạt động đúng trước khi AI agent sử dụng</benefit>
+      <action>enter test params and click Run on tool editor page</action>
+      <benefit>verify tool works correctly before AI agent uses it</benefit>
     </story>
   </user-stories>
 </feature>
 
 ## Server
-- [ ] Nút "Run" → gọi API execute tool → hiển thị kết quả.
+- [ ] "Run" button → call API to execute tool → display result.
 - [ ] API: POST /api/mcp-servers/:serverId/tools/:toolId/test → { params: object }.
-- [ ] Test API chạy code trong sandbox tương tự như khi AI agent gọi, nhưng có thêm detailed logging.
+- [ ] Test API runs JavaScript code in Bun sandbox same as when AI agent calls, but with additional detailed logging.
 
 ## Web
-- [ ] Panel test nằm bên phải hoặc bên dưới code editor (toggle visible).
-- [ ] Input: JSON editor cho params (pre-populated từ inputSchema nếu có).
-- [ ] Hiển thị: Result (JSON), stdout logs, stderr, execution time.
-- [ ] Nếu lỗi → hiển thị error message + stacktrace với highlight dòng lỗi.
-- [ ] History: giữ lại 10 lần test gần nhất (trong localStorage).
+- [ ] Test panel on the right or below code editor (toggle visible).
+- [ ] Input: JSON editor for params (pre-populated from inputSchema if available).
+- [ ] Display: Result (JSON), console logs (from context.log), stderr, execution time.
+- [ ] On error → display error message + stacktrace with highlighted error line.
+- [ ] History: keep last 10 test runs (in localStorage).

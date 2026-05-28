@@ -1,23 +1,23 @@
 <feature>
   <meta>
     <id>table_api</id>
-    <title>API CRUD cho table data</title>
+    <title>Table data API CRUD</title>
     <group>Dynamic Table</group>
     <status>done</status>
     <priority>p0</priority>
   </meta>
 
   <overview>
-    RESTful API đầy đủ cho CRUD operations trên databases, tables, columns, và rows.
-    API này được sử dụng bởi frontend UI, MCP tools, và Dynamic APIs.
+    Full RESTful API for CRUD operations on databases, tables, columns, and rows.
+    This API is used by the frontend UI, MCP tools, and Dynamic APIs.
     Base: /api/databases
   </overview>
 
   <user-stories>
     <story id="US-01">
       <actor>Frontend / MCP Tool / Dynamic API</actor>
-      <action>gọi API để đọc/ghi dữ liệu bảng</action>
-      <benefit>tương tác với structured data qua HTTP</benefit>
+      <action>call API to read/write table data</action>
+      <benefit>interact with structured data via HTTP</benefit>
     </story>
   </user-stories>
 </feature>
@@ -28,4 +28,6 @@
 - [x] Column CRUD: POST .../columns, PATCH .../columns/:colId, DELETE .../columns/:colId
 - [x] Row CRUD: GET .../rows (list + pagination + sort + filter), POST, PATCH .../rows/:rowId, DELETE .../rows/:rowId
 - [x] Query params: sort, order, filter, filterLogic, page, limit
-- [x] Tất cả endpoints yêu cầu auth (JWT hoặc API key)
+- [x] POST .../query — MQL (SQL-like DSL): SELECT, WHERE, ORDER BY, LIMIT, OFFSET, COUNT, IN, BETWEEN, LIKE, IS NULL, nested AND/OR
+- [x] MQL security: banned DDL/DML keywords, semicolons, comments, column whitelist, table-scoped
+- [x] All endpoints require auth (JWT or API key)

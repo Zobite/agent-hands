@@ -2,30 +2,30 @@
   <meta>
     <id>storage_public_url</id>
     <title>Public file URL</title>
-    <group>Storage</group>
+    <group>Object Storage</group>
     <status>done</status>
     <priority>p1</priority>
   </meta>
 
   <overview>
-    Files trong public bucket có thể truy cập qua URL trực tiếp mà không
-    cần authentication. URL format: /storage/{bucket}/{key}
+    Files in public buckets can be accessed via direct URL without
+    authentication. URL format: /storage/{bucket}/{key}
   </overview>
 
   <user-stories>
     <story id="US-01">
       <actor>User</actor>
-      <action>share link trực tiếp đến file trong public bucket</action>
-      <benefit>embed images, share files mà không cần auth</benefit>
+      <action>share a direct link to a file in a public bucket</action>
+      <benefit>embed images, share files without requiring auth</benefit>
     </story>
   </user-stories>
 </feature>
 
 ## Server
-- [x] GET /storage/:bucketName/:key → serve file trực tiếp (no auth required cho public bucket)
-- [x] Private bucket → trả 403 hoặc yêu cầu auth
-- [x] Set Content-Type header đúng
+- [x] GET /storage/:bucketName/:key → serve file directly (no auth required for public bucket)
+- [x] Private bucket → return 403 or require auth
+- [x] Set Content-Type header correctly
 
 ## Web
-- [x] Copy URL button trên mỗi file trong public bucket
-- [x] Preview inline cho images
+- [x] Copy URL button on each file in public bucket
+- [x] Inline preview for images

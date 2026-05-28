@@ -8,25 +8,25 @@
   </meta>
 
   <overview>
-    Click "Open" trên một row → dialog detail hiển thị tất cả properties
-    dạng form. Giống Notion page view cho database record.
+    Click "Open" on a row → detail dialog shows all properties as a form.
+    Similar to Notion page view for a database record.
   </overview>
 
   <user-stories>
     <story id="US-01">
       <actor>User</actor>
-      <action>click vào row title hoặc "Open" từ context menu</action>
-      <benefit>xem và chỉnh sửa đầy đủ tất cả fields của record</benefit>
+      <action>click row title or "Open" from context menu</action>
+      <benefit>view and edit all fields of a record in full</benefit>
     </story>
   </user-stories>
 </feature>
 
 ## Server
-- [ ] GET .../rows/:rowId trả đầy đủ data + column metadata
+- [ ] GET .../rows/:rowId returns full data + column metadata
 
 ## Web
-- [ ] Click row title hoặc "Open" → dialog/drawer mở ra
-- [ ] Hiển thị tất cả properties dạng form (label: value), theo đúng column type
-- [ ] Chỉnh sửa inline trên dialog, auto-save khi blur
-- [ ] Nút Delete row trên dialog
-- [ ] Nút đóng (X) hoặc click outside → đóng
+- [ ] Click row title or "Open" → dialog/drawer opens
+- [ ] Display all properties as form (label: value), matching column type
+- [ ] Inline editing on dialog, auto-save on blur
+- [ ] Delete row button on dialog
+- [ ] Close button (X) or click outside → close

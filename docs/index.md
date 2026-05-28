@@ -1,17 +1,16 @@
-# Moro Agent Toolkit — Feature Tree
+# Agent Hands — Feature Tree
 
-> Cây tính năng các nhóm cần phát triển. Tài liệu chi tiết cho từng nhóm nằm trong `docs/features/<group>/overview.md`.
+> Feature tree of all groups to be developed. Detailed documentation for each group is located in `docs/features/<group>/overview.md`.
 >
 > **Icons:** ✅ Done · 🚧 In Progress · ⬜ Planned
 
-| Icon | Nhóm tính năng | Overview File | Mô tả |
+| Icon | Feature Group | Overview File | Description |
 | :---: | --- | --- | --- |
-| 👤 | **User Management** | [features/users/overview.md](features/users/overview.md) | Hệ thống quản lý người dùng: xác thực, phân quyền, quản trị tài khoản. |
-| 🔑 | **Dynamic Variables** | [features/variables/overview.md](features/variables/overview.md) | Key-value store giống Redis. Variables tổ chức theo Namespaces. |
-| 📊 | **Dynamic Table** | [features/tables/overview.md](features/tables/overview.md) | Database dạng bảng giống Notion. Tables tổ chức theo Databases. |
-| 📝 | **Documents** | [features/documents/overview.md](features/documents/overview.md) | Soạn thảo tài liệu block-based giống Notion. Tổ chức theo Project. |
-| 📦 | **Storage** | [features/storage/overview.md](features/storage/overview.md) | Object storage tự xây dựng giống MinIO/S3: buckets, upload/download, presigned URLs. |
-| 🔌 | **MCP Servers** | [features/mcp-servers/overview.md](features/mcp-servers/overview.md) | Quản lý MCP servers & Tools. Custom servers chứa Python tools chạy trong sandbox. |
-| ⚡ | **Dynamic API** | [features/dynamic-api/overview.md](features/dynamic-api/overview.md) | Hệ thống Cloudflare Worker-like API runtime tạo bằng JS/TS trên Bun. |
-| ✅🤖 | **LLM Providers** | [features/llm-providers/overview.md](features/llm-providers/overview.md) | Quản lý các nhà cung cấp LLM: API key, base URL, auto-fetch models. |
+| 👤 | **User Management** | [features/users/overview.md](features/users/overview.md) | User management system: authentication, authorization, account administration. |
+| ✅🔑 | **KV Store** | [features/kv-store/overview.md](features/kv-store/overview.md) | Flat key-value store. Key globally unique, use prefix for organization. |
+| 📊 | **DataTables** | [features/tables/overview.md](features/tables/overview.md) | Notion-like data tables. Tables organized by Projects. |
 
+| 📦 | **Object Storage** | [features/storage/overview.md](features/storage/overview.md) | Self-hosted object storage similar to MinIO/S3: buckets, upload/download, presigned URLs. |
+| ✅🔌 | **MCP Servers** | [features/mcp-servers/overview.md](features/mcp-servers/overview.md) | Manage MCP servers & Tools. Custom servers with JavaScript tools running in sandbox. |
+| ⚡ | **Dynamic API** | [features/dynamic-api/overview.md](features/dynamic-api/overview.md) | Cloudflare Worker-like API runtime built with JS/TS on Bun. |
+| ✅🤖 | **LLM Providers** | [features/llm-providers/overview.md](features/llm-providers/overview.md) | Manage LLM providers: API key, base URL, auto-fetch models. |

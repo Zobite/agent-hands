@@ -38,10 +38,10 @@ export const variableNamespaces = sqliteTable("variable_projects", {
   updatedAt: int("updated_at").notNull(),
 });
 
-// ─── Variables (Dynamic Key-Value Store) ───────────────────────────────────────
+// ─── KV Store (Key-Value Store) ─────────────────────────────────────────────
 export const variables = sqliteTable("variables", {
   id: text("id").primaryKey(),          // var_xxxx
-  projectId: text("project_id"),        // scoped under a variable_namespace (null = global)
+  projectId: text("project_id"),        // legacy field — always null (namespace removed)
   key: text("key").notNull(),
   value: text("value").notNull(),       // stored as text regardless of type
   type: text("type", { enum: ["string", "number", "boolean", "json"] })
@@ -53,9 +53,9 @@ export const variables = sqliteTable("variables", {
   updatedAt: int("updated_at").notNull(),
 });
 
-// ─── Databases (grouping for Dynamic Tables) ──────────────────────────────────
-export const databases = sqliteTable("databases_v2", {
-  id: text("id").primaryKey(),             // dbs_xxxx
+// ─── DataTable Projects (grouping for Dynamic Tables) ──────────────────────────
+export const datatableProjects = sqliteTable("databases_v2", {
+  id: text("id").primaryKey(),             // prj_xxxx
   name: text("name").notNull(),
   description: text("description"),
   icon: text("icon"),
@@ -67,7 +67,7 @@ export const databases = sqliteTable("databases_v2", {
 // ─── Dynamic Tables ────────────────────────────────────────────────────────────
 export const dynamicTables = sqliteTable("dynamic_tables", {
   id: text("id").primaryKey(),            // dtb_xxxx
-  databaseId: text("database_id"),        // optional: group under a database
+  projectId: text("database_id"),         // optional: group under a project
   name: text("name").notNull(),
   description: text("description"),
   icon: text("icon"),
@@ -165,6 +165,7 @@ export const mcpTools = sqliteTable("mcp_tools", {
   description: text("description").notNull().default(""),
   inputSchema: text("input_schema"),        // JSON Schema string
   code: text("code").notNull().default(""),  // Python source code
+  draftCode: text("draft_code"),             // AI-generated draft code (pending review)
   isActive: int("is_active").notNull().default(1),
   createdAt: int("created_at").notNull(),
   updatedAt: int("updated_at").notNull(),
@@ -251,12 +252,14 @@ export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 export type ApiKey = typeof apiKeys.$inferSelect;
 export type InsertApiKey = typeof apiKeys.$inferInsert;
+/** @deprecated Namespace table kept for migration compat — no longer used */
 export type VariableNamespace = typeof variableNamespaces.$inferSelect;
+/** @deprecated */
 export type InsertVariableNamespace = typeof variableNamespaces.$inferInsert;
 export type Variable = typeof variables.$inferSelect;
 export type InsertVariable = typeof variables.$inferInsert;
-export type DatabaseRecord = typeof databases.$inferSelect;
-export type InsertDatabase = typeof databases.$inferInsert;
+export type DatatableProject = typeof datatableProjects.$inferSelect;
+export type InsertDatatableProject = typeof datatableProjects.$inferInsert;
 export type DynamicTable = typeof dynamicTables.$inferSelect;
 export type InsertDynamicTable = typeof dynamicTables.$inferInsert;
 export type DynamicTableRow = typeof dynamicTableRows.$inferSelect;

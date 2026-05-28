@@ -8,28 +8,28 @@
   </meta>
 
   <overview>
-       Router catch-all cho prefix /apis/* → match với dynamic API endpoints đã
-    đăng ký. Hỗ trợ path params, method matching, và fallback 404. Route table
-    cached trong memory, invalidate khi CRUD dynamic-apis.
+    Catch-all router for prefix /apis/* → matches with registered dynamic API
+    endpoints. Supports path params, method matching, and fallback 404. Route
+    table cached in memory, invalidated on dynamic-apis CRUD.
   </overview>
 
   <user-stories>
     <story id="US-01">
       <actor>External client</actor>
-      <action>gọi GET /apis/my-endpoint</action>
-      <benefit>request được route tới JS/TS handler tương ứng</benefit>
+      <action>call GET /apis/my-endpoint</action>
+      <benefit>request is routed to the corresponding JS/TS handler</benefit>
     </story>
   </user-stories>
 </feature>
 
 ## Server
-- [x] Mọi request /apis/* được catch bởi dynamic router.
-- [x] Router match theo: method + path pattern (exact match hoặc param match).
-- [x] Chỉ route tới endpoints có isActive = true.
-- [x] Không match → trả 404 { error: "Endpoint not found" }.
-- [x] Method không match (path match nhưng method khác) → trả 405 Method Not Allowed.
-- [x] Route table cached in memory, invalidate khi CRUD dynamic-apis.
-- [x] Tuỳ chọn auth: mỗi API endpoint có thể cấu hình yêu cầu JWT hoặc public.
+- [x] All requests /apis/* are caught by dynamic router.
+- [x] Router matches by: method + path pattern (exact match or param match).
+- [x] Only routes to endpoints with isActive = true.
+- [x] No match → return 404 { error: "Endpoint not found" }.
+- [x] Method mismatch (path matches but different method) → return 405 Method Not Allowed.
+- [x] Route table cached in memory, invalidated on dynamic-apis CRUD.
+- [x] Auth option: each API endpoint can be configured to require JWT or be public.
 
 ## Web
 - [x] Path params: /users/:id → request.params = { id: "123" }.

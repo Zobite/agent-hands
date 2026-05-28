@@ -1,10 +1,9 @@
-import { Spin, Switch, Tooltip, message } from "antd";
-import { ArrowLeft, BookOpen, Check, Copy, Globe, Key, Layers, Play, Shield, Terminal, Wrench, Zap } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { API_BASE, client } from "src/lib/client";
-import { MoroError } from "src/lib/http";
-import type { McpToolItem, McpToolServerItem } from "src/lib/types";
+import { Form, Input, Modal, Spin, Switch, Tooltip } from "antd";
+import { ArrowLeft, BookOpen, Check, Copy, Edit3, Globe, Key, Layers, Play, Plug, Plus, Shield, Terminal, Trash2, Wrench, Zap } from "lucide-react";
+import { useState } from "react";
+import { API_BASE } from "src/lib/client";
+import type { McpToolItem } from "src/lib/types";
+import { useServerDetail } from "../hooks/useServerDetail";
 
 // ── MCP Meta-Tools (the 3 tools exposed to AI agents) ──────────────────────
 
@@ -17,22 +16,22 @@ interface McpMetaTool {
 
 const MCP_META_TOOLS: McpMetaTool[] = [
   {
-    name: "get_overview",
-    description: "Returns a summary of all available actions and resources",
+    name: "list_actions",
+    description: "Lists all available actions with descriptions",
     icon: <Layers size={14} strokeWidth={1.5} />,
-    usage: "get_overview()",
+    usage: "list_actions()",
   },
   {
-    name: "get_docs",
-    description: "Returns detailed params, types, and examples for an action",
+    name: "get_action_docs",
+    description: "Returns detailed params, types, and examples for a specific action",
     icon: <BookOpen size={14} strokeWidth={1.5} />,
-    usage: 'get_docs({ action: "variables.set" })',
+    usage: 'get_action_docs({ action: "kv.set" })',
   },
   {
     name: "execute",
     description: "Validates payload and executes the specified action",
     icon: <Play size={14} strokeWidth={1.5} />,
-    usage: 'execute({ action: "variables.set", payload: { ... } })',
+    usage: 'execute({ action: "kv.set", payload: { ... } })',
   },
 ];
 
@@ -41,44 +40,19 @@ const MCP_META_TOOLS: McpMetaTool[] = [
 // ══════════════════════════════════════════════════════════════════════════════
 
 export default function McpServerDetailPage() {
-  const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
-  const [server, setServer] = useState<McpToolServerItem | null>(null);
-  const [tools, setTools] = useState<McpToolItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { id, server, tools, loading, isBuiltin, handleToggleTool, handleCreateTool, handleEditServer, handleDeleteServer, handleDeleteTool, navigate } =
+    useServerDetail();
+
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"tools" | "config">("tools");
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editLoading, setEditLoading] = useState(false);
+  const [form] = Form.useForm();
 
-  const fetchData = useCallback(async () => {
-    if (!id) return;
-    setLoading(true);
-    try {
-      const [srv, toolsRes] = await Promise.all([client.mcpToolServers.get(id), client.mcpToolServers.listTools(id)]);
-      setServer(srv);
-      setTools(toolsRes.items);
-    } catch {
-      message.error("Failed to load MCP server");
-      navigate("/mcp-servers");
-    } finally {
-      setLoading(false);
-    }
-  }, [id, navigate]);
-
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
-
-  const handleToggleTool = async (tool: McpToolItem) => {
-    if (!id) return;
-    try {
-      const updated = await client.mcpToolServers.updateTool(id, tool.id, {
-        isActive: !tool.isActive,
-      });
-      setTools((prev) => prev.map((t) => (t.id === tool.id ? updated : t)));
-    } catch (err) {
-      if (err instanceof MoroError) message.error(err.message);
-    }
-  };
+  // ── New Tool modal state ────────────────────────────────────────────────
+  const [newToolOpen, setNewToolOpen] = useState(false);
+  const [newToolLoading, setNewToolLoading] = useState(false);
+  const [newToolForm] = Form.useForm();
 
   const copyToClipboard = (text: string, field: string) => {
     navigator.clipboard.writeText(text);
@@ -86,7 +60,22 @@ export default function McpServerDetailPage() {
     setTimeout(() => setCopiedField(null), 2000);
   };
 
-  const isBuiltin = server?.type === "builtin";
+  const handleEditSubmit = async () => {
+    try {
+      const values = await form.validateFields();
+      setEditLoading(true);
+      await handleEditServer({
+        name: values.name,
+        description: values.description || "",
+      });
+      setEditDialogOpen(false);
+    } catch {
+      // Form validation failed or edit failed
+    } finally {
+      setEditLoading(false);
+    }
+  };
+
   const apiOrigin = API_BASE || `${window.location.protocol}//${window.location.hostname}:18080`;
   const mcpEndpoint = `${apiOrigin}/api/mcp/${id}`;
 
@@ -115,36 +104,68 @@ export default function McpServerDetailPage() {
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="flex items-center justify-center w-10 h-10 rounded-md border border-hairline-soft bg-canvas text-muted shrink-0">
-              <Shield size={18} strokeWidth={1.5} />
+              {isBuiltin ? <Shield size={18} strokeWidth={1.5} /> : <Plug size={18} strokeWidth={1.5} />}
             </div>
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="font-display text-[28px] font-normal text-ink tracking-[-0.56px] m-0 leading-tight">{server.name}</h1>
-                <span className="font-mono text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#dfa88f]/30 text-[#8a5a3a]">Built-in</span>
+                <span
+                  className={`font-mono text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full ${
+                    isBuiltin ? "bg-[#dfa88f]/30 text-[#8a5a3a]" : "bg-ink/10 text-ink"
+                  }`}
+                >
+                  {isBuiltin ? "Built-in" : "Custom"}
+                </span>
               </div>
               {server.description && <p className="text-[13px] text-muted mt-1 m-0">{server.description}</p>}
             </div>
           </div>
 
-          <div className="flex items-center gap-1 p-0.5 rounded-md bg-surface-strong border border-hairline">
-            <button
-              onClick={() => setActiveTab("tools")}
-              className={`flex items-center gap-1.5 h-[30px] px-3 rounded-md font-mono text-[11px] uppercase tracking-wider border-none cursor-pointer transition-all duration-150 ${
-                activeTab === "tools" ? "bg-canvas text-ink shadow-sm" : "bg-transparent text-muted hover:text-ink"
-              }`}
-            >
-              <Wrench size={12} />
-              Tools
-            </button>
-            <button
-              onClick={() => setActiveTab("config")}
-              className={`flex items-center gap-1.5 h-[30px] px-3 rounded-md font-mono text-[11px] uppercase tracking-wider border-none cursor-pointer transition-all duration-150 ${
-                activeTab === "config" ? "bg-canvas text-ink shadow-sm" : "bg-transparent text-muted hover:text-ink"
-              }`}
-            >
-              <Terminal size={12} />
-              Connect
-            </button>
+          <div className="flex items-center gap-2">
+            {!isBuiltin && (
+              <div className="flex items-center gap-2 border-r border-hairline pr-3 mr-1">
+                <button
+                  onClick={() => {
+                    form.setFieldsValue({
+                      name: server.name,
+                      description: server.description,
+                    });
+                    setEditDialogOpen(true);
+                  }}
+                  className="flex items-center gap-1.5 h-[32px] px-3 rounded-md bg-transparent border border-hairline text-muted font-mono text-[11px] uppercase tracking-wider hover:border-hairline-strong hover:text-ink cursor-pointer transition-colors"
+                >
+                  <Edit3 size={12} />
+                  Edit
+                </button>
+                <button
+                  onClick={handleDeleteServer}
+                  className="flex items-center gap-1.5 h-[32px] px-3 rounded-md bg-transparent border border-[#cf2d56]/20 text-[#cf2d56] font-mono text-[11px] uppercase tracking-wider hover:bg-[#cf2d56]/5 hover:border-[#cf2d56]/40 cursor-pointer transition-colors"
+                >
+                  <Trash2 size={12} />
+                  Delete
+                </button>
+              </div>
+            )}
+            <div className="flex items-center gap-1 p-0.5 rounded-md bg-surface-strong border border-hairline">
+              <button
+                onClick={() => setActiveTab("tools")}
+                className={`flex items-center gap-1.5 h-[30px] px-3 rounded-md font-mono text-[11px] uppercase tracking-wider border-none cursor-pointer transition-all duration-150 ${
+                  activeTab === "tools" ? "bg-canvas text-ink shadow-sm" : "bg-transparent text-muted hover:text-ink"
+                }`}
+              >
+                <Wrench size={12} />
+                Tools
+              </button>
+              <button
+                onClick={() => setActiveTab("config")}
+                className={`flex items-center gap-1.5 h-[30px] px-3 rounded-md font-mono text-[11px] uppercase tracking-wider border-none cursor-pointer transition-all duration-150 ${
+                  activeTab === "config" ? "bg-canvas text-ink shadow-sm" : "bg-transparent text-muted hover:text-ink"
+                }`}
+              >
+                <Terminal size={12} />
+                Connect
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -152,11 +173,100 @@ export default function McpServerDetailPage() {
       {/* Content */}
       <div className="flex-1 overflow-y-auto px-8 py-8">
         {activeTab === "tools" ? (
-          <ToolsTab isBuiltin={isBuiltin} tools={tools} onToggle={handleToggleTool} />
+          <ToolsTab
+            id={id!}
+            isBuiltin={isBuiltin}
+            tools={tools}
+            onToggle={handleToggleTool}
+            onDeleteTool={handleDeleteTool}
+            onNewTool={() => setNewToolOpen(true)}
+            navigate={navigate}
+          />
         ) : (
           <ConfigTab mcpEndpoint={mcpEndpoint} copiedField={copiedField} onCopy={copyToClipboard} />
         )}
       </div>
+
+      {/* Edit Server Dialog */}
+      <Modal
+        title="Edit MCP Server"
+        open={editDialogOpen}
+        onOk={handleEditSubmit}
+        onCancel={() => {
+          form.resetFields();
+          setEditDialogOpen(false);
+        }}
+        okText="Save"
+        confirmLoading={editLoading}
+        destroyOnClose
+      >
+        <Form form={form} layout="vertical" requiredMark={false} className="mt-4">
+          <Form.Item
+            name="name"
+            label={<span className="font-mono text-[11px] uppercase tracking-wider text-muted">Server Name</span>}
+            rules={[
+              { required: true, message: "Server name is required" },
+              {
+                pattern: /^[a-zA-Z0-9_-]+$/,
+                message: "Only alphanumeric, hyphens, underscores",
+              },
+              { max: 100, message: "Max 100 characters" },
+            ]}
+          >
+            <Input placeholder="e.g. my-tools" className="font-mono" />
+          </Form.Item>
+          <Form.Item
+            name="description"
+            label={<span className="font-mono text-[11px] uppercase tracking-wider text-muted">Description (optional)</span>}
+            rules={[{ max: 1000, message: "Max 1000 characters" }]}
+          >
+            <Input.TextArea rows={3} placeholder="What tools will this server contain?" showCount maxLength={1000} />
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      {/* New Tool Dialog */}
+      <Modal
+        title="New Tool"
+        open={newToolOpen}
+        onOk={async () => {
+          try {
+            const values = await newToolForm.validateFields();
+            setNewToolLoading(true);
+            await handleCreateTool(values.name);
+            setNewToolOpen(false);
+            newToolForm.resetFields();
+          } catch {
+            // validation or API error
+          } finally {
+            setNewToolLoading(false);
+          }
+        }}
+        onCancel={() => {
+          newToolForm.resetFields();
+          setNewToolOpen(false);
+        }}
+        okText="Create"
+        confirmLoading={newToolLoading}
+        destroyOnClose
+      >
+        <Form form={newToolForm} layout="vertical" requiredMark={false} className="mt-4">
+          <Form.Item
+            name="name"
+            label={<span className="font-mono text-[11px] uppercase tracking-wider text-muted">Tool Name</span>}
+            rules={[
+              { required: true, message: "Tool name is required" },
+              {
+                pattern: /^[a-z0-9_]+$/,
+                message: "Must be snake_case (lowercase alphanumeric + underscore)",
+              },
+              { max: 100, message: "Max 100 characters" },
+            ]}
+          >
+            <Input placeholder="e.g. get_weather" className="font-mono" />
+          </Form.Item>
+        </Form>
+      </Modal>
     </div>
   );
 }
@@ -164,27 +274,81 @@ export default function McpServerDetailPage() {
 // ── Tools Tab ─────────────────────────────────────────────────────────────────
 
 function ToolsTab({
+  id,
   isBuiltin,
   tools,
   onToggle,
+  onDeleteTool,
+  onNewTool,
+  navigate,
 }: {
+  id: string;
   isBuiltin: boolean;
   tools: McpToolItem[];
   onToggle: (t: McpToolItem) => void;
+  onDeleteTool: (t: McpToolItem) => void;
+  onNewTool: () => void;
+  navigate: (path: string) => void;
 }) {
   if (!isBuiltin) {
     return (
-      <div className="flex flex-col gap-2">
-        {tools.map((tool) => (
-          <div key={tool.id} className="flex items-center justify-between px-4 py-3 border border-hairline rounded-md bg-surface-card">
-            <div className="flex items-center gap-3 min-w-0">
-              <Wrench size={14} className="text-muted shrink-0" />
-              <span className="font-mono text-[13px] text-ink font-medium truncate">{tool.name}</span>
-              <span className="text-[12px] text-muted truncate">{tool.description}</span>
+      <div className="max-w-[800px] mx-auto flex flex-col gap-6">
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Wrench size={14} className="text-muted" />
+              <span className="font-mono text-[11px] uppercase tracking-wider text-muted">MCP Tools ({tools.length})</span>
             </div>
-            <Switch size="small" checked={!!tool.isActive} onChange={() => onToggle(tool)} />
+            <button
+              onClick={onNewTool}
+              className="inline-flex items-center gap-1.5 h-[32px] px-3.5 rounded-md bg-ink text-canvas font-medium text-[12px] hover:bg-opacity-90 cursor-pointer transition-colors border-none"
+            >
+              <Plus size={13} />
+              New Tool
+            </button>
           </div>
-        ))}
+
+          {tools.length === 0 ? (
+            <div className="flex flex-col items-center justify-center p-8 border border-dashed border-hairline rounded-md bg-surface-card text-center min-h-[200px]">
+              <Wrench size={24} className="text-muted-soft mb-2" strokeWidth={1.5} />
+              <span className="font-mono text-[11px] uppercase tracking-wider text-muted font-semibold">No Tools Created Yet</span>
+              <p className="text-[12px] text-muted-soft mt-1.5 mb-0 max-w-[320px] leading-relaxed">
+                Create custom tools that your AI agents can execute in an isolated JavaScript sandbox.
+              </p>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-2">
+              {tools.map((tool, idx) => (
+                <div
+                  key={tool.id}
+                  onClick={() => navigate(`/mcp-servers/${id}/tools/${tool.id}`)}
+                  className="flex items-center justify-between px-4 py-3.5 border border-hairline rounded-md bg-surface-card hover:border-hairline-strong transition-all duration-150 ease-in-out cursor-pointer group opacity-0 animate-[fadeInUp_0.35s_cubic-bezier(0.16,1,0.3,1)_forwards]"
+                  style={{ animationDelay: `${idx * 0.04}s` }}
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="flex items-center justify-center w-8 h-8 rounded-md bg-canvas border border-hairline-soft text-muted shrink-0">
+                      <Wrench size={14} strokeWidth={1.5} />
+                    </div>
+                    <div className="min-w-0">
+                      <span className="font-mono text-[13px] text-ink font-medium block truncate group-hover:text-ink transition-colors">{tool.name}</span>
+                      <span className="text-[12px] text-muted block truncate mt-0.5">{tool.description}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4 shrink-0" onClick={(e) => e.stopPropagation()}>
+                    <Switch size="small" checked={!!tool.isActive} onChange={() => onToggle(tool)} />
+                    <button
+                      onClick={() => onDeleteTool(tool)}
+                      className="p-1.5 rounded hover:bg-canvas text-muted hover:text-[#cf2d56] transition-colors cursor-pointer border-none bg-transparent"
+                      title="Delete tool"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     );
   }
@@ -238,7 +402,7 @@ function ConfigTab({
   const cursorConfig = JSON.stringify(
     {
       mcpServers: {
-        "moro-llm-toolkit": {
+        "agent-hands": {
           url: `${mcpEndpoint}`,
           headers: {
             Authorization: "Bearer <YOUR_API_KEY>",
@@ -250,12 +414,12 @@ function ConfigTab({
     2,
   );
 
-  const claudeCodeCmd = `claude mcp add moro-toolkit ${mcpEndpoint} --header "Authorization: Bearer <YOUR_API_KEY>"`;
+  const claudeCodeCmd = `claude mcp add agent-hands ${mcpEndpoint} --header "Authorization: Bearer <YOUR_API_KEY>"`;
 
   const antigravityConfig = JSON.stringify(
     {
       mcpServers: {
-        "moro-llm-toolkit": {
+        "agent-hands": {
           serverUrl: `${mcpEndpoint}`,
           headers: {
             Authorization: "Bearer <YOUR_API_KEY>",

@@ -1,33 +1,33 @@
 <feature>
   <meta>
     <id>table_create</id>
-    <title>Tạo bảng mới</title>
+    <title>Create new table</title>
     <group>Dynamic Table</group>
     <status>done</status>
     <priority>p0</priority>
   </meta>
 
   <overview>
-    User tạo một bảng (table) mới trong database. Mỗi bảng có tên, mô tả,
-    và tập hợp cột tuỳ chỉnh. Bảng mới tạo có sẵn cột "Title" mặc định.
+    User creates a new table in a database. Each table has a name, description,
+    and custom column set. Newly created tables come with a default "Title" column.
   </overview>
 
   <user-stories>
     <story id="US-01">
       <actor>User</actor>
-      <action>click "New Table" trên trang Tables</action>
-      <benefit>tạo database tuỳ chỉnh để lưu trữ và quản lý dữ liệu có cấu trúc</benefit>
+      <action>click "New Table" on the Tables page</action>
+      <benefit>create a custom database to store and manage structured data</benefit>
     </story>
   </user-stories>
 </feature>
 
 ## Server
-- [x] POST /api/databases/:dbId/tables { name, description?, icon? } → tạo table mới
-- [x] Table mới tự động có cột "Title" (type: text, primary)
-- [x] Tên bảng unique trong database
+- [x] POST /api/databases/:dbId/tables { name, description?, icon? } → create new table
+- [x] New table automatically has a "Title" column (type: text, primary)
+- [x] Table name unique within database
 
 ## Web
-- [x] Nút "New Table" trên trang danh sách tables
-- [x] Click → dialog: Tên (bắt buộc), Mô tả (optional), Icon (emoji picker)
-- [x] Save → bảng mới xuất hiện trong danh sách
-- [x] Cancel → đóng dialog, không tạo
+- [x] "New Table" button on the table list page
+- [x] Click → dialog: Name (required), Description (optional), Icon (emoji picker)
+- [x] Save → new table appears in the list
+- [x] Cancel → close dialog, no creation

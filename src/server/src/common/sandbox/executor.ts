@@ -88,7 +88,7 @@ export interface SandboxOptions {
 // ── Implementation ──────────────────────────────────────────────────────────
 
 function getVenvDir(toolId: string): string {
-  const dataDir = process.env.DATA_DIR ?? `${process.env.HOME}/.moro-llm-toolkit`;
+  const dataDir = process.env.DATA_DIR ?? `${process.env.HOME}/.agent-hands`;
   return join(dataDir, "tool-venvs", toolId);
 }
 
@@ -273,12 +273,12 @@ class _VariablesHelper:
     def __init__(self, http):
         self._http = http
 
-    def get(self, namespace_id, key, namespace="default"):
-        return self._http.get(f"/api/variable-namespaces/{namespace_id}/variables/by-key/{key}?namespace={namespace}")
+    def get(self, key):
+        return self._http.get(f"/api/kv-store/by-key/{key}")
 
-    def set(self, namespace_id, key, value, namespace="default", ttl=0):
-        return self._http.post(f"/api/variable-namespaces/{namespace_id}/variables", {
-            "key": key, "value": str(value), "namespace": namespace, "ttl": ttl
+    def set(self, key, value, ttl=0):
+        return self._http.post("/api/kv-store", {
+            "key": key, "value": str(value), "ttl": ttl
         })
 
 
@@ -286,14 +286,14 @@ class _TablesHelper:
     def __init__(self, http):
         self._http = http
 
-    def query(self, db_id, table_id, filters=None, page=1, limit=50):
+    def query(self, project_id, table_id, filters=None, page=1, limit=50):
         params = f"page={page}&limit={limit}"
         if filters:
             params += f"&filter={json.dumps(filters)}"
-        return self._http.get(f"/api/databases/{db_id}/tables/{table_id}/rows?{params}")
+        return self._http.get(f"/api/datatables/{project_id}/tables/{table_id}/rows?{params}")
 
-    def insert(self, db_id, table_id, data):
-        return self._http.post(f"/api/databases/{db_id}/tables/{table_id}/rows", {"data": data})
+    def insert(self, project_id, table_id, data):
+        return self._http.post(f"/api/datatables/{project_id}/tables/{table_id}/rows", {"data": data})
 
 
 class _Context:
@@ -440,7 +440,7 @@ export async function executePythonSandbox(
  * Clean up venvs not used for more than maxAgeDays.
  */
 export function cleanupStaleVenvs(maxAgeDays = 7): number {
-  const dataDir = process.env.DATA_DIR ?? `${process.env.HOME}/.moro-llm-toolkit`;
+  const dataDir = process.env.DATA_DIR ?? `${process.env.HOME}/.agent-hands`;
   const venvBaseDir = join(dataDir, "tool-venvs");
   if (!existsSync(venvBaseDir)) return 0;
 

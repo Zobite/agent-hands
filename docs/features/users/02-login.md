@@ -1,41 +1,41 @@
 <feature>
   <meta>
     <id>user_login</id>
-    <title>Đăng nhập (Login)</title>
+    <title>Login</title>
     <group>Users</group>
     <status>done</status>
     <priority>p0</priority>
   </meta>
 
   <overview>
-    User đăng nhập bằng username/email và password. Hệ thống cấp JWT token
-    để xác thực các request tiếp theo. Mọi route (trừ public routes)
-    đều yêu cầu đăng nhập.
+    User logs in with username/email and password. System issues a JWT token
+    for authenticating subsequent requests. All routes (except public routes)
+    require login.
   </overview>
 
   <user-stories>
     <story id="US-01">
       <actor>User</actor>
-      <action>nhập username/email và password, nhấn Login</action>
-      <benefit>truy cập hệ thống và sử dụng các tính năng</benefit>
+      <action>enter username/email and password, click Login</action>
+      <benefit>access the system and use features</benefit>
     </story>
     <story id="US-02">
-      <actor>User chưa đăng nhập</actor>
-      <action>truy cập bất kỳ trang nào</action>
-      <benefit>tự động redirect về trang login</benefit>
+      <actor>Unauthenticated user</actor>
+      <action>access any page</action>
+      <benefit>automatically redirected to login page</benefit>
     </story>
   </user-stories>
 </feature>
 
 ## Server
-- [x] POST /api/auth/login { username, password } → trả JWT token
-- [x] Token có thời hạn (mặc định 24h), hết hạn → redirect login
-- [x] Tất cả API routes (trừ /api/auth/*) yêu cầu token hợp lệ, trả 401 nếu thiếu/hết hạn
-- [x] Trả lỗi cụ thể: sai password, user không tồn tại
+- [x] POST /api/auth/login { username, password } → return JWT token
+- [x] Token has expiration (default 24h), expired → redirect to login
+- [x] All API routes (except /api/auth/*) require valid token, return 401 if missing/expired
+- [x] Return specific errors: wrong password, user not found
 
 ## Web
-- [x] Trang login: form Username/Email + Password
-- [x] Nhấn Login → validate input, gọi API POST /api/auth/login
-- [x] Thành công → lưu token, redirect về trang chính
-- [x] Thất bại → hiển thị thông báo lỗi cụ thể
-- [x] User chưa đăng nhập → redirect về login
+- [x] Login page: form Username/Email + Password
+- [x] Click Login → validate input, call API POST /api/auth/login
+- [x] Success → save token, redirect to main page
+- [x] Failure → display specific error message
+- [x] Unauthenticated user → redirect to login

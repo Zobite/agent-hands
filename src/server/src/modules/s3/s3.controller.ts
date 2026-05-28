@@ -64,7 +64,7 @@ export function registerS3Routes(app: FastifyInstance) {
   app.addHook("preHandler", async (req, reply) => {
     const requestId = reqIdGen();
     reply.header("x-amz-request-id", requestId);
-    reply.header("Server", "MoroS3");
+    reply.header("Server", "AgentHandsS3");
 
     const authResult = await verifyS3Auth(
       req.method,

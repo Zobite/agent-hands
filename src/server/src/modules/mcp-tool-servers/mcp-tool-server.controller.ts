@@ -1,7 +1,8 @@
 import type { FastifyInstance } from "fastify";
 import type { ZodTypeProvider } from "fastify-type-provider-zod";
+import { z } from "zod";
 import { requireAuth } from "../../common/auth/middleware.js";
-import { executePythonSandbox } from "../../common/sandbox/executor.js";
+import { executeMcpTool } from "./mcp-tool-executor.js";
 import {
   createMcpServerBodySchema,
   updateMcpServerBodySchema,
@@ -32,6 +33,7 @@ import {
   createMcpToolLog,
   listMcpToolLogs,
 } from "./mcp-tool-server.service.js";
+import { runMcpCodingAgent, type McpAgentEvent } from "./mcp-tool-server.coding-agent.js";
 
 // ── Server Routes ───────────────────────────────────────────────────────────
 
@@ -95,6 +97,65 @@ export function registerMcpServerRoutes(app: FastifyInstance) {
     await deleteMcpServer(id);
     return reply.send({ id, deleted: true });
   });
+
+  // ── Coding Agent SSE Endpoint ────────────────────────────────────────────
+
+  const codingAgentBodySchema = z.object({
+    providerId: z.string().min(1),
+    model: z.string().min(1),
+    prompt: z.string().min(1),
+    currentCode: z.string().default(""),
+    serverId: z.string().min(1),
+    toolId: z.string().min(1),
+    toolName: z.string().default(""),
+    toolDescription: z.string().default(""),
+    inputSchema: z.string().default(""),
+    history: z.array(z.object({
+      role: z.enum(["user", "assistant"]),
+      content: z.string(),
+    })).default([]),
+  });
+
+  // POST /coding-agent — SSE stream of coding agent events
+  r.post(
+    "/coding-agent",
+    {
+      preHandler: [requireAuth],
+      schema: { body: codingAgentBodySchema },
+    },
+    async (req, reply) => {
+      const input = req.body as z.infer<typeof codingAgentBodySchema>;
+
+      // Extract auth token for test execution
+      const authHeader = req.headers.authorization;
+      const authToken = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : "";
+
+      // Set SSE headers
+      reply.raw.writeHead(200, {
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache",
+        Connection: "keep-alive",
+        "X-Accel-Buffering": "no",
+      });
+
+      const sendEvent = (event: McpAgentEvent) => {
+        reply.raw.write(`data: ${JSON.stringify(event)}\n\n`);
+      };
+
+      try {
+        await runMcpCodingAgent({ ...input, authToken }, sendEvent);
+        reply.raw.write(`data: ${JSON.stringify({ type: "stream_end" })}\n\n`);
+      } catch (err: unknown) {
+        console.error("[McpCodingAgent] Error:", err);
+        const message = err instanceof Error ? err.message : "Agent failed";
+        reply.raw.write(
+          `data: ${JSON.stringify({ type: "error", message })}\n\n`,
+        );
+      } finally {
+        reply.raw.end();
+      }
+    },
+  );
 }
 
 // ── Tool Routes (nested under /:id/tools) ───────────────────────────────────
@@ -201,7 +262,7 @@ export function registerMcpToolRoutes(app: FastifyInstance) {
     return reply.send(result);
   });
 
-  // POST /:toolId/test — test execute tool
+  // POST /:toolId/test — test execute tool (uses JS executor)
   r.post(
     "/:toolId/test",
     { preHandler: [requireAuth], schema: { body: testMcpToolBodySchema } },
@@ -210,15 +271,18 @@ export function registerMcpToolRoutes(app: FastifyInstance) {
       const tool = await getMcpToolById(toolId);
       if (!tool) return reply.code(400).send({ error: "not_found", message: "Tool not found" });
 
-      const body = req.body as { params?: Record<string, unknown> };
+      const body = req.body as { params?: Record<string, unknown>; source?: "prod" | "draft" };
+
+      // Pick code based on source: "prod" = official code, "draft" = draftCode (fallback to code)
+      const codeToTest = body.source === "prod" ? tool.code : (tool.draftCode ?? tool.code);
 
       // Extract auth token for context SDK
       const authHeader = req.headers.authorization;
       const authToken = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : "";
 
-      const result = await executePythonSandbox(
+      const result = await executeMcpTool(
         tool.id,
-        tool.code,
+        codeToTest,
         body.params ?? {},
         {
           timeoutMs: 30_000,
@@ -243,4 +307,5 @@ export function registerMcpToolRoutes(app: FastifyInstance) {
       return reply.send(result);
     },
   );
+
 }

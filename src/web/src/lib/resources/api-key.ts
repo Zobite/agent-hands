@@ -1,5 +1,5 @@
 import type { HttpClient } from "../http";
-import type { ApiKeyItem, ApiKeyCreated, CreateApiKeyInput } from "../types";
+import type { ApiKeyCreated, ApiKeyItem, CreateApiKeyInput } from "../types";
 
 export class ApiKeysResource {
   constructor(private http: HttpClient) {}

@@ -1,44 +1,15 @@
+import { Form, Input, Modal, Select, Spin, Tag, Tooltip, message } from "antd";
+import { AlertTriangle, Box, Check, Copy, Cpu, Globe, Pencil, Plus, RefreshCw, Search, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import {
-  Modal,
-  Form,
-  Input,
-  Select,
-  message,
-  Spin,
-  Tooltip,
-  Tag,
-} from "antd";
-import {
-  Plus,
-  Trash2,
-  Pencil,
-  RefreshCw,
-  AlertTriangle,
-  Cpu,
-  Globe,
-  Box,
-  Search,
-  Copy,
-  Check,
-} from "lucide-react";
-import type {
-  LlmProviderItem,
-  LlmProviderType,
-  CreateLlmProviderInput,
-  UpdateLlmProviderInput,
-} from "src/lib/types";
-import { MoroError } from "src/lib/http";
 import { client } from "src/lib/client";
+import { AgentHandsError } from "src/lib/http";
+import type { CreateLlmProviderInput, LlmProviderItem, LlmProviderType, UpdateLlmProviderInput } from "src/lib/types";
 
 const { confirm } = Modal;
 
 // ── Provider metadata ────────────────────────────────────────────────────────
 
-const PROVIDER_META: Record<
-  LlmProviderType,
-  { label: string; defaultUrl: string; requiresKey: boolean }
-> = {
+const PROVIDER_META: Record<LlmProviderType, { label: string; defaultUrl: string; requiresKey: boolean }> = {
   openai: { label: "OpenAI", defaultUrl: "https://api.openai.com/v1", requiresKey: true },
   openrouter: { label: "OpenRouter", defaultUrl: "https://openrouter.ai/api/v1", requiresKey: true },
   anthropic: { label: "Anthropic", defaultUrl: "https://api.anthropic.com/v1", requiresKey: true },
@@ -91,7 +62,7 @@ export default function LlmProvidersPage() {
           setProviders((prev) => prev.filter((p) => p.id !== provider.id));
           message.success("Provider removed");
         } catch (err) {
-          if (err instanceof MoroError) message.error(err.message);
+          if (err instanceof AgentHandsError) message.error(err.message);
         }
       },
     });
@@ -104,7 +75,7 @@ export default function LlmProvidersPage() {
       setProviders((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
       message.success(`Refreshed ${updated.models.length} models`);
     } catch (err) {
-      if (err instanceof MoroError) {
+      if (err instanceof AgentHandsError) {
         message.error(err.message);
       } else {
         message.error("Failed to refresh models");
@@ -122,18 +93,13 @@ export default function LlmProvidersPage() {
       <div className="px-8 pt-10 pb-6 shrink-0 border-b border-hairline">
         <div className="flex items-center gap-2 mb-3">
           <Cpu size={16} className="text-muted" />
-          <span className="font-mono text-[11px] uppercase tracking-wide text-muted">
-            Administration / LLM Providers
-          </span>
+          <span className="font-mono text-[11px] uppercase tracking-wide text-muted">Administration / LLM Providers</span>
         </div>
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div>
-            <h1 className="font-display text-[32px] font-normal text-ink tracking-[-0.64px] m-0 leading-tight">
-              LLM Providers
-            </h1>
+            <h1 className="font-display text-[32px] font-normal text-ink tracking-[-0.64px] m-0 leading-tight">LLM Providers</h1>
             <p className="text-[13px] text-muted mt-2 m-0 leading-relaxed max-w-[520px]">
-              Configure large language model providers. Each provider stores an API key and a cached list
-              of available models fetched at creation time.
+              Configure large language model providers. Each provider stores an API key and a cached list of available models fetched at creation time.
             </p>
           </div>
           <button
@@ -156,9 +122,7 @@ export default function LlmProvidersPage() {
           /* ── Empty State ─────────────────────────────── */
           <div className="flex flex-col items-center justify-center min-h-[300px] flex-1 border border-dashed border-hairline-strong rounded-md bg-transparent m-auto max-w-[600px]">
             <Cpu size={32} className="text-muted-soft mb-4" strokeWidth={1.5} />
-            <div className="font-mono text-[12px] text-muted-soft uppercase tracking-wide mb-6">
-              NO PROVIDERS CONFIGURED
-            </div>
+            <div className="font-mono text-[12px] text-muted-soft uppercase tracking-wide mb-6">NO PROVIDERS CONFIGURED</div>
             <button
               onClick={() => setCreateModalOpen(true)}
               className="bg-transparent border border-hairline-strong text-ink px-4 py-2 rounded-md font-medium text-[13px] hover:border-ink transition-colors cursor-pointer"
@@ -181,14 +145,12 @@ export default function LlmProvidersPage() {
                     <Cpu size={16} strokeWidth={1.5} />
                   </div>
                   <div className="min-w-0">
-                    <div className="text-[14px] font-medium text-ink tracking-tight truncate">
-                      {provider.name}
-                    </div>
+                    <div className="text-[14px] font-medium text-ink tracking-tight truncate">{provider.name}</div>
                     <div className="flex items-center gap-2 mt-0.5">
                       <Tag
                         bordered={false}
                         className="!text-[10px] !font-mono !uppercase !tracking-wider !m-0 !px-1.5 !py-0 !rounded-sm"
-                        style={{ background: 'var(--color-surface-strong)', color: 'var(--color-ink)' }}
+                        style={{ background: "var(--color-surface-strong)", color: "var(--color-ink)" }}
                       >
                         {PROVIDER_META[provider.providerType]?.label ?? provider.providerType}
                       </Tag>
@@ -198,19 +160,13 @@ export default function LlmProvidersPage() {
 
                 {/* Key */}
                 <div className="w-[140px] shrink-0 hidden lg:block">
-                  <div className="font-mono text-[10px] text-muted-soft uppercase tracking-wider mb-0.5">
-                    API Key
-                  </div>
-                  <span className="font-mono text-[12px] text-muted tracking-wide">
-                    {provider.apiKey || "—"}
-                  </span>
+                  <div className="font-mono text-[10px] text-muted-soft uppercase tracking-wider mb-0.5">API Key</div>
+                  <span className="font-mono text-[12px] text-muted tracking-wide">{provider.apiKey || "—"}</span>
                 </div>
 
                 {/* Base URL */}
                 <div className="w-[160px] shrink-0 hidden xl:block">
-                  <div className="font-mono text-[10px] text-muted-soft uppercase tracking-wider mb-0.5">
-                    Base URL
-                  </div>
+                  <div className="font-mono text-[10px] text-muted-soft uppercase tracking-wider mb-0.5">Base URL</div>
                   <Tooltip title={provider.baseUrl || PROVIDER_META[provider.providerType]?.defaultUrl || "—"}>
                     <span className="font-mono text-[11px] text-muted-soft tracking-wide flex items-center gap-1 truncate">
                       <Globe size={10} className="shrink-0" />
@@ -221,9 +177,7 @@ export default function LlmProvidersPage() {
 
                 {/* Models Count — clickable */}
                 <div className="w-[80px] shrink-0">
-                  <div className="font-mono text-[10px] text-muted-soft uppercase tracking-wider mb-0.5">
-                    Models
-                  </div>
+                  <div className="font-mono text-[10px] text-muted-soft uppercase tracking-wider mb-0.5">Models</div>
                   <button
                     onClick={() => setViewModelsProvider(provider)}
                     className="flex items-center gap-1 font-mono text-[12px] text-ink bg-transparent border-none p-0 cursor-pointer hover:underline underline-offset-2 transition-all"
@@ -236,12 +190,8 @@ export default function LlmProvidersPage() {
 
                 {/* Created */}
                 <div className="w-[90px] shrink-0 hidden md:block">
-                  <div className="font-mono text-[10px] text-muted-soft uppercase tracking-wider mb-0.5">
-                    Created
-                  </div>
-                  <span className="font-mono text-[11px] text-muted-soft tracking-wide">
-                    {formatDate(provider.createdAt)}
-                  </span>
+                  <div className="font-mono text-[10px] text-muted-soft uppercase tracking-wider mb-0.5">Created</div>
+                  <span className="font-mono text-[11px] text-muted-soft tracking-wide">{formatDate(provider.createdAt)}</span>
                 </div>
 
                 {/* Actions */}
@@ -260,10 +210,7 @@ export default function LlmProvidersPage() {
                       disabled={refreshingId === provider.id}
                       className="inline-flex items-center justify-center w-8 h-8 bg-transparent border-none cursor-pointer text-muted-soft rounded-sm p-0 transition-all duration-100 hover:text-ink disabled:opacity-40"
                     >
-                      <RefreshCw
-                        size={14}
-                        className={refreshingId === provider.id ? "animate-spin" : ""}
-                      />
+                      <RefreshCw size={14} className={refreshingId === provider.id ? "animate-spin" : ""} />
                     </button>
                   </Tooltip>
                   <Tooltip title="Delete">
@@ -312,11 +259,7 @@ export default function LlmProvidersPage() {
       />
 
       {/* Models View Modal */}
-      <ModelsViewModal
-        open={!!viewModelsProvider}
-        provider={viewModelsProvider ?? undefined}
-        onClose={() => setViewModelsProvider(null)}
-      />
+      <ModelsViewModal open={!!viewModelsProvider} provider={viewModelsProvider ?? undefined} onClose={() => setViewModelsProvider(null)} />
     </div>
   );
 }
@@ -384,7 +327,7 @@ function ProviderFormModal({
       form.resetFields();
       message.success(isEdit ? "Provider updated" : `Provider created with ${saved.models.length} models`);
     } catch (err) {
-      if (err instanceof MoroError) {
+      if (err instanceof AgentHandsError) {
         message.error(err.message);
       } else {
         message.error(isEdit ? "Failed to update provider" : "Failed to create provider");
@@ -398,11 +341,7 @@ function ProviderFormModal({
 
   return (
     <Modal
-      title={
-        <span className="font-mono text-[14px]">
-          {isEdit ? "Edit Provider" : "Add LLM Provider"}
-        </span>
-      }
+      title={<span className="font-mono text-[14px]">{isEdit ? "Edit Provider" : "Add LLM Provider"}</span>}
       open={open}
       onCancel={onClose}
       footer={null}
@@ -417,25 +356,13 @@ function ProviderFormModal({
         style={{ marginTop: 16 }}
         initialValues={{ providerType: "openai", apiKey: "", baseUrl: "" }}
       >
-        <Form.Item
-          name="name"
-          label="Name"
-          rules={[{ required: true, message: "Provider name is required" }]}
-        >
+        <Form.Item name="name" label="Name" rules={[{ required: true, message: "Provider name is required" }]}>
           <Input autoFocus placeholder="e.g. My OpenAI, Production Router" />
         </Form.Item>
 
         {!isEdit && (
-          <Form.Item
-            name="providerType"
-            label="Provider"
-            rules={[{ required: true, message: "Select a provider type" }]}
-          >
-            <Select
-              options={PROVIDER_OPTIONS}
-              onChange={(v: LlmProviderType) => setSelectedType(v)}
-              placeholder="Select provider"
-            />
+          <Form.Item name="providerType" label="Provider" rules={[{ required: true, message: "Select a provider type" }]}>
+            <Select options={PROVIDER_OPTIONS} onChange={(v: LlmProviderType) => setSelectedType(v)} placeholder="Select provider" />
           </Form.Item>
         )}
 
@@ -445,30 +372,18 @@ function ProviderFormModal({
             label={isEdit ? "API Key (leave blank to keep current)" : "API Key"}
             rules={isEdit ? [] : [{ required: meta?.requiresKey, message: "API key is required" }]}
           >
-            <Input.Password
-              placeholder={isEdit ? "Enter new key to update" : "sk-..."}
-              style={{ fontFamily: "var(--font-mono)" }}
-            />
+            <Input.Password placeholder={isEdit ? "Enter new key to update" : "sk-..."} style={{ fontFamily: "var(--font-mono)" }} />
           </Form.Item>
         )}
 
-        <Form.Item
-          name="baseUrl"
-          label="Base URL"
-          tooltip="Leave blank to use the provider's default endpoint"
-        >
-          <Input
-            placeholder={meta?.defaultUrl || "https://..."}
-            style={{ fontFamily: "var(--font-mono)", fontSize: 13 }}
-          />
+        <Form.Item name="baseUrl" label="Base URL" tooltip="Leave blank to use the provider's default endpoint">
+          <Input placeholder={meta?.defaultUrl || "https://..."} style={{ fontFamily: "var(--font-mono)", fontSize: 13 }} />
         </Form.Item>
 
         {loading && (
           <div className="flex items-center gap-2 px-3 py-2 mb-4 border border-dashed border-hairline rounded-md bg-canvas-soft">
             <Spin size="small" />
-            <span className="font-mono text-[12px] text-muted">
-              Connecting to provider & fetching models...
-            </span>
+            <span className="font-mono text-[12px] text-muted">Connecting to provider & fetching models...</span>
           </div>
         )}
 
@@ -514,9 +429,7 @@ function ModelsViewModal({
   const filtered = useMemo(() => {
     if (!search.trim()) return models;
     const q = search.toLowerCase();
-    return models.filter(
-      (m) => m.toLowerCase().includes(q),
-    );
+    return models.filter((m) => m.toLowerCase().includes(q));
   }, [models, search]);
 
   const handleCopy = (modelId: string) => {
@@ -548,10 +461,7 @@ function ModelsViewModal({
     >
       {/* Search */}
       <div className="relative mt-3 mb-3">
-        <Search
-          size={14}
-          className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-soft pointer-events-none"
-        />
+        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-soft pointer-events-none" />
         <input
           type="text"
           value={search}
@@ -564,13 +474,9 @@ function ModelsViewModal({
       {/* Count + info */}
       <div className="flex items-center justify-between mb-2 px-1">
         <span className="font-mono text-[10px] uppercase tracking-wider text-muted-soft">
-          {filtered.length === models.length
-            ? `${models.length} models`
-            : `${filtered.length} / ${models.length} models`}
+          {filtered.length === models.length ? `${models.length} models` : `${filtered.length} / ${models.length} models`}
         </span>
-        <span className="font-mono text-[10px] text-muted-soft">
-          Click ID to copy
-        </span>
+        <span className="font-mono text-[10px] text-muted-soft">Click ID to copy</span>
       </div>
 
       {/* Model list */}
@@ -589,16 +495,11 @@ function ModelsViewModal({
               onClick={() => handleCopy(model)}
               title={`Copy: ${model}`}
             >
-              <span className="font-mono text-[12px] text-ink truncate flex-1">
-                {model}
-              </span>
+              <span className="font-mono text-[12px] text-ink truncate flex-1">{model}</span>
               {copiedId === model ? (
                 <Check size={12} className="text-green-600 shrink-0 ml-2" />
               ) : (
-                <Copy
-                  size={12}
-                  className="text-muted-soft opacity-0 group-hover/row:opacity-100 shrink-0 ml-2 transition-opacity"
-                />
+                <Copy size={12} className="text-muted-soft opacity-0 group-hover/row:opacity-100 shrink-0 ml-2 transition-opacity" />
               )}
             </div>
           ))

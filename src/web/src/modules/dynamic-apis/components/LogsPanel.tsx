@@ -70,21 +70,14 @@ export function LogsPanel({ logs, loading, onRefresh }: LogsPanelProps) {
               className="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-canvas transition-colors"
               onClick={() => setExpandedId(isExpanded ? null : log.id)}
             >
-              <span className="text-muted-soft shrink-0">
-                {isExpanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
-              </span>
-              <span
-                className="font-mono text-[11px] font-semibold"
-                style={{ color: log.statusCode < 400 ? "#1f8a65" : "#cf2d56" }}
-              >
+              <span className="text-muted-soft shrink-0">{isExpanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}</span>
+              <span className="font-mono text-[11px] font-semibold" style={{ color: log.statusCode < 400 ? "#1f8a65" : "#cf2d56" }}>
                 {log.statusCode}
               </span>
               <span className="font-mono text-[11px] text-muted">{log.method}</span>
               <span className="font-mono text-[11px] text-ink truncate flex-1">{log.path}</span>
               <span className="font-mono text-[10px] text-muted-soft">{log.executionTimeMs}ms</span>
-              <span className="font-mono text-[10px] text-muted-soft">
-                {new Date(log.createdAt).toLocaleTimeString()}
-              </span>
+              <span className="font-mono text-[10px] text-muted-soft">{new Date(log.createdAt).toLocaleTimeString()}</span>
             </div>
 
             {isExpanded && (

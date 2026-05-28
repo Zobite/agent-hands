@@ -4,7 +4,7 @@ import type { ActionDefinition } from "../registry.js";
 export const storageActions: ActionDefinition[] = [
   {
     name: "storage.list_buckets",
-    category: "Storage",
+    category: "Object Storage",
     description: "List all storage buckets",
     params: [],
     schema: z.object({}),
@@ -16,7 +16,7 @@ export const storageActions: ActionDefinition[] = [
   },
   {
     name: "storage.list_objects",
-    category: "Storage",
+    category: "Object Storage",
     description: "List objects (files) in a bucket",
     params: [
       { name: "bucketName", type: "string", required: true, description: "Bucket name" },
@@ -38,7 +38,7 @@ export const storageActions: ActionDefinition[] = [
   },
   {
     name: "storage.get_object_info",
-    category: "Storage",
+    category: "Object Storage",
     description: "Get metadata for a specific object (size, type, URLs)",
     params: [
       { name: "bucketName", type: "string", required: true, description: "Bucket name" },
@@ -55,7 +55,7 @@ export const storageActions: ActionDefinition[] = [
   },
   {
     name: "storage.get_download_url",
-    category: "Storage",
+    category: "Object Storage",
     description: "Generate a pre-signed download URL",
     params: [
       { name: "bucketName", type: "string", required: true, description: "Bucket name" },
@@ -77,7 +77,7 @@ export const storageActions: ActionDefinition[] = [
   },
   {
     name: "storage.delete_object",
-    category: "Storage",
+    category: "Object Storage",
     description: "Delete an object from a bucket",
     params: [
       { name: "bucketName", type: "string", required: true, description: "Bucket name" },

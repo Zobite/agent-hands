@@ -1,41 +1,35 @@
 <feature>
   <meta>
     <id>table_column_management</id>
-    <title>Quản lý cột (properties)</title>
+    <title>Column management (properties)</title>
     <group>Dynamic Table</group>
     <status>done</status>
     <priority>p0</priority>
   </meta>
 
   <overview>
-    User thêm, sửa, xoá, sắp xếp lại các cột (properties) của bảng.
-    Mỗi cột có tên, kiểu dữ liệu, và các tuỳ chọn. Giống Notion property management.
+    User manages columns (properties) of a table: add new column, change type,
+    rename, delete, reorder. Each column has a data type determining input UI and validation.
   </overview>
 
   <user-stories>
     <story id="US-01">
       <actor>User</actor>
-      <action>click "+" trên header bảng để thêm cột mới</action>
-      <benefit>mở rộng cấu trúc dữ liệu theo nhu cầu</benefit>
-    </story>
-    <story id="US-02">
-      <actor>User</actor>
-      <action>click vào column header → menu chỉnh sửa/xoá/đổi type</action>
-      <benefit>tuỳ chỉnh cấu trúc bảng linh hoạt</benefit>
+      <action>click "+" icon on table header to add a new column</action>
+      <benefit>extend table structure with new properties</benefit>
     </story>
   </user-stories>
 </feature>
 
 ## Server
-- [x] POST /api/databases/:dbId/tables/:id/columns { name, type, options? } → thêm cột
-- [x] PATCH /api/databases/:dbId/tables/:id/columns/:colId { name?, type?, options? } → sửa cột
-- [x] DELETE /api/databases/:dbId/tables/:id/columns/:colId → xoá cột + dữ liệu tương ứng
-- [x] Cột "Title" (primary) không thể xoá
+- [x] POST .../columns { name, type, config? } → add column
+- [x] PATCH .../columns/:colId { name?, type?, config? } → update column
+- [x] DELETE .../columns/:colId → delete column + remove from all rows
+- [x] Column types: text, number, select, multi_select, date, checkbox, url, email
 
 ## Web
-- [x] Nút "+" trên cột cuối header → menu chọn column type
-- [x] Click column header → dropdown: Rename, Edit type, Delete
-- [x] Thêm cột → cột mới xuất hiện ngay với tên mặc định
-- [x] Rename: inline edit trên header
-- [x] Delete cột → confirm dialog
-- [x] Drag & drop sắp xếp lại thứ tự cột
+- [x] "+" button on table header → new column (choose type)
+- [x] Click column header → dropdown menu: Rename, Change type, Delete
+- [x] Rename: inline edit on header
+- [x] Delete column → confirm dialog
+- [x] Drag & drop to reorder columns

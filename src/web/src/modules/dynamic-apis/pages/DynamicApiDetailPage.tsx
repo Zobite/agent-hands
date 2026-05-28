@@ -1,19 +1,17 @@
 import { Modal, Spin, Tabs, message } from "antd";
-import { AlertTriangle, BookOpen, Bot, Clock, Play, Terminal, PanelRightClose, PanelRightOpen } from "lucide-react";
+import { AlertTriangle, BookOpen, Bot, Clock, PanelRightClose, PanelRightOpen, Play, Terminal } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { API_BASE, client } from "src/lib/client";
-import { MoroError } from "src/lib/http";
+import { AgentHandsError } from "src/lib/http";
 import type { DynamicApiItem, DynamicApiLogItem } from "src/lib/types";
 
-
-
+import { AiCodingPanel } from "../components/AiCodingPanel";
 import { EndpointHeader } from "../components/EndpointHeader";
 import { HandlerCodeEditor } from "../components/HandlerCodeEditor";
 import { HandlerSdkReference } from "../components/HandlerSdkReference";
 import { LogsPanel } from "../components/LogsPanel";
 import { TestPanel } from "../components/TestPanel";
-import { AiCodingPanel } from "../components/AiCodingPanel";
 
 const { confirm } = Modal;
 
@@ -169,7 +167,7 @@ export default function DynamicApiDetailPage() {
       setDirty(false);
       message.success("Saved");
     } catch (err) {
-      if (err instanceof MoroError) message.error(err.message);
+      if (err instanceof AgentHandsError) message.error(err.message);
       else message.error("Failed to save");
     } finally {
       setSaving(false);
@@ -190,7 +188,7 @@ export default function DynamicApiDetailPage() {
           message.success(`Deleted "${api.name}"`);
           navigate("/dynamic-apis");
         } catch (err) {
-          if (err instanceof MoroError) message.error(err.message);
+          if (err instanceof AgentHandsError) message.error(err.message);
         }
       },
     });
@@ -243,35 +241,37 @@ export default function DynamicApiDetailPage() {
     }
   };
 
-
   // ── AI panel resize handlers ─────────────────────────────────────────────
 
-  const handleResizeStart = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    dragRef.current = { startX: e.clientX, startW: aiPanelWidth };
-    document.body.style.cursor = "col-resize";
-    document.body.style.userSelect = "none";
+  const handleResizeStart = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      dragRef.current = { startX: e.clientX, startW: aiPanelWidth };
+      document.body.style.cursor = "col-resize";
+      document.body.style.userSelect = "none";
 
-    const onMove = (ev: MouseEvent) => {
-      if (!dragRef.current) return;
-      const delta = dragRef.current.startX - ev.clientX;
-      const next = Math.max(AI_PANEL_MIN, Math.min(AI_PANEL_MAX, dragRef.current.startW + delta));
-      setAiPanelWidth(next);
-    };
-    const onUp = () => {
-      document.removeEventListener("mousemove", onMove);
-      document.removeEventListener("mouseup", onUp);
-      document.body.style.cursor = "";
-      document.body.style.userSelect = "";
-      setAiPanelWidth((w) => {
-        localStorage.setItem("ai_panel_width", String(w));
-        return w;
-      });
-      dragRef.current = null;
-    };
-    document.addEventListener("mousemove", onMove);
-    document.addEventListener("mouseup", onUp);
-  }, [aiPanelWidth]);
+      const onMove = (ev: MouseEvent) => {
+        if (!dragRef.current) return;
+        const delta = dragRef.current.startX - ev.clientX;
+        const next = Math.max(AI_PANEL_MIN, Math.min(AI_PANEL_MAX, dragRef.current.startW + delta));
+        setAiPanelWidth(next);
+      };
+      const onUp = () => {
+        document.removeEventListener("mousemove", onMove);
+        document.removeEventListener("mouseup", onUp);
+        document.body.style.cursor = "";
+        document.body.style.userSelect = "";
+        setAiPanelWidth((w) => {
+          localStorage.setItem("ai_panel_width", String(w));
+          return w;
+        });
+        dragRef.current = null;
+      };
+      document.addEventListener("mousemove", onMove);
+      document.addEventListener("mouseup", onUp);
+    },
+    [aiPanelWidth],
+  );
 
   // ── Render ─────────────────────────────────────────────────────────────────
 
@@ -446,10 +446,7 @@ export default function DynamicApiDetailPage() {
             >
               <div className="w-[1px] h-8 bg-hairline-strong rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
-            <div
-              className="flex flex-col shrink-0 overflow-hidden"
-              style={{ width: aiPanelWidth }}
-            >
+            <div className="flex flex-col shrink-0 overflow-hidden" style={{ width: aiPanelWidth }}>
               <AiCodingPanel
                 apiId={api.id}
                 method={method}

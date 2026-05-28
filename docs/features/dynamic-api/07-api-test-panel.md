@@ -8,27 +8,27 @@
   </meta>
 
   <overview>
-       Panel test tích hợp trong editor, cho phép gửi request test tới dynamic
-    endpoint và xem response. Giống mini Postman. Hiển thị cả captured console
-    logs từ handler execution.
+    Integrated test panel in the editor that allows sending test requests to
+    dynamic endpoints and viewing responses. Like a mini Postman. Also displays
+    captured console logs from handler execution.
   </overview>
 
   <user-stories>
     <story id="US-01">
       <actor>User</actor>
-      <action>nhấn "Test" trên editor → gửi request test</action>
-      <benefit>test API ngay trong app mà không cần Postman/curl</benefit>
+      <action>press "Test" on editor → send test request</action>
+      <benefit>test API directly in app without needing Postman/curl</benefit>
     </story>
   </user-stories>
 </feature>
 
 ## Server
-- [x] Nút "Send" → gọi request tới endpoint.
-- [x] Console output: hiển thị captured console.log/error/warn từ handler.
+- [x] "Send" button → send request to endpoint.
+- [x] Console output: displays captured console.log/error/warn from handler.
 
 ## Web
-- [x] Panel test bên phải hoặc bên dưới code editor.
+- [x] Test panel on the right or below code editor.
 - [x] Form inputs: Method (auto-fill), URL (auto-fill), Headers (editable), Query params, Body (JSON editor).
-- [x] Response hiển thị: Status code (colored), Headers, Body (JSON formatted), Execution time.
-- [x] History: lưu lại 10 requests gần nhất.
+- [x] Response display: Status code (colored), Headers, Body (JSON formatted), Execution time.
+- [x] History: saves last 10 requests.
 - [x] Copy cURL command.

@@ -1,22 +1,22 @@
 <feature>
   <meta>
     <id>mcp_edit_server</id>
-    <title>Chỉnh sửa MCP server</title>
+    <title>Edit MCP server</title>
     <group>MCP Servers</group>
-    <status>planned</status>
+    <status>done</status>
     <priority>p0</priority>
   </meta>
 
   <overview>
-       User chỉnh sửa thông tin của một custom MCP server (name, description).
-    Built-in server không thể chỉnh sửa.
+    User edits information of a custom MCP server (name, description).
+    Built-in server cannot be edited.
   </overview>
 
   <user-stories>
     <story id="US-01">
       <actor>User</actor>
-      <action>click Edit trên một custom MCP server</action>
-      <benefit>cập nhật tên hoặc mô tả của server</benefit>
+      <action>click Edit on a custom MCP server</action>
+      <benefit>update server name or description</benefit>
     </story>
   </user-stories>
 </feature>
@@ -25,10 +25,10 @@
 - [ ] API: PATCH /api/mcp-servers/:id → { name?, description? }.
 
 ## Web
-- [ ] Nút Edit trên mỗi custom MCP server card/row.
-- [ ] Built-in server KHÔNG hiển thị nút Edit (trừ description).
-- [ ] Dialog chỉnh sửa: Name (editable), Description (editable).
-- [ ] Validation: Name unique, cùng rules như tạo mới.
-- [ ] Save → danh sách cập nhật, toast thành công.
-- [ ] Nếu server không tồn tại → 400 not_found.
-- [ ] Nếu là builtin → 403 forbidden (không cho sửa name).
+- [ ] Edit button on each custom MCP server card/row.
+- [ ] Built-in server does NOT show Edit button (except description).
+- [ ] Edit dialog: Name (editable), Description (editable).
+- [ ] Validation: Name unique, same rules as creation.
+- [ ] Save → list updates, success toast.
+- [ ] If server does not exist → 400 not_found.
+- [ ] If builtin → 403 forbidden (cannot edit name).

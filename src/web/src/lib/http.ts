@@ -1,14 +1,14 @@
 import type { ApiError } from "./types";
 
 /** Error thrown when the API returns a non-OK response */
-export class MoroError extends Error {
+export class AgentHandsError extends Error {
   public readonly status: number;
   public readonly error: string;
   public readonly details?: unknown[];
 
   constructor(status: number, body: ApiError) {
     super(body.message);
-    this.name = "MoroError";
+    this.name = "AgentHandsError";
     this.status = status;
     this.error = body.error;
     this.details = body.details;
@@ -95,7 +95,7 @@ export class HttpClient {
           body: JSON.stringify({ refresh_token: this._refreshToken }),
         });
         if (res.ok) {
-          const data = await res.json() as { access_token: string; refresh_token: string };
+          const data = (await res.json()) as { access_token: string; refresh_token: string };
           this.setTokens(data.access_token, data.refresh_token);
         } else {
           // Refresh failed — clear tokens and notify
@@ -159,7 +159,7 @@ export class HttpClient {
       } catch {
         errorBody = { error: "unknown", message: res.statusText };
       }
-      throw new MoroError(res.status, errorBody);
+      throw new AgentHandsError(res.status, errorBody);
     }
 
     if (res.status === 204) return undefined as T;
@@ -188,7 +188,7 @@ export class HttpClient {
         body: JSON.stringify({ refresh_token: this._refreshToken }),
       });
       if (res.ok) {
-        const data = await res.json() as { access_token: string; refresh_token: string };
+        const data = (await res.json()) as { access_token: string; refresh_token: string };
         this.setTokens(data.access_token, data.refresh_token);
       } else {
         // Refresh failed — clear tokens and notify
@@ -250,12 +250,7 @@ export class HttpClient {
   }
 
   /** Send a raw binary body request — used for file uploads */
-  async requestBinary<T>(
-    method: string,
-    path: string,
-    body: Blob | ArrayBuffer | Uint8Array,
-    contentType?: string,
-  ): Promise<T> {
+  async requestBinary<T>(method: string, path: string, body: Blob | ArrayBuffer | Uint8Array, contentType?: string): Promise<T> {
     await this.ensureFreshToken();
 
     const doFetch = () => {

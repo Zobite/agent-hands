@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { client } from "src/lib/client";
 import type { VersionInfo } from "src/lib/resources/system";
 
@@ -62,9 +62,7 @@ export function useUpdateChecker() {
     }
   }, []);
 
-  const showBanner =
-    state.versionInfo?.hasUpdate === true &&
-    state.versionInfo.latest !== state.dismissedVersion;
+  const showBanner = state.versionInfo?.hasUpdate === true && state.versionInfo.latest !== state.dismissedVersion;
 
   return {
     versionInfo: state.versionInfo,

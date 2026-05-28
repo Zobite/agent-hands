@@ -1,9 +1,5 @@
 import type { HttpClient } from "../http";
-import type {
-  User,
-  CreateUserInput,
-  UpdateUserInput,
-} from "../types";
+import type { CreateUserInput, UpdateUserInput, User } from "../types";
 
 export class UsersResource {
   constructor(private http: HttpClient) {}

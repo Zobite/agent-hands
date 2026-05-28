@@ -27,10 +27,7 @@ export class ConfigurationsResource {
   }
 
   async batchGet(keys: string[]): Promise<Record<string, string>> {
-    const res = await this.http.post<{ values: Record<string, string> }>(
-      "/api/configurations/batch-get",
-      { keys },
-    );
+    const res = await this.http.post<{ values: Record<string, string> }>("/api/configurations/batch-get", { keys });
     return res.values;
   }
 }

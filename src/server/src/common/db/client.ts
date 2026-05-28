@@ -8,7 +8,7 @@ let _sqlite: BunSQLite | null = null;
 export function getDb(dataDir?: string) {
   if (_db) return _db;
 
-  const dir = dataDir ?? process.env.DATA_DIR ?? `${process.env.HOME}/.moro-llm-toolkit`;
+  const dir = dataDir ?? process.env.DATA_DIR ?? `${process.env.HOME}/.agent-hands`;
   const dbPath = `${dir}/data.db`;
 
   _sqlite = new BunSQLite(dbPath, { create: true });

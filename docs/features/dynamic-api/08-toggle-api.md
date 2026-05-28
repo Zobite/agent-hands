@@ -8,25 +8,25 @@
   </meta>
 
   <overview>
-       User bật/tắt API endpoint mà không cần xoá. Endpoint inactive sẽ trả 404
-    khi gọi, nhưng code, dependencies, và config vẫn được giữ lại. Warm instance
-    được evict khi toggle off.
+    User enables/disables an API endpoint without deleting it. Inactive
+    endpoints return 404 when called, but code, dependencies, and config
+    are preserved. Warm instance is evicted when toggled off.
   </overview>
 
   <user-stories>
     <story id="US-01">
       <actor>User</actor>
-      <action>toggle off API endpoint tạm thời</action>
-      <benefit>tắt endpoint mà không mất code, có thể bật lại bất cứ lúc nào</benefit>
+      <action>temporarily toggle off an API endpoint</action>
+      <benefit>disable endpoint without losing code, can re-enable anytime</benefit>
     </story>
   </user-stories>
 </feature>
 
 ## Server
-- [x] Toggle switch trên API row trong management page.
-- [x] Toggle on → isActive = true, endpoint hoạt động lại ngay (warm lại từ request đầu tiên).
+- [x] Toggle switch on API row in management page.
+- [x] Toggle on → isActive = true, endpoint works again immediately (warms on first request).
 - [x] API: PATCH /api/dynamic-apis/:id { isActive: boolean }.
 
 ## Web
-- [x] Toggle off → isActive = false, evict warm instance, request tới path trả 404.
-- [x] Badge/icon hiển thị trạng thái active/inactive.
+- [x] Toggle off → isActive = false, evict warm instance, requests to path return 404.
+- [x] Badge/icon displays active/inactive status.

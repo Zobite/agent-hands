@@ -2,7 +2,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { registerAllSystemTools } from "./tools.js";
 
-const SERVER_NAME = "moro-llm-toolkit";
+const SERVER_NAME = "agent-hands";
 const SERVER_VERSION = "0.1.0";
 
 // System user for MCP-initiated writes
@@ -21,5 +21,5 @@ export async function startMcpServer() {
   const server = createMcpServer();
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  process.stderr.write("[MCP] Moro LLM Toolkit MCP server running on stdio\n");
+  process.stderr.write("[MCP] Agent Hands MCP server running on stdio\n");
 }
