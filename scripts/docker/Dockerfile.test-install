@@ -1,0 +1,33 @@
+FROM debian:bookworm-slim
+
+# Install essentials
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    ca-certificates \
+    sudo \
+    python3 \
+    unzip \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create a non-root test user with sudo access (simulates real user)
+RUN useradd -m -s /bin/bash testuser \
+    && echo "testuser ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
+# Install Bun as testuser (so it's in testuser's home, like a real install)
+USER testuser
+WORKDIR /home/testuser
+RUN curl -fsSL https://bun.sh/install | bash
+ENV PATH="/home/testuser/.bun/bin:$PATH"
+
+# Switch back to root to copy test files
+USER root
+WORKDIR /test
+
+COPY run-tests.sh /test/run-tests.sh
+RUN chmod +x /test/run-tests.sh
+
+# Run as testuser
+USER testuser
+WORKDIR /home/testuser
+
+ENTRYPOINT ["/test/run-tests.sh"]

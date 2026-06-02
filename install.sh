@@ -14,7 +14,16 @@ set -euo pipefail
 # ── Config ──────────────────────────────────────────────────────────────────
 REPO="Zobite/agent-hands"
 INSTALL_DIR="${INSTALL_DIR:-$HOME/.local/share/agent-hands}"
-BIN_DIR="/usr/local/bin"
+# Determine the best BIN_DIR (prefer user-local directories if they are in PATH)
+if [ -z "${BIN_DIR:-}" ]; then
+  if [[ ":$PATH:" == *":$HOME/.local/bin:"* ]]; then
+    BIN_DIR="$HOME/.local/bin"
+  elif [[ ":$PATH:" == *":$HOME/bin:"* ]]; then
+    BIN_DIR="$HOME/bin"
+  else
+    BIN_DIR="/usr/local/bin"
+  fi
+fi
 BIN_NAME="agent-hands"
 
 # ── Colors ──────────────────────────────────────────────────────────────────
@@ -99,50 +108,94 @@ else
   wget --show-progress -q "$DOWNLOAD_URL" -O "$TMP_DIR/$TARBALL_NAME"
 fi
 
-# ── 5. Extract ──────────────────────────────────────────────────────────────
+# ── 5. Extract (safe: stage first, then swap) ──────────────────────────────
 info "Installing to ${INSTALL_DIR}..."
+IS_FIRST_INSTALL=false
+if [ ! -d "$INSTALL_DIR" ] || [ ! -f "$INSTALL_DIR/package.json" ]; then
+  IS_FIRST_INSTALL=true
+fi
+
+STAGING_DIR="$TMP_DIR/staging"
+mkdir -p "$STAGING_DIR"
+tar -xzf "$TMP_DIR/$TARBALL_NAME" -C "$STAGING_DIR" --strip-components=1
+
+# Only remove old installation after successful extract
 rm -rf "$INSTALL_DIR"
-mkdir -p "$INSTALL_DIR"
-tar -xzf "$TMP_DIR/$TARBALL_NAME" -C "$INSTALL_DIR" --strip-components=1
+mkdir -p "$(dirname "$INSTALL_DIR")"
+mv "$STAGING_DIR" "$INSTALL_DIR"
 
 # ── 6. Set permissions ──────────────────────────────────────────────────────
 chmod +x "$INSTALL_DIR/bin/agent-hands.js"
 
 # ── 7. Create symlink ──────────────────────────────────────────────────────
-info "Creating symlink..."
-
-NEEDS_SUDO=false
-if [ ! -w "$BIN_DIR" ]; then
-  NEEDS_SUDO=true
-fi
-
 LINK_TARGET="$INSTALL_DIR/bin/agent-hands.js"
 
-if [ "$NEEDS_SUDO" = true ]; then
-  warn "Need sudo to create symlink in ${BIN_DIR}"
-  sudo ln -sf "$LINK_TARGET" "$BIN_DIR/$BIN_NAME"
+# Check if correct symlink already exists to avoid unnecessary sudo prompts on updates
+if [ -L "$BIN_DIR/$BIN_NAME" ] && [ "$(readlink "$BIN_DIR/$BIN_NAME")" = "$LINK_TARGET" ]; then
+  info "Symlink already exists and is correct. Skipping."
 else
-  ln -sf "$LINK_TARGET" "$BIN_DIR/$BIN_NAME"
+  info "Creating symlink..."
+
+  # Ensure BIN_DIR exists
+  if [ ! -d "$BIN_DIR" ]; then
+    info "Creating directory ${BIN_DIR}..."
+    if [ -w "$(dirname "$BIN_DIR")" ]; then
+      mkdir -p "$BIN_DIR"
+    else
+      warn "Need sudo to create directory ${BIN_DIR}"
+      sudo mkdir -p "$BIN_DIR" || warn "Could not create directory ${BIN_DIR}."
+    fi
+  fi
+
+  if [ -d "$BIN_DIR" ]; then
+    NEEDS_SUDO=false
+    if [ ! -w "$BIN_DIR" ]; then
+      NEEDS_SUDO=true
+    fi
+
+    if [ "$NEEDS_SUDO" = true ]; then
+      warn "Need sudo to create symlink in ${BIN_DIR}"
+      sudo ln -sf "$LINK_TARGET" "$BIN_DIR/$BIN_NAME" || warn "Failed to create symlink in ${BIN_DIR}. You can create it manually later."
+    else
+      ln -sf "$LINK_TARGET" "$BIN_DIR/$BIN_NAME" || warn "Failed to create symlink in ${BIN_DIR}. You can create it manually later."
+    fi
+  fi
 fi
 
-# ── 8. Verify ───────────────────────────────────────────────────────────────
-echo ""
-if command -v "$BIN_NAME" &> /dev/null; then
-  INSTALLED_V=$($BIN_NAME version 2>/dev/null || echo "unknown")
-  success "Agent Hands installed successfully!"
+# ── 8. First-run init (create super admin) ──────────────────────────────────
+if [ "$IS_FIRST_INSTALL" = true ]; then
   echo ""
+  info "First install detected — initializing super admin..."
+  bun "$INSTALL_DIR/bin/agent-hands.js" init || warn "Auto-init failed. Run 'agent-hands init' manually after start."
+fi
+
+# ── 9. Start/Restart Server ──────────────────────────────────────────────────
+echo ""
+info "Starting Agent Hands server..."
+if bun "$INSTALL_DIR/bin/agent-hands.js" restart; then
+  echo ""
+  success "Agent Hands is up and running!"
   echo -e "   ${BOLD}Version${NC}  : ${VERSION_NUM}"
   echo -e "   ${BOLD}Location${NC} : ${INSTALL_DIR}"
-  echo -e "   ${BOLD}Binary${NC}   : ${BIN_DIR}/${BIN_NAME}"
+  if [ -x "$BIN_DIR/$BIN_NAME" ]; then
+    echo -e "   ${BOLD}Binary${NC}   : ${BIN_DIR}/${BIN_NAME}"
+  fi
   echo ""
-  echo -e "   ${BOLD}Quick start:${NC}"
-  echo -e "     ${CYAN}agent-hands start${NC}          # Start the server"
-  echo -e "     ${CYAN}open http://localhost:18080${NC}      # Open Web UI"
+  echo -e "   🎉 ${BOLD}Web UI is available at:${NC}"
+  echo -e "     🔗  ${CYAN}http://localhost:18080${NC}"
+  echo ""
+  echo -e "   To manage the server in the future:"
+  echo -e "     ${CYAN}agent-hands stop${NC}      # Stop the server"
+  echo -e "     ${CYAN}agent-hands status${NC}    # Check status"
+  echo -e "     ${CYAN}agent-hands logs${NC}      # View logs"
   echo ""
 else
-  success "Files installed to ${INSTALL_DIR}"
-  warn "Could not verify binary in PATH. You may need to add it manually:"
+  warn "Could not start Agent Hands server automatically."
   echo ""
-  echo -e "     ${CYAN}export PATH=\"${BIN_DIR}:\$PATH\"${NC}"
+  success "Agent Hands files installed successfully to ${INSTALL_DIR}"
+  if ! command -v "$BIN_NAME" &> /dev/null; then
+    warn "Could not verify binary in PATH. You may need to add it manually:"
+    echo -e "     ${CYAN}export PATH=\"${BIN_DIR}:\$PATH\"${NC}"
+  fi
   echo ""
 fi

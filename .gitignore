@@ -35,3 +35,7 @@ docker/data
 .code-review-graph/
 .agents
 docs/
+
+# CodeGraph
+.codegraph/
+
