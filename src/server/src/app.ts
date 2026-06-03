@@ -16,6 +16,7 @@ import systemModule, { MODULE_PREFIX as SYSTEM_PREFIX } from "./modules/system/s
 import dynamicApisModule, { MODULE_PREFIX as DYNAMIC_APIS_PREFIX } from "./modules/dynamic-apis/dynamic-api.module.js";
 import llmProvidersModule, { MODULE_PREFIX as LLM_PROVIDERS_PREFIX } from "./modules/llm-providers/llm-provider.module.js";
 import configurationsModule, { MODULE_PREFIX as CONFIGURATIONS_PREFIX } from "./modules/configurations/configuration.module.js";
+import browsersModule, { MODULE_PREFIX as BROWSERS_PREFIX } from "./modules/browsers/browser.module.js";
 import { registerDynamicApiRunner } from "./modules/dynamic-apis/dynamic-api.runner.js";
 import Fastify from "fastify";
 import type { FastifyError, FastifyInstance } from "fastify";
@@ -142,6 +143,7 @@ const MODULE_REGISTRY = [
   { name: "dynamic-apis",     plugin: dynamicApisModule,      prefix: DYNAMIC_APIS_PREFIX },
   { name: "llm-providers",    plugin: llmProvidersModule,     prefix: LLM_PROVIDERS_PREFIX },
   { name: "configurations",   plugin: configurationsModule,   prefix: CONFIGURATIONS_PREFIX },
+  { name: "browsers",          plugin: browsersModule,          prefix: BROWSERS_PREFIX },
 ] as const;
 
 async function loadModules(app: FastifyInstance) {

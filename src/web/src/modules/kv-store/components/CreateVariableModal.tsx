@@ -67,7 +67,7 @@ export default function CreateVariableModal({ open, loading, onClose, onSubmit }
             <button
               type="submit"
               disabled={loading}
-              className="px-4 py-2 bg-ink text-canvas border-none rounded-md font-medium text-[13px] hover:bg-opacity-90 cursor-pointer transition-opacity disabled:opacity-50"
+              className="px-4 py-2 bg-ink text-canvas border-none rounded-md font-medium text-[13px] hover:bg-primary-active cursor-pointer transition-colors disabled:opacity-50"
             >
               {loading ? "Registering..." : "Execute"}
             </button>

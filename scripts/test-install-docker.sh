@@ -84,6 +84,16 @@ mkdir -p "$STAGING/bin" "$STAGING/dist" "$STAGING/public"
 # Real CLI entry point (simplified but functional with bun)
 cat > "$STAGING/bin/agent-hands.js" << 'CLI'
 #!/usr/bin/env bun
+import { existsSync } from "node:fs";
+import { join, dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+import os from "node:os";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const PKG_ROOT = resolve(__dirname, "..");
+const dataDir = process.env.DATA_DIR ?? join(os.homedir(), ".agent-hands");
+const markerFile = join(dataDir, ".initialized");
+
 const cmd = process.argv[2];
 switch (cmd) {
   case "version": console.log(`agent-hands v1.0.0`); break;
@@ -92,6 +102,14 @@ switch (cmd) {
   case "stop":    console.log("🛑 Server stopped (test)."); break;
   case "restart":
     console.log("🛑 Stopping...");
+    // Simulate first-install detection (like real seedDefaultAdmin)
+    if (!existsSync(markerFile)) {
+      console.log("🔑 Default super admin created:");
+      console.log("   Username : admin");
+      const { mkdirSync, writeFileSync } = await import("node:fs");
+      mkdirSync(dataDir, { recursive: true });
+      writeFileSync(markerFile, "done");
+    }
     console.log("🤖 Agent Hands started!");
     console.log("   PID      : 12345");
     console.log("   URL      : http://127.0.0.1:18080");

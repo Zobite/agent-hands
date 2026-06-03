@@ -55,7 +55,7 @@ export default function UsersPage() {
   const handleDelete = (user: User) => {
     confirm({
       title: <span className="font-mono text-[14px]">Delete Account</span>,
-      icon: <AlertTriangle size={20} className="text-red-500 mr-2" />,
+      icon: <AlertTriangle size={20} className="text-error mr-2" />,
       content: `Target: ${user.name} (${user.email}). This action is irreversible.`,
       okText: "Execute Delete",
       okType: "danger",
@@ -89,7 +89,7 @@ export default function UsersPage() {
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
           <h1 className="font-display text-[32px] font-normal text-ink tracking-[-0.64px] m-0 leading-tight">User Directory</h1>
           <button
-            className="flex items-center gap-2 h-[36px] px-4 rounded-md bg-ink text-canvas font-medium text-[13px] hover:bg-opacity-90 transition-opacity cursor-pointer border-none shrink-0"
+            className="flex items-center gap-2 h-[36px] px-4 rounded-md bg-ink text-canvas font-medium text-[13px] hover:bg-primary-active transition-colors cursor-pointer border-none shrink-0"
             onClick={() => setCreateModalOpen(true)}
           >
             <Plus size={16} />
@@ -136,7 +136,7 @@ export default function UsersPage() {
               return (
                 <div
                   key={user.id}
-                  className="grid grid-cols-[1fr_140px_200px_100px_100px_40px] gap-4 items-center px-5 py-3.5 border border-hairline rounded-md bg-surface-card transition-colors duration-150 hover:border-hairline-strong group opacity-0 animate-[fadeInUp_0.35s_cubic-bezier(0.16,1,0.3,1)_forwards]"
+                  className="grid grid-cols-[1fr_140px_200px_100px_100px_40px] gap-4 items-center px-5 py-3.5 border border-hairline rounded-md bg-surface-card transition-colors duration-150 hover:border-hairline-strong group animate-[fadeInUp_0.35s_cubic-bezier(0.16,1,0.3,1)_both]"
                   style={{ animationDelay: `${idx * 0.04}s` }}
                 >
                   {/* Name + avatar initial */}
@@ -339,7 +339,7 @@ function CreateUserModal({
             <button
               type="submit"
               disabled={loading}
-              className="px-4 py-2 bg-ink text-canvas border-none rounded-md font-medium text-[13px] hover:bg-opacity-90 cursor-pointer transition-opacity disabled:opacity-50"
+              className="px-4 py-2 bg-ink text-canvas border-none rounded-md font-medium text-[13px] hover:bg-primary-active cursor-pointer transition-opacity disabled:opacity-50"
             >
               {loading ? "Initializing..." : "Execute"}
             </button>
@@ -452,7 +452,7 @@ function EditUserModal({
             <button
               type="submit"
               disabled={loading}
-              className="px-4 py-2 bg-ink text-canvas border-none rounded-md font-medium text-[13px] hover:bg-opacity-90 cursor-pointer transition-opacity disabled:opacity-50"
+              className="px-4 py-2 bg-ink text-canvas border-none rounded-md font-medium text-[13px] hover:bg-primary-active cursor-pointer transition-opacity disabled:opacity-50"
             >
               {loading ? "Committing..." : "Commit Changes"}
             </button>
@@ -568,7 +568,7 @@ function ResetPasswordModal({
             <button
               type="submit"
               disabled={loading}
-              className="px-4 py-2 bg-ink text-canvas border-none rounded-md font-medium text-[13px] hover:bg-opacity-90 cursor-pointer transition-opacity disabled:opacity-50"
+              className="px-4 py-2 bg-ink text-canvas border-none rounded-md font-medium text-[13px] hover:bg-primary-active cursor-pointer transition-opacity disabled:opacity-50"
             >
               {loading ? "Resetting..." : "Execute Reset"}
             </button>

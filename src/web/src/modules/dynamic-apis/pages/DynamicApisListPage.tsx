@@ -68,7 +68,7 @@ export default function DynamicApisListPage() {
   const handleDelete = (api: DynamicApiItem) => {
     confirm({
       title: <span className="font-mono text-[14px]">Delete Endpoint</span>,
-      icon: <AlertTriangle size={20} className="text-red-500 mr-2" />,
+      icon: <AlertTriangle size={20} className="text-error mr-2" />,
       content: `Delete "${api.name}" (${api.method} ${api.path})? This action is irreversible.`,
       okText: "Delete",
       okType: "danger",
@@ -118,7 +118,7 @@ export default function DynamicApisListPage() {
           <div className="flex items-center gap-3">
             <DynamicApiDocsModal />
             <button
-              className="flex items-center gap-2 h-[36px] px-4 rounded-md bg-ink text-canvas font-medium text-[13px] hover:bg-opacity-90 transition-opacity cursor-pointer border-none"
+              className="flex items-center gap-2 h-[36px] px-4 rounded-md bg-ink text-canvas font-medium text-[13px] hover:bg-primary-active transition-colors cursor-pointer border-none"
               onClick={() => setCreateModalOpen(true)}
             >
               <Plus size={16} />
@@ -185,7 +185,7 @@ export default function DynamicApisListPage() {
             {apis.map((api, idx) => (
               <div
                 key={api.id}
-                className="flex items-center gap-4 px-5 py-4 border border-hairline rounded-md bg-surface-card cursor-pointer transition-colors duration-150 hover:border-hairline-strong group opacity-0 animate-[fadeInUp_0.35s_cubic-bezier(0.16,1,0.3,1)_forwards]"
+                className="flex items-center gap-4 px-5 py-4 border border-hairline rounded-md bg-surface-card cursor-pointer transition-colors duration-150 hover:border-hairline-strong group animate-[fadeInUp_0.35s_cubic-bezier(0.16,1,0.3,1)_both]"
                 style={{ animationDelay: `${idx * 0.03}s` }}
                 onClick={() => navigate(`/dynamic-apis/${api.id}`)}
               >
@@ -367,7 +367,7 @@ function CreateApiModal({
             <button
               type="submit"
               disabled={loading}
-              className="px-4 py-2 bg-ink text-canvas border-none rounded-md font-medium text-[13px] hover:bg-opacity-90 cursor-pointer transition-opacity"
+              className="px-4 py-2 bg-ink text-canvas border-none rounded-md font-medium text-[13px] hover:bg-primary-active cursor-pointer transition-opacity"
             >
               {loading ? "Creating..." : "Create API"}
             </button>

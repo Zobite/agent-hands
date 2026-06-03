@@ -81,14 +81,14 @@ export function EndpointHeader({
         <div className="flex items-center gap-2 shrink-0 ml-4">
           <button
             onClick={onDelete}
-            className="inline-flex items-center justify-center w-[32px] h-[32px] rounded-md bg-transparent border border-hairline text-muted hover:text-red-500 hover:border-red-200 transition-colors cursor-pointer"
+            className="inline-flex items-center justify-center w-[32px] h-[32px] rounded-md bg-transparent border border-hairline text-muted hover:text-error hover:border-error/20 transition-colors cursor-pointer"
           >
             <Trash2 size={14} />
           </button>
           <button
             onClick={onSave}
             disabled={saving || !dirty}
-            className="inline-flex items-center gap-1.5 h-[32px] px-4 rounded-md bg-ink text-canvas text-[13px] font-medium hover:bg-opacity-90 transition-opacity cursor-pointer border-none disabled:opacity-40 disabled:cursor-default"
+            className="inline-flex items-center gap-1.5 h-[32px] px-4 rounded-md bg-ink text-canvas text-[13px] font-medium hover:bg-primary-active transition-colors cursor-pointer border-none disabled:opacity-40 disabled:cursor-default"
           >
             <Save size={14} />
             {saving ? "Saving..." : "Save"}

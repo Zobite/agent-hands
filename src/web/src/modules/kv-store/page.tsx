@@ -83,7 +83,7 @@ export default function KvStorePage() {
 
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div>
-            <h1 className="font-display text-[32px] font-normal text-ink tracking-[-0.64px] m-0 leading-tight">KV Store</h1>
+            <h1 className="font-display text-[24px] md:text-[32px] font-normal text-ink tracking-[-0.64px] m-0 leading-tight">KV Store</h1>
             <p className="text-[13px] text-muted mt-2 m-0 leading-relaxed">
               Key-value store with optional TTL. Use key prefixes for organization (e.g.{" "}
               <code className="text-[11px] bg-canvas px-1 py-0.5 rounded border border-hairline">config.api_url</code>,{" "}

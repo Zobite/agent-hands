@@ -7,6 +7,45 @@ export interface VersionInfo {
   checkedAt: number;
 }
 
+
+export interface SystemInfo {
+  cpu: {
+    model: string;
+    cores: number;
+    usage: number;
+  };
+  memory: {
+    total: number;
+    used: number;
+    free: number;
+    usage: number;
+  };
+  disk: {
+    total: number;
+    used: number;
+    free: number;
+    usage: number;
+    mount: string;
+  };
+  process: {
+    pid: number;
+    uptime: number;
+    memoryRss: number;
+    memoryHeap: number;
+    bunVersion: string;
+    nodeVersion: string;
+  };
+  os: {
+    platform: string;
+    arch: string;
+    hostname: string;
+    release: string;
+    uptime: number;
+  };
+
+  timestamp: number;
+}
+
 export class SystemResource {
   constructor(private http: HttpClient) {}
 
@@ -14,7 +53,12 @@ export class SystemResource {
     return this.http.get<VersionInfo>("/api/system/version");
   }
 
+  getSystemInfo(): Promise<SystemInfo> {
+    return this.http.get<SystemInfo>("/api/system/info");
+  }
+
   triggerUpdate(): Promise<{ ok: boolean; message: string }> {
     return this.http.post<{ ok: boolean; message: string }>("/api/system/update");
   }
 }
+

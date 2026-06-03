@@ -33,6 +33,7 @@ const CATEGORIES: CategoryMeta[] = [
   { name: "Variables", description: "Flat key-value store. Supports string, number, boolean, json types, TTL. Use key prefixes for organization.", order: 1 },
   { name: "Databases & Tables", description: "Structured data with typed columns. Databases contain tables, tables contain rows.", order: 3 },
   { name: "Storage", description: "Object storage with buckets for file management.", order: 5 },
+  { name: "Browser Profiles", description: "Manage and control persistent stealth browser sessions using CloakBrowser & Playwright.", order: 7 },
 ];
 
 // ── Internal State ─────────────────────────────────────────────────────────────

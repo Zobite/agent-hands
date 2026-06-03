@@ -236,7 +236,7 @@ curl -X POST ${apiHost}/apis/users \\
           <div className="flex justify-end mt-2 pt-4 border-t border-hairline">
             <button
               onClick={() => setOpen(false)}
-              className="px-5 py-1.5 bg-ink text-canvas rounded-md font-medium text-[13px] hover:bg-opacity-90 cursor-pointer transition-all border-none"
+              className="px-5 py-1.5 bg-ink text-canvas rounded-md font-medium text-[13px] hover:bg-primary-active cursor-pointer transition-all border-none"
             >
               Dismiss
             </button>

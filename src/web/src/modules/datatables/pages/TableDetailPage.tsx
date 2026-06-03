@@ -219,7 +219,7 @@ export default function TableDetailPage() {
         <div className="flex items-center gap-3 ml-auto">
           {selectedRowIds.length > 0 && (
             <button
-              className="flex items-center gap-2 h-[36px] px-4 rounded-md bg-transparent border border-red-500/30 text-red-500 font-medium text-[13px] hover:bg-red-50 transition-colors cursor-pointer"
+              className="flex items-center gap-2 h-[36px] px-4 rounded-md bg-transparent border border-error/30 text-error font-medium text-[13px] hover:bg-error/5 transition-colors cursor-pointer"
               onClick={handleBulkDelete}
             >
               <Trash2 size={14} />
@@ -234,7 +234,7 @@ export default function TableDetailPage() {
             Insert Row
           </button>
           <button
-            className="flex items-center gap-2 h-[36px] px-4 rounded-md bg-ink border border-transparent text-canvas font-medium text-[13px] hover:bg-opacity-90 transition-opacity cursor-pointer shadow-sm shadow-black/10"
+            className="flex items-center gap-2 h-[36px] px-4 rounded-md bg-ink border border-transparent text-canvas font-medium text-[13px] hover:bg-primary-active transition-colors cursor-pointer shadow-sm shadow-black/10"
             onClick={() => setAddColumnOpen(true)}
           >
             <Plus size={14} />
@@ -729,7 +729,7 @@ function AddRowModal({
             <button
               type="submit"
               disabled={loading}
-              className="px-4 py-2 bg-ink text-canvas border-none rounded-md font-medium text-[13px] hover:bg-opacity-90 cursor-pointer transition-opacity flex items-center gap-1"
+              className="px-4 py-2 bg-ink text-canvas border-none rounded-md font-medium text-[13px] hover:bg-primary-active cursor-pointer transition-colors flex items-center gap-1"
             >
               {loading ? "Executing..." : "Execute"}
             </button>
@@ -804,7 +804,7 @@ function AddColumnModal({
             <button
               type="submit"
               disabled={loading}
-              className="px-4 py-2 bg-ink text-canvas border-none rounded-md font-medium text-[13px] hover:bg-opacity-90 cursor-pointer transition-opacity flex items-center gap-1"
+              className="px-4 py-2 bg-ink text-canvas border-none rounded-md font-medium text-[13px] hover:bg-primary-active cursor-pointer transition-colors flex items-center gap-1"
             >
               {loading ? "Executing..." : "Execute"}
             </button>
@@ -888,7 +888,7 @@ function EditColumnModal({
             <button
               type="submit"
               disabled={loading}
-              className="px-4 py-2 bg-ink text-canvas border-none rounded-md font-medium text-[13px] hover:bg-opacity-90 cursor-pointer transition-opacity flex items-center gap-1"
+              className="px-4 py-2 bg-ink text-canvas border-none rounded-md font-medium text-[13px] hover:bg-primary-active cursor-pointer transition-colors flex items-center gap-1"
             >
               {loading ? "Executing..." : "Execute"}
             </button>
@@ -969,12 +969,15 @@ function RowDetailModal({
         <div className="flex justify-between">
           <button
             onClick={handleDelete}
-            className="flex items-center gap-2 px-4 py-2 bg-transparent border border-red-500/30 text-red-500 rounded-md font-medium text-[13px] hover:bg-red-50 transition-colors cursor-pointer"
+            className="flex items-center gap-2 px-4 py-2 bg-transparent border border-error/30 text-error rounded-md font-medium text-[13px] hover:bg-error/5 transition-colors cursor-pointer"
           >
             <Trash2 size={14} />
             Delete Row
           </button>
-          <button onClick={onClose} className="px-4 py-2 bg-ink text-canvas border-none rounded-md font-medium text-[13px] hover:bg-opacity-90 cursor-pointer">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 bg-ink text-canvas border-none rounded-md font-medium text-[13px] hover:bg-primary-active cursor-pointer"
+          >
             Done
           </button>
         </div>

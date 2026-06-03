@@ -17,6 +17,7 @@ await Bun.build({
   outdir: join(__dirname, "..", "..", "dist"),
   target: "bun",
   sourcemap: "none",
+  external: ["playwright", "playwright-core"],
   define: {
     "__PKG_VERSION__": JSON.stringify(version),
   },

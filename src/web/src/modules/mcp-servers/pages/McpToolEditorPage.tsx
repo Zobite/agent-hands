@@ -128,7 +128,7 @@ export default function McpToolEditorPage() {
           <button
             onClick={() => handleSave()}
             disabled={saving || !isDirty}
-            className="flex items-center gap-2 h-[36px] px-4 rounded-md bg-ink text-canvas font-medium text-[13px] hover:bg-opacity-90 transition-opacity cursor-pointer border-none disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center gap-2 h-[36px] px-4 rounded-md bg-ink text-canvas font-medium text-[13px] hover:bg-primary-active transition-colors cursor-pointer border-none disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Save size={14} />
             {saving ? "Saving..." : "Save"}

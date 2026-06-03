@@ -12,6 +12,7 @@ import { StorageResource } from "./resources/storage";
 import { SystemResource } from "./resources/system";
 import { TablesResource } from "./resources/table";
 import { UsersResource } from "./resources/user";
+import { BrowserProfilesResource } from "./resources/browser";
 
 class AgentHandsClient {
   private http: HttpClient;
@@ -29,6 +30,7 @@ class AgentHandsClient {
   public readonly dynamicApis: DynamicApisResource;
   public readonly llmProviders: LlmProvidersResource;
   public readonly configurations: ConfigurationsResource;
+  public readonly browserProfiles: BrowserProfilesResource;
 
   constructor(options: ClientOptions) {
     this.http = new HttpClient(options);
@@ -45,6 +47,7 @@ class AgentHandsClient {
     this.dynamicApis = new DynamicApisResource(this.http);
     this.llmProviders = new LlmProvidersResource(this.http);
     this.configurations = new ConfigurationsResource(this.http);
+    this.browserProfiles = new BrowserProfilesResource(this.http);
   }
 
   get accessToken() {

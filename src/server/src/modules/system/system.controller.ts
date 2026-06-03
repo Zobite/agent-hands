@@ -1,10 +1,16 @@
 import type { FastifyInstance } from "fastify";
-import { getVersionInfo, performUpdate } from "./system.service.js";
+import { getVersionInfo, performUpdate, getSystemInfo } from "./system.service.js";
 
 export function registerSystemRoutes(app: FastifyInstance) {
   // GET /version — current + latest version info
   app.get("/version", async (_req, reply) => {
     const info = await getVersionInfo();
+    return reply.send(info);
+  });
+
+  // GET /info — system metrics (CPU, memory, disk, process, OS)
+  app.get("/info", async (_req, reply) => {
+    const info = await getSystemInfo();
     return reply.send(info);
   });
 

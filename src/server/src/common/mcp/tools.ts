@@ -19,6 +19,7 @@ import {
 import { kvStoreActions } from "./actions/kv-store.js";
 import { datatableProjectActions, tableActions } from "./actions/table.js";
 import { storageActions } from "./actions/storage.js";
+import { browserProfileActions } from "./actions/browser.js";
 
 // ── Bootstrap all actions into the registry ────────────────────────────────────
 
@@ -27,6 +28,7 @@ registerActions([
   ...datatableProjectActions,
   ...tableActions,
   ...storageActions,
+  ...browserProfileActions,
 ]);
 
 // ── Register MCP Tools ─────────────────────────────────────────────────────────

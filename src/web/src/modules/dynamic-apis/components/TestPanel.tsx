@@ -127,7 +127,7 @@ function KeyValueEditor({
           {!readOnlyKeys ? (
             <button
               onClick={() => removeEntry(id)}
-              className="shrink-0 inline-flex items-center justify-center w-6 h-6 bg-transparent border-none text-muted-soft hover:text-red-400 cursor-pointer p-0 transition-colors"
+              className="shrink-0 inline-flex items-center justify-center w-6 h-6 bg-transparent border-none text-muted-soft hover:text-error cursor-pointer p-0 transition-colors"
             >
               <Trash2 size={12} />
             </button>

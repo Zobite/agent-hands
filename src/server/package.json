@@ -1,6 +1,6 @@
 {
   "name": "agent-hands-server",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "type": "module",
   "private": true,
   "scripts": {
@@ -32,6 +32,7 @@
     "fastify-type-provider-zod": "^4.0.2",
     "jose": "^6.0.10",
     "nanoid": "^5.1.5",
+    "playwright": "^1.60.0",
     "turndown": "^7.2.4",
     "zod": "^3.24.4"
   },

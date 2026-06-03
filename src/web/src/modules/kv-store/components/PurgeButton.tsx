@@ -21,7 +21,7 @@ export default function PurgeButton({ selectedIds, onPurged }: PurgeButtonProps)
   const handlePurge = () => {
     confirm({
       title: <span className="font-mono text-[14px]">Purge Records</span>,
-      icon: <AlertTriangle size={20} className="text-red-500 mr-2" />,
+      icon: <AlertTriangle size={20} className="text-error mr-2" />,
       content: `${selectedIds.length} variable(s) will be permanently deleted. This action is irreversible.`,
       okText: "Execute Purge",
       okType: "danger",

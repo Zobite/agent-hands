@@ -1,5 +1,23 @@
 import { Tooltip } from "antd";
-import { BookOpen, Bot, Database, FileText, HardDrive, Key, KeyRound, LayoutDashboard, LogOut, Plug, Settings, Table2, Users, Zap } from "lucide-react";
+import {
+  BookOpen,
+  Bot,
+  Cpu,
+  Database,
+  FileText,
+  Globe,
+  HardDrive,
+  Key,
+  KeyRound,
+  LayoutDashboard,
+  LogOut,
+  Monitor,
+  Plug,
+  Settings,
+  Table2,
+  Users,
+  Zap,
+} from "lucide-react";
 import type React from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { AgentHandsLogo } from "src/common/components/AgentHandsLogo";
@@ -23,6 +41,9 @@ const navIcons: Record<string, React.ReactNode> = {
   database: <Database size={16} strokeWidth={2} />,
   plug: <Plug size={16} strokeWidth={2} />,
   zap: <Zap size={16} strokeWidth={2} />,
+  globe: <Globe size={16} strokeWidth={2} />,
+  monitor: <Monitor size={16} strokeWidth={2} />,
+  cpu: <Cpu size={16} strokeWidth={2} />,
 };
 
 type NavItem = {
@@ -51,9 +72,7 @@ function NavGroup({
   return (
     <div className="flex flex-col gap-1 mb-6">
       {label && (
-        <div className="font-mono text-[11px] font-medium uppercase tracking-[0.8px] text-muted-soft px-3 mb-1 select-none hidden md:block">
-          {label}
-        </div>
+        <div className="font-mono text-[11px] font-medium uppercase tracking-[0.8px] text-muted-soft px-3 mb-1 select-none hidden md:block">{label}</div>
       )}
       {visibleItems.map((item) => (
         <NavLink

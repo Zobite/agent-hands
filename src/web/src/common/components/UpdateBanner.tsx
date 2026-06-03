@@ -133,7 +133,7 @@ export function UpdateBanner({ versionInfo, isUpdating, updateError, onUpdate, o
 
       {phase === "error" && (
         <div className="flex items-center gap-4 px-5 py-4">
-          <AlertCircle size={18} className="text-red-400 shrink-0" />
+          <AlertCircle size={18} className="text-error shrink-0" />
           <div className="flex-1">
             <p className="text-[13px] font-semibold text-ink">Update failed</p>
             {updateError && <p className="text-[12px] text-muted mt-0.5 break-words">{updateError}</p>}

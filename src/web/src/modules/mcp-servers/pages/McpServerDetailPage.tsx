@@ -92,7 +92,7 @@ export default function McpServerDetailPage() {
   return (
     <div className="flex flex-col h-full overflow-hidden bg-canvas">
       {/* Header */}
-      <div className="px-8 pt-10 pb-6 shrink-0 border-b border-hairline">
+      <div className="px-4 md:px-8 pt-10 pb-6 shrink-0 border-b border-hairline">
         <button
           onClick={() => navigate("/mcp-servers")}
           className="flex items-center gap-1.5 text-muted text-[13px] mb-4 bg-transparent border-none cursor-pointer hover:text-ink transition-colors p-0"
@@ -111,7 +111,7 @@ export default function McpServerDetailPage() {
                 <h1 className="font-display text-[28px] font-normal text-ink tracking-[-0.56px] m-0 leading-tight">{server.name}</h1>
                 <span
                   className={`font-mono text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full ${
-                    isBuiltin ? "bg-[#dfa88f]/30 text-[#8a5a3a]" : "bg-ink/10 text-ink"
+                    isBuiltin ? "bg-timeline-thinking/30 text-accent-amber" : "bg-ink/10 text-ink"
                   }`}
                 >
                   {isBuiltin ? "Built-in" : "Custom"}
@@ -150,7 +150,7 @@ export default function McpServerDetailPage() {
               <button
                 onClick={() => setActiveTab("tools")}
                 className={`flex items-center gap-1.5 h-[30px] px-3 rounded-md font-mono text-[11px] uppercase tracking-wider border-none cursor-pointer transition-all duration-150 ${
-                  activeTab === "tools" ? "bg-canvas text-ink shadow-sm" : "bg-transparent text-muted hover:text-ink"
+                  activeTab === "tools" ? "bg-canvas text-ink" : "bg-transparent text-muted hover:text-ink"
                 }`}
               >
                 <Wrench size={12} />
@@ -159,7 +159,7 @@ export default function McpServerDetailPage() {
               <button
                 onClick={() => setActiveTab("config")}
                 className={`flex items-center gap-1.5 h-[30px] px-3 rounded-md font-mono text-[11px] uppercase tracking-wider border-none cursor-pointer transition-all duration-150 ${
-                  activeTab === "config" ? "bg-canvas text-ink shadow-sm" : "bg-transparent text-muted hover:text-ink"
+                  activeTab === "config" ? "bg-canvas text-ink" : "bg-transparent text-muted hover:text-ink"
                 }`}
               >
                 <Terminal size={12} />
@@ -171,7 +171,7 @@ export default function McpServerDetailPage() {
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto px-8 py-8">
+      <div className="flex-1 overflow-y-auto px-4 md:px-8 py-8">
         {activeTab === "tools" ? (
           <ToolsTab
             id={id!}
@@ -301,7 +301,7 @@ function ToolsTab({
             </div>
             <button
               onClick={onNewTool}
-              className="inline-flex items-center gap-1.5 h-[32px] px-3.5 rounded-md bg-ink text-canvas font-medium text-[12px] hover:bg-opacity-90 cursor-pointer transition-colors border-none"
+              className="inline-flex items-center gap-1.5 h-[32px] px-3.5 rounded-md bg-ink text-canvas font-medium text-[12px] hover:bg-primary-active cursor-pointer transition-colors border-none"
             >
               <Plus size={13} />
               New Tool
@@ -322,7 +322,7 @@ function ToolsTab({
                 <div
                   key={tool.id}
                   onClick={() => navigate(`/mcp-servers/${id}/tools/${tool.id}`)}
-                  className="flex items-center justify-between px-4 py-3.5 border border-hairline rounded-md bg-surface-card hover:border-hairline-strong transition-all duration-150 ease-in-out cursor-pointer group opacity-0 animate-[fadeInUp_0.35s_cubic-bezier(0.16,1,0.3,1)_forwards]"
+                  className="flex items-center justify-between px-4 py-3.5 border border-hairline rounded-md bg-surface-card hover:border-hairline-strong transition-all duration-150 ease-in-out cursor-pointer group animate-[fadeInUp_0.35s_cubic-bezier(0.16,1,0.3,1)_both]"
                   style={{ animationDelay: `${idx * 0.04}s` }}
                 >
                   <div className="flex items-center gap-3 min-w-0">
@@ -365,11 +365,11 @@ function ToolsTab({
           {MCP_META_TOOLS.map((tool, idx) => (
             <div
               key={tool.name}
-              className="flex items-center justify-between px-4 py-3.5 border border-hairline rounded-md bg-surface-card hover:border-hairline-strong transition-colors duration-150 opacity-0 animate-[fadeInUp_0.35s_cubic-bezier(0.16,1,0.3,1)_forwards]"
+              className="flex items-center justify-between px-4 py-3.5 border border-hairline rounded-md bg-surface-card hover:border-hairline-strong transition-colors duration-150 animate-[fadeInUp_0.35s_cubic-bezier(0.16,1,0.3,1)_both]"
               style={{ animationDelay: `${idx * 0.05}s` }}
             >
               <div className="flex items-center gap-3 min-w-0">
-                <div className="flex items-center justify-center w-8 h-8 rounded-md bg-[#dfa88f]/15 border border-[#dfa88f]/30 text-[#8a5a3a] shrink-0">
+                <div className="flex items-center justify-center w-8 h-8 rounded-md bg-timeline-thinking/15 border border-timeline-thinking/30 text-accent-amber shrink-0">
                   {tool.icon}
                 </div>
                 <div className="min-w-0">
@@ -434,7 +434,7 @@ function ConfigTab({
   return (
     <div className="flex flex-col gap-8 max-w-[800px] mx-auto">
       {/* Endpoint Info */}
-      <div className="opacity-0 animate-[fadeInUp_0.35s_cubic-bezier(0.16,1,0.3,1)_forwards]">
+      <div className="animate-[fadeInUp_0.35s_cubic-bezier(0.16,1,0.3,1)_both]">
         <div className="flex items-center gap-2 mb-4">
           <Globe size={14} className="text-muted" />
           <span className="font-mono text-[11px] uppercase tracking-wider text-muted">MCP Endpoint</span>
@@ -448,15 +448,15 @@ function ConfigTab({
       </div>
 
       {/* Authentication */}
-      <div className="opacity-0 animate-[fadeInUp_0.35s_cubic-bezier(0.16,1,0.3,1)_forwards]" style={{ animationDelay: "0.05s" }}>
+      <div className="animate-[fadeInUp_0.35s_cubic-bezier(0.16,1,0.3,1)_both]" style={{ animationDelay: "0.05s" }}>
         <div className="flex items-center gap-2 mb-4">
           <Key size={14} className="text-muted" />
           <span className="font-mono text-[11px] uppercase tracking-wider text-muted">Authentication</span>
         </div>
         <div className="px-4 py-4 rounded-md border border-hairline bg-surface-card flex flex-col gap-3">
           <div className="flex items-start gap-3">
-            <div className="w-6 h-6 rounded-full bg-[#dfa88f]/20 flex items-center justify-center shrink-0 mt-0.5">
-              <span className="font-mono text-[10px] text-[#8a5a3a] font-bold">1</span>
+            <div className="w-6 h-6 rounded-full bg-timeline-thinking/20 flex items-center justify-center shrink-0 mt-0.5">
+              <span className="font-mono text-[10px] text-accent-amber font-bold">1</span>
             </div>
             <div>
               <div className="text-[13px] text-ink font-medium">API Key (Recommended)</div>
@@ -544,7 +544,7 @@ function ConfigBlock({
   delay?: string;
 }) {
   return (
-    <div className="opacity-0 animate-[fadeInUp_0.35s_cubic-bezier(0.16,1,0.3,1)_forwards]" style={{ animationDelay: delay }}>
+    <div className="animate-[fadeInUp_0.35s_cubic-bezier(0.16,1,0.3,1)_both]" style={{ animationDelay: delay }}>
       <div className="flex items-center justify-between mb-2">
         <div>
           <div className="font-mono text-[12px] text-ink font-medium">{title}</div>

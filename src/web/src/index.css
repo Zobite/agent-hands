@@ -613,3 +613,16 @@
 .cot-fade-in {
   animation: cotFadeIn 0.2s ease-out;
 }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   TOUCH TARGET ENLARGEMENT — coarse pointer (finger/stylus)
+   Ensures minimum 44×44px hit areas on touch devices.
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+@media (pointer: coarse) {
+  /* Enlarge icon-only buttons that are 24–32px to 44px with invisible hit area */
+  button[aria-label] {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}

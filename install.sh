@@ -161,15 +161,24 @@ else
     fi
   fi
 fi
-
-# ── 8. First-run init (create super admin) ──────────────────────────────────
-if [ "$IS_FIRST_INSTALL" = true ]; then
-  echo ""
-  info "First install detected — initializing super admin..."
-  bun "$INSTALL_DIR/bin/agent-hands.js" init || warn "Auto-init failed. Run 'agent-hands init' manually after start."
+# ── 7b. Install Playwright browser (optional) ────────────────────────────────
+# Browser Profiles feature requires Playwright + Chromium. This is optional:
+# if it fails, the server still works — only the Browser feature is disabled.
+echo ""
+if [ "${SKIP_BROWSER:-}" = "true" ]; then
+  info "Skipping Playwright browser install (SKIP_BROWSER=true)"
+else
+  info "Installing Playwright browser for Browser Profiles feature..."
+  if (cd "$INSTALL_DIR" && bun add playwright 2>/dev/null && bunx playwright install chromium 2>/dev/null); then
+    success "Chromium browser installed — Browser Profiles feature is ready"
+  else
+    warn "Could not install Playwright/Chromium. Browser Profiles feature will not be available."
+    warn "To enable it later:  cd $INSTALL_DIR && bun add playwright && npx playwright install chromium"
+  fi
 fi
 
-# ── 9. Start/Restart Server ──────────────────────────────────────────────────
+# ── 8. Start/Restart Server ──────────────────────────────────────────────────
+# The server auto-seeds a default super admin on first start if no users exist.
 echo ""
 info "Starting Agent Hands server..."
 if bun "$INSTALL_DIR/bin/agent-hands.js" restart; then
@@ -184,6 +193,21 @@ if bun "$INSTALL_DIR/bin/agent-hands.js" restart; then
   echo -e "   🎉 ${BOLD}Web UI is available at:${NC}"
   echo -e "     🔗  ${CYAN}http://localhost:18080${NC}"
   echo ""
+
+  # ── Show default credentials on first install ──────────────────────────
+  if [ "$IS_FIRST_INSTALL" = true ]; then
+    echo -e "   ┌──────────────────────────────────────────────┐"
+    echo -e "   │  ${BOLD}🔑 Default Login Credentials${NC}                │"
+    echo -e "   │                                              │"
+    echo -e "   │    Username : ${CYAN}admin${NC}                         │"
+    echo -e "   │    Password : ${CYAN}admin123${NC}                      │"
+    echo -e "   │                                              │"
+    echo -e "   │  ${YELLOW}⚠️  Please change your password after${NC}      │"
+    echo -e "   │  ${YELLOW}   first login for security!${NC}               │"
+    echo -e "   └──────────────────────────────────────────────┘"
+    echo ""
+  fi
+
   echo -e "   To manage the server in the future:"
   echo -e "     ${CYAN}agent-hands stop${NC}      # Stop the server"
   echo -e "     ${CYAN}agent-hands status${NC}    # Check status"
@@ -196,6 +220,20 @@ else
   if ! command -v "$BIN_NAME" &> /dev/null; then
     warn "Could not verify binary in PATH. You may need to add it manually:"
     echo -e "     ${CYAN}export PATH=\"${BIN_DIR}:\$PATH\"${NC}"
+  fi
+
+  # ── Show default credentials even if server didn't start ────────────────
+  if [ "$IS_FIRST_INSTALL" = true ]; then
+    echo ""
+    echo -e "   ┌──────────────────────────────────────────────┐"
+    echo -e "   │  ${BOLD}🔑 Default Login Credentials${NC}                │"
+    echo -e "   │                                              │"
+    echo -e "   │    Username : ${CYAN}admin${NC}                         │"
+    echo -e "   │    Password : ${CYAN}admin123${NC}                      │"
+    echo -e "   │                                              │"
+    echo -e "   │  ${YELLOW}⚠️  Please change your password after${NC}      │"
+    echo -e "   │  ${YELLOW}   first login for security!${NC}               │"
+    echo -e "   └──────────────────────────────────────────────┘"
   fi
   echo ""
 fi

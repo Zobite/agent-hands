@@ -24,7 +24,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { client } from "src/lib/client";
 import { AgentHandsError } from "src/lib/http";
-import DatatableDocsModal from "../components/DatatableDocsModal";
 import type {
   AddColumnInput,
   ColumnDef,
@@ -37,6 +36,7 @@ import type {
   UpdateColumnInput,
   UpdateTableInput,
 } from "src/lib/types";
+import DatatableDocsModal from "../components/DatatableDocsModal";
 
 const { confirm } = Modal;
 
@@ -342,7 +342,7 @@ export default function ProjectDetailPage() {
   const handleDeleteTable = (table: DynamicTable) => {
     confirm({
       title: <span className="font-mono text-[14px]">Delete Table</span>,
-      icon: <AlertTriangle size={20} className="text-red-500 mr-2" />,
+      icon: <AlertTriangle size={20} className="text-error mr-2" />,
       content: `"${table.name}" and all ${table.rowCount} row(s) will be permanently deleted.`,
       okText: "Delete",
       okType: "danger",
@@ -366,7 +366,7 @@ export default function ProjectDetailPage() {
     if (!id || !activeTableId) return;
     confirm({
       title: <span className="font-mono text-[14px]">Delete Column "{col.name}"</span>,
-      icon: <AlertTriangle size={20} className="text-red-500 mr-2" />,
+      icon: <AlertTriangle size={20} className="text-error mr-2" />,
       content: "This will remove this column and its data from all rows.",
       okText: "Delete",
       okType: "danger",
@@ -391,7 +391,7 @@ export default function ProjectDetailPage() {
 
     confirm({
       title: <span className="font-mono text-[14px]">Delete {selectedIds.length} Row(s)</span>,
-      icon: <AlertTriangle size={20} className="text-red-500 mr-2" />,
+      icon: <AlertTriangle size={20} className="text-error mr-2" />,
       content: "This action is irreversible.",
       okText: "Delete",
       okType: "danger",
@@ -621,7 +621,7 @@ export default function ProjectDetailPage() {
 
               <div className="w-px h-4 bg-hairline" />
               <button
-                className="flex items-center gap-1.5 h-[28px] px-2.5 rounded text-muted-soft text-[11px] font-mono uppercase tracking-wide bg-transparent border-none cursor-pointer hover:text-red-500 transition-colors"
+                className="flex items-center gap-1.5 h-[28px] px-2.5 rounded text-muted-soft text-[11px] font-mono uppercase tracking-wide bg-transparent border-none cursor-pointer hover:text-error transition-colors"
                 onClick={handleDeleteSelectedRows}
               >
                 <Trash2 size={12} />
@@ -636,7 +636,7 @@ export default function ProjectDetailPage() {
                 Row
               </button>
               <button
-                className="flex items-center gap-1.5 h-[28px] px-3 rounded-md bg-ink text-canvas border-none font-medium text-[12px] hover:bg-opacity-90 transition-opacity cursor-pointer"
+                className="flex items-center gap-1.5 h-[28px] px-3 rounded-md bg-ink text-canvas border-none font-medium text-[12px] hover:bg-primary-active transition-colors cursor-pointer"
                 onClick={() => setAddColumnOpen(true)}
               >
                 <Plus size={13} />
@@ -791,12 +791,7 @@ export default function ProjectDetailPage() {
         </>
       )}
 
-      <DatatableDocsModal
-        open={docsOpen}
-        onClose={() => setDocsOpen(false)}
-        project={project}
-        tables={tables}
-      />
+      <DatatableDocsModal open={docsOpen} onClose={() => setDocsOpen(false)} project={project} tables={tables} />
     </div>
   );
 }
@@ -899,7 +894,7 @@ function CreateTableInDbModal({
                   type="button"
                   disabled={columns.length <= 1}
                   onClick={() => removeColumn(col.key)}
-                  className="flex items-center justify-center w-8 h-8 rounded-md bg-transparent border-none text-muted hover:text-red-500 cursor-pointer disabled:opacity-30 p-0"
+                  className="flex items-center justify-center w-8 h-8 rounded-md bg-transparent border-none text-muted hover:text-error cursor-pointer disabled:opacity-30 p-0"
                 >
                   <Trash2 size={14} />
                 </button>
@@ -920,7 +915,7 @@ function CreateTableInDbModal({
             <button
               type="submit"
               disabled={loading}
-              className="px-4 py-2 bg-ink text-canvas border-none rounded-md font-medium text-[13px] hover:bg-opacity-90 cursor-pointer transition-opacity"
+              className="px-4 py-2 bg-ink text-canvas border-none rounded-md font-medium text-[13px] hover:bg-primary-active cursor-pointer transition-colors"
             >
               {loading ? "Executing..." : "Execute"}
             </button>
@@ -985,7 +980,7 @@ function EditTableModal({
             <button
               type="submit"
               disabled={loading}
-              className="px-4 py-2 bg-ink text-canvas border-none rounded-md font-medium text-[13px] hover:bg-opacity-90 cursor-pointer transition-opacity"
+              className="px-4 py-2 bg-ink text-canvas border-none rounded-md font-medium text-[13px] hover:bg-primary-active cursor-pointer transition-colors"
             >
               {loading ? "Executing..." : "Execute"}
             </button>
@@ -1065,7 +1060,7 @@ function AddRowModal({
             <button
               type="submit"
               disabled={loading}
-              className="px-4 py-2 bg-ink text-canvas border-none rounded-md font-medium text-[13px] hover:bg-opacity-90 cursor-pointer transition-opacity"
+              className="px-4 py-2 bg-ink text-canvas border-none rounded-md font-medium text-[13px] hover:bg-primary-active cursor-pointer transition-colors"
             >
               {loading ? "Executing..." : "Execute"}
             </button>
@@ -1136,7 +1131,7 @@ function AddColumnModal({
             <button
               type="submit"
               disabled={loading}
-              className="px-4 py-2 bg-ink text-canvas border-none rounded-md font-medium text-[13px] hover:bg-opacity-90 cursor-pointer transition-opacity"
+              className="px-4 py-2 bg-ink text-canvas border-none rounded-md font-medium text-[13px] hover:bg-primary-active cursor-pointer transition-colors"
             >
               {loading ? "Executing..." : "Execute"}
             </button>
@@ -1211,7 +1206,7 @@ function EditColumnModal({
             <button
               type="submit"
               disabled={loading}
-              className="px-4 py-2 bg-ink text-canvas border-none rounded-md font-medium text-[13px] hover:bg-opacity-90 cursor-pointer transition-opacity"
+              className="px-4 py-2 bg-ink text-canvas border-none rounded-md font-medium text-[13px] hover:bg-primary-active cursor-pointer transition-colors"
             >
               {loading ? "Executing..." : "Execute"}
             </button>
@@ -1404,7 +1399,7 @@ function FilterDropdown({
 
                   {/* Remove button */}
                   <button
-                    className="flex items-center justify-center w-6 h-6 shrink-0 bg-transparent border-none cursor-pointer text-muted-soft hover:text-red-500 rounded transition-colors p-0"
+                    className="flex items-center justify-center w-6 h-6 shrink-0 bg-transparent border-none cursor-pointer text-muted-soft hover:text-error rounded transition-colors p-0"
                     onClick={() => removeFilter(index)}
                   >
                     <X size={13} />
@@ -1427,7 +1422,7 @@ function FilterDropdown({
         </button>
         {filters.length > 0 && (
           <button
-            className="bg-transparent border-none text-muted text-[11px] font-mono uppercase tracking-wide cursor-pointer hover:text-red-500 p-0 transition-colors"
+            className="bg-transparent border-none text-muted text-[11px] font-mono uppercase tracking-wide cursor-pointer hover:text-error p-0 transition-colors"
             onClick={() => onFiltersChange([])}
           >
             Clear all
@@ -1501,7 +1496,7 @@ function SortDropdown({
       {sortColumn && (
         <div className="px-4 py-2.5 border-t border-hairline">
           <button
-            className="bg-transparent border-none text-muted text-[11px] font-mono uppercase tracking-wide cursor-pointer hover:text-red-500 p-0 transition-colors"
+            className="bg-transparent border-none text-muted text-[11px] font-mono uppercase tracking-wide cursor-pointer hover:text-error p-0 transition-colors"
             onClick={() => {
               onClear();
               onClose();

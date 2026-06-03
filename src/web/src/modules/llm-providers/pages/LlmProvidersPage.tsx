@@ -51,7 +51,7 @@ export default function LlmProvidersPage() {
   const handleDelete = (provider: LlmProviderItem) => {
     confirm({
       title: <span className="font-mono text-[14px]">Remove Provider</span>,
-      icon: <AlertTriangle size={20} className="text-red-500 mr-2" />,
+      icon: <AlertTriangle size={20} className="text-error mr-2" />,
       content: `Remove "${provider.name}"? This will permanently delete the provider and its cached model list.`,
       okText: "Remove",
       okType: "danger",
@@ -103,7 +103,7 @@ export default function LlmProvidersPage() {
             </p>
           </div>
           <button
-            className="flex items-center gap-2 h-[36px] px-4 rounded-md bg-ink text-canvas font-medium text-[13px] hover:bg-opacity-90 transition-opacity cursor-pointer border-none shrink-0"
+            className="flex items-center gap-2 h-[36px] px-4 rounded-md bg-ink text-canvas font-medium text-[13px] hover:bg-primary-active transition-colors cursor-pointer border-none shrink-0"
             onClick={() => setCreateModalOpen(true)}
           >
             <Plus size={16} />
@@ -136,7 +136,7 @@ export default function LlmProvidersPage() {
             {providers.map((provider, idx) => (
               <div
                 key={provider.id}
-                className="flex items-center gap-5 px-5 py-4 border border-hairline rounded-md bg-surface-card transition-colors duration-150 hover:border-hairline-strong group opacity-0 animate-[fadeInUp_0.35s_cubic-bezier(0.16,1,0.3,1)_forwards]"
+                className="flex items-center gap-5 px-5 py-4 border border-hairline rounded-md bg-surface-card transition-colors duration-150 hover:border-hairline-strong group animate-[fadeInUp_0.35s_cubic-bezier(0.16,1,0.3,1)_both]"
                 style={{ animationDelay: `${idx * 0.04}s` }}
               >
                 {/* Icon + Name */}
@@ -216,7 +216,7 @@ export default function LlmProvidersPage() {
                   <Tooltip title="Delete">
                     <button
                       onClick={() => handleDelete(provider)}
-                      className="inline-flex items-center justify-center w-8 h-8 bg-transparent border-none cursor-pointer text-muted-soft rounded-sm p-0 transition-all duration-100 hover:text-red-500"
+                      className="inline-flex items-center justify-center w-8 h-8 bg-transparent border-none cursor-pointer text-muted-soft rounded-sm p-0 transition-all duration-100 hover:text-error"
                     >
                       <Trash2 size={14} />
                     </button>
@@ -399,7 +399,7 @@ function ProviderFormModal({
             <button
               type="submit"
               disabled={loading}
-              className="px-4 py-2 bg-ink text-canvas border-none rounded-md font-medium text-[13px] hover:bg-opacity-90 cursor-pointer transition-opacity disabled:opacity-50"
+              className="px-4 py-2 bg-ink text-canvas border-none rounded-md font-medium text-[13px] hover:bg-primary-active cursor-pointer transition-opacity disabled:opacity-50"
             >
               {loading ? "Connecting..." : isEdit ? "Update" : "Add Provider"}
             </button>
@@ -497,7 +497,7 @@ function ModelsViewModal({
             >
               <span className="font-mono text-[12px] text-ink truncate flex-1">{model}</span>
               {copiedId === model ? (
-                <Check size={12} className="text-green-600 shrink-0 ml-2" />
+                <Check size={12} className="text-success shrink-0 ml-2" />
               ) : (
                 <Copy size={12} className="text-muted-soft opacity-0 group-hover/row:opacity-100 shrink-0 ml-2 transition-opacity" />
               )}

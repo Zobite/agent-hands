@@ -231,7 +231,7 @@ export default function ApiDocsPage() {
               <BookOpen size={14} className="text-muted" strokeWidth={1.5} />
               <span className="font-mono text-[11px] uppercase tracking-wide text-muted">Documentation</span>
             </div>
-            <h1 className="font-display text-[32px] font-normal text-ink tracking-[-0.64px] m-0 leading-tight">API Reference</h1>
+            <h1 className="font-display text-[24px] md:text-[32px] font-normal text-ink tracking-[-0.64px] m-0 leading-tight">API Reference</h1>
           </div>
         </div>
 

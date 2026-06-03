@@ -30,7 +30,7 @@ export default function ApiKeysPage() {
   const handleDelete = (key: ApiKeyItem) => {
     confirm({
       title: <span className="font-mono text-[14px]">Revoke Credential</span>,
-      icon: <AlertTriangle size={20} className="text-red-500 mr-2" />,
+      icon: <AlertTriangle size={20} className="text-error mr-2" />,
       content: `Target: ${key.name}. Any applications using this key will lose access. This action is irreversible.`,
       okText: "Execute Revoke",
       okType: "danger",
@@ -75,7 +75,7 @@ export default function ApiKeysPage() {
             </p>
           </div>
           <button
-            className="flex items-center gap-2 h-[36px] px-4 rounded-md bg-ink text-canvas font-medium text-[13px] hover:bg-opacity-90 transition-opacity cursor-pointer border-none shrink-0"
+            className="flex items-center gap-2 h-[36px] px-4 rounded-md bg-ink text-canvas font-medium text-[13px] hover:bg-primary-active transition-colors cursor-pointer border-none shrink-0"
             onClick={() => setCreateModalOpen(true)}
           >
             <Plus size={16} />
@@ -169,7 +169,7 @@ export default function ApiKeysPage() {
                 {/* Action */}
                 <button
                   onClick={() => handleDelete(key)}
-                  className="inline-flex items-center justify-center w-8 h-8 bg-transparent border-none cursor-pointer text-muted-soft rounded-sm p-0 transition-all duration-100 opacity-0 group-hover:opacity-100 hover:text-red-500"
+                  className="inline-flex items-center justify-center w-8 h-8 bg-transparent border-none cursor-pointer text-muted-soft rounded-sm p-0 transition-all duration-100 opacity-0 group-hover:opacity-100 hover:text-error"
                   title="Revoke"
                 >
                   <Trash2 size={14} />
@@ -262,7 +262,7 @@ function CreateKeyModal({
             <button
               type="submit"
               disabled={loading}
-              className="px-4 py-2 bg-ink text-canvas border-none rounded-md font-medium text-[13px] hover:bg-opacity-90 cursor-pointer transition-opacity disabled:opacity-50"
+              className="px-4 py-2 bg-ink text-canvas border-none rounded-md font-medium text-[13px] hover:bg-primary-active cursor-pointer transition-opacity disabled:opacity-50"
             >
               {loading ? "Generating..." : "Execute"}
             </button>
@@ -310,7 +310,7 @@ function KeyCreatedModal({
         <div className="flex justify-end">
           <button
             onClick={onClose}
-            className="px-4 py-2 bg-ink text-canvas border-none rounded-md font-medium text-[13px] hover:bg-opacity-90 cursor-pointer transition-opacity"
+            className="px-4 py-2 bg-ink text-canvas border-none rounded-md font-medium text-[13px] hover:bg-primary-active cursor-pointer transition-opacity"
           >
             Acknowledge
           </button>

@@ -183,7 +183,7 @@ export default function DynamicApiDetailPage() {
     if (!api) return;
     confirm({
       title: <span className="font-mono text-[14px]">Delete Endpoint</span>,
-      icon: <AlertTriangle size={20} className="text-red-500 mr-2" />,
+      icon: <AlertTriangle size={20} className="text-error mr-2" />,
       content: `Delete "${api.name}" (${api.method} ${api.path})? This action is irreversible.`,
       okText: "Delete",
       okType: "danger",

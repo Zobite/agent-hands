@@ -184,9 +184,8 @@ test_fresh_install_real() {
   cli_output=$(bun "$install_dir/bin/agent-hands.js" version 2>&1)
   assert_contains_output "CLI version command works" "$cli_output" "v1.0.0"
 
-  # Verify first-install init ran
-  assert_contains_output "First install detected" "$output" "First install detected"
-  assert_contains_output "Super admin init ran" "$output" "Super admin created"
+  # Verify first-install auto-seed ran (matches real seedDefaultAdmin output)
+  assert_contains_output "Default super admin auto-seeded" "$output" "Default super admin created"
 
   # Verify server start output
   assert_contains_output "Web UI URL displayed" "$output" "localhost:18080"
@@ -226,7 +225,6 @@ EOF
 
   assert_contains_output "Upgrade message shown" "$output" "Upgrading v0.9.0"
   assert_not_contains_output "Not detected as first install" "$output" "First install detected"
-  assert_not_contains_output "Init not run on upgrade" "$output" "Super admin created"
 
   cleanup_state
 }
@@ -420,6 +418,28 @@ test_file_permissions_real() {
   cleanup_state
 }
 
+test_browser_graceful_without_playwright() {
+  echo -e "\n${CYAN}${BOLD}▸ TEST [Docker]: Server Starts OK Without Playwright${NC}"
+
+  cleanup_state
+
+  local installer="/tmp/install-test.sh"
+  create_patched_installer "$installer"
+
+  # Install with SKIP_BROWSER=true so playwright is NOT installed
+  local output
+  output=$(SKIP_BROWSER=true VERSION=1.0.0 bash "$installer" 2>&1)
+  local exit_code=$?
+
+  assert_eq "Exit code is 0" "0" "$exit_code"
+  assert_contains_output "Skipped playwright install" "$output" "Skipping Playwright"
+
+  # Verify server started successfully (CLI restart command works)
+  assert_contains_output "Server started despite no playwright" "$output" "localhost:18080"
+
+  cleanup_state
+}
+
 # ── Runner ──────────────────────────────────────────────────────────────────
 
 echo ""
@@ -440,6 +460,7 @@ ALL_TESTS=(
   test_path_with_spaces
   test_symlink_update_on_upgrade
   test_file_permissions_real
+  test_browser_graceful_without_playwright
 )
 
 for test_fn in "${ALL_TESTS[@]}"; do

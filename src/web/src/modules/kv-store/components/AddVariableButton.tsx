@@ -45,7 +45,7 @@ export default function AddVariableButton({ onCreated }: AddVariableButtonProps)
   return (
     <>
       <button
-        className="flex items-center gap-2 h-[36px] px-4 rounded-md bg-ink text-canvas font-medium text-[13px] hover:bg-opacity-90 transition-opacity cursor-pointer border-none"
+        className="flex items-center gap-2 h-[36px] px-4 rounded-md bg-ink text-canvas font-medium text-[13px] hover:bg-primary-active transition-colors cursor-pointer border-none"
         onClick={() => setOpen(true)}
       >
         <Plus size={16} />

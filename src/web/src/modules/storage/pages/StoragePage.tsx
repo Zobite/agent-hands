@@ -401,7 +401,7 @@ export default function StoragePage() {
 
   if (loading) {
     return (
-      <div className="max-w-[1280px] mx-auto px-12 py-8 flex justify-center pt-[120px]">
+      <div className="max-w-[1280px] mx-auto px-4 md:px-12 py-8 flex justify-center pt-[120px]">
         <Spin size="large" />
       </div>
     );
@@ -469,11 +469,11 @@ export default function StoragePage() {
       {/* ── Main Content ─────────────────────────────── */}
       <div className="flex-1 overflow-y-auto bg-canvas min-w-0">
         {viewMode === "api-prompt" ? (
-          <div className="px-8 py-6 max-w-[1200px]">
+          <div className="px-4 md:px-8 py-6 max-w-[1200px]">
             <StorageApiDocsPanel />
           </div>
         ) : viewMode === "access-keys" ? (
-          <div className="px-8 py-6 max-w-[1200px]">
+          <div className="px-4 md:px-8 py-6 max-w-[1200px]">
             <AccessKeysPanel />
           </div>
         ) : viewMode === "buckets" ? (
@@ -571,7 +571,7 @@ function BucketsView({
   onRefresh: () => void;
 }) {
   return (
-    <div className="px-8 py-6 max-w-[1200px]">
+    <div className="px-4 md:px-8 py-6 max-w-[1200px]">
       {/* Toolbar */}
       <div className="flex items-center justify-between gap-4 mb-4">
         <div className="flex items-center gap-2 flex-1 min-w-0">
@@ -908,7 +908,7 @@ function ObjectBrowserView({
   ];
 
   return (
-    <div className="px-8 py-6 max-w-[1200px]">
+    <div className="px-4 md:px-8 py-6 max-w-[1200px]">
       {/* Breadcrumb Navigation */}
       <div className="flex items-center gap-2 px-4 py-2 bg-surface-soft border border-hairline-soft rounded-lg mb-4">
         <Tooltip title="Back to Buckets">

@@ -248,6 +248,25 @@ export const configurations = sqliteTable("configurations", {
   updatedAt: int("updated_at").notNull(),
 });
 
+// ─── Browser Profiles ──────────────────────────────────────────────────────────
+export const browserProfiles = sqliteTable("browser_profiles", {
+  id: text("id").primaryKey(),              // bpr_xxxx
+  name: text("name").notNull(),
+  description: text("description"),
+  userDataDir: text("user_data_dir").notNull(), // Absolute path to storage folder
+  proxyConfig: text("proxy_config"),            // JSON string: { server, username, password }
+  fingerprintConfig: text("fingerprint_config"),// JSON string: { userAgent, viewport: { width, height }, locale, timezoneId, geolocation: { latitude, longitude } }
+  status: text("status", { enum: ["idle", "running", "error"] })
+    .notNull()
+    .default("idle"),
+  cdpPort: int("cdp_port"),
+  wsEndpoint: text("ws_endpoint"),
+  pid: int("pid"),
+  createdBy: text("created_by").notNull(),
+  createdAt: int("created_at").notNull(),
+  updatedAt: int("updated_at").notNull(),
+});
+
 // ─── Types ─────────────────────────────────────────────────────────────────────
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
@@ -289,3 +308,5 @@ export type LlmProvider = typeof llmProviders.$inferSelect;
 export type InsertLlmProvider = typeof llmProviders.$inferInsert;
 export type Configuration = typeof configurations.$inferSelect;
 export type InsertConfiguration = typeof configurations.$inferInsert;
+export type BrowserProfile = typeof browserProfiles.$inferSelect;
+export type InsertBrowserProfile = typeof browserProfiles.$inferInsert;

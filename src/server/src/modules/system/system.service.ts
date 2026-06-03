@@ -1,7 +1,8 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import type { VersionResponse } from "./system.schema.js";
+import os from "node:os";
+import type { VersionResponse, SystemInfoResponse } from "./system.schema.js";
 
 /**
  * Injected at build time by `src/server/build.ts` via Bun's `define`.
@@ -131,3 +132,102 @@ export function invalidateVersionCache() {
   _cachedAt = 0;
 }
 
+// ── System Info ────────────────────────────────────────────────────────────────
+
+/** Sample CPU usage over a short interval (non-blocking) */
+async function getCpuUsage(): Promise<number> {
+  const cpus1 = os.cpus();
+  const total1 = cpus1.reduce((acc, c) => {
+    const t = c.times;
+    return acc + t.user + t.nice + t.sys + t.idle + t.irq;
+  }, 0);
+  const idle1 = cpus1.reduce((acc, c) => acc + c.times.idle, 0);
+
+  await new Promise((r) => setTimeout(r, 200));
+
+  const cpus2 = os.cpus();
+  const total2 = cpus2.reduce((acc, c) => {
+    const t = c.times;
+    return acc + t.user + t.nice + t.sys + t.idle + t.irq;
+  }, 0);
+  const idle2 = cpus2.reduce((acc, c) => acc + c.times.idle, 0);
+
+  const totalDiff = total2 - total1;
+  const idleDiff = idle2 - idle1;
+  if (totalDiff === 0) return 0;
+  return Math.round(((totalDiff - idleDiff) / totalDiff) * 100 * 10) / 10;
+}
+
+/** Get disk usage for the root mount via `df` */
+async function getDiskInfo(): Promise<{ total: number; used: number; free: number; usage: number; mount: string }> {
+  try {
+    const proc = Bun.spawn(["df", "-k", "/"], { stdout: "pipe", stderr: "pipe" });
+    const output = await new Response(proc.stdout).text();
+    await proc.exited;
+
+    const lines = output.trim().split("\n");
+    if (lines.length < 2) throw new Error("unexpected df output");
+
+    // df -k output: Filesystem 1K-blocks Used Available Use%/Capacity Mounted
+    // On macOS APFS the "Used" column only reflects a single volume's usage,
+    // while "Available" is the real free space across the volume group.
+    // Therefore we compute: used = total - available  so the numbers add up.
+    const parts = lines[1].split(/\s+/);
+    const totalKb = parseInt(parts[1], 10);
+    const availKb = parseInt(parts[3], 10);
+    const usedKb = totalKb - availKb;
+    const mount = parts[parts.length - 1];
+
+    return {
+      total: totalKb * 1024,
+      used: usedKb * 1024,
+      free: availKb * 1024,
+      usage: totalKb > 0 ? Math.round((usedKb / totalKb) * 100 * 10) / 10 : 0,
+      mount,
+    };
+  } catch {
+    return { total: 0, used: 0, free: 0, usage: 0, mount: "/" };
+  }
+}
+
+/** Gather all system info */
+export async function getSystemInfo(): Promise<SystemInfoResponse> {
+  const cpus = os.cpus();
+  const totalMem = os.totalmem();
+  const freeMem = os.freemem();
+  const usedMem = totalMem - freeMem;
+  const memUsage = process.memoryUsage();
+
+  const [cpuUsage, disk] = await Promise.all([getCpuUsage(), getDiskInfo()]);
+
+  return {
+    cpu: {
+      model: cpus[0]?.model ?? "unknown",
+      cores: cpus.length,
+      usage: cpuUsage,
+    },
+    memory: {
+      total: totalMem,
+      used: usedMem,
+      free: freeMem,
+      usage: Math.round((usedMem / totalMem) * 100 * 10) / 10,
+    },
+    disk,
+    process: {
+      pid: process.pid,
+      uptime: Math.floor(process.uptime()),
+      memoryRss: memUsage.rss,
+      memoryHeap: memUsage.heapUsed,
+      bunVersion: typeof Bun !== "undefined" ? Bun.version : "N/A",
+      nodeVersion: process.version,
+    },
+    os: {
+      platform: os.platform(),
+      arch: os.arch(),
+      hostname: os.hostname(),
+      release: os.release(),
+      uptime: Math.floor(os.uptime()),
+    },
+    timestamp: Date.now(),
+  };
+}

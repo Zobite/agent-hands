@@ -1241,6 +1241,196 @@ console.log(refreshed.models.length);`,
       },
     ],
   },
+  {
+    id: "browsers",
+    label: "Browsers",
+    description: "Manage persistent stealth browser sessions using CloakBrowser & Playwright.",
+    basePrefix: "/api/browsers",
+    endpoints: [
+      {
+        method: "GET",
+        path: "/",
+        summary: "List all browser profiles",
+        auth: "both",
+        queryParams: "search, page, limit",
+        response: `{
+  "items": [{
+    "id": "bpr_xxx",
+    "name": "Social Scraper 1",
+    "description": "Stealth profile",
+    "status": "idle",
+    "cdpPort": null,
+    "wsEndpoint": null,
+    "createdAt": 1714000000
+  }],
+  "meta": { "total": 1 }
+}`,
+        jsExample: `const profiles = await fetch("{{BASE_URL}}/api/browsers", {
+  headers: { "X-API-Key": "YOUR_API_KEY" }
+}).then(res => res.json());`,
+      },
+      {
+        method: "POST",
+        path: "/",
+        summary: "Create a new browser profile",
+        auth: "both",
+        body: `{
+  "name": "Social Scraper 1",
+  "description": "Stealth profile",
+  "proxyConfig": {
+    "server": "http://127.0.0.1:8080"
+  }
+}`,
+        jsExample: `const profile = await fetch("{{BASE_URL}}/api/browsers", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "X-API-Key": "YOUR_API_KEY"
+  },
+  body: JSON.stringify({
+    name: "Social Scraper 1",
+    proxyConfig: { server: "http://127.0.0.1:8080" }
+  })
+}).then(res => res.json());`,
+      },
+      {
+        method: "POST",
+        path: "/:id/start",
+        summary: "Launch a browser profile in persistent background mode",
+        auth: "both",
+        response: `{
+  "id": "bpr_xxx",
+  "status": "running",
+  "cdpPort": 19001,
+  "wsEndpoint": "ws://127.0.0.1:19001/devtools/browser/..."
+}`,
+        jsExample: `const session = await fetch("{{BASE_URL}}/api/browsers/bpr_xxx/start", {
+  method: "POST",
+  headers: { "X-API-Key": "YOUR_API_KEY" }
+}).then(res => res.json());
+console.log(session.wsEndpoint);`,
+      },
+      {
+        method: "POST",
+        path: "/:id/stop",
+        summary: "Stop a running browser profile process",
+        auth: "both",
+        jsExample: `await fetch("{{BASE_URL}}/api/browsers/bpr_xxx/stop", {
+  method: "POST",
+  headers: { "X-API-Key": "YOUR_API_KEY" }
+});`,
+      },
+      {
+        method: "GET",
+        path: "/:id/screenshot",
+        summary: "Retrieve raw live browser screenshot",
+        auth: "both",
+        queryParams: "tabIndex",
+        notes: "Returns a raw PNG image buffer. Pass tabIndex query parameter to fetch from specific tabs.",
+        jsExample: `// View screenshot in frontend or download it
+const imageUrl = "{{BASE_URL}}/api/browsers/bpr_xxx/screenshot?tabIndex=0";`,
+      },
+      {
+        method: "GET",
+        path: "/:id/tabs",
+        summary: "List all active tabs/pages inside a running browser context",
+        auth: "both",
+        response: `[
+  { "index": 0, "url": "https://httpbin.org", "title": "httpbin" }
+]`,
+        jsExample: `const tabs = await fetch("{{BASE_URL}}/api/browsers/bpr_xxx/tabs", {
+  headers: { "X-API-Key": "YOUR_API_KEY" }
+}).then(res => res.json());`,
+      },
+      {
+        method: "POST",
+        path: "/:id/control",
+        summary: "Execute a sequence of browser actions on a running profile",
+        auth: "both",
+        body: `{
+  "tabIndex": 0,
+  "steps": [
+    { "action": "navigate", "url": "https://httpbin.org" },
+    { "action": "screenshot" }
+  ]
+}`,
+        notes: "Omit tabIndex to auto-create a new tab (closed after execution). Pass tabIndex to reuse an existing tab (kept open). Supported actions: navigate, click, type, screenshot, get_content, eval, wait. Set timeout per step (ms). Execution stops on first error.",
+        jsExample: `const result = await fetch("{{BASE_URL}}/api/browsers/bpr_xxx/control", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "X-API-Key": "YOUR_API_KEY"
+  },
+  body: JSON.stringify({
+    tabIndex: 0,
+    steps: [
+      { action: "navigate", url: "https://httpbin.org" },
+      { action: "screenshot" }
+    ]
+  })
+}).then(res => res.json());`,
+      },
+    ],
+  },
+  {
+    id: "system",
+    label: "System",
+    description: "System information, version checking, and self-update.",
+    basePrefix: "/api/system",
+    endpoints: [
+      {
+        method: "GET",
+        path: "/info",
+        summary: "Get system metrics (CPU, memory, disk, process, OS)",
+        auth: "both",
+        response: `{
+  "cpu": { "model": "Apple M3", "cores": 8, "usage": 12.5 },
+  "memory": { "total": 17179869184, "used": 16753000448, "free": 426868736, "usage": 97.5 },
+  "disk": { "total": 245107195904, "used": 16728260608, "free": 9543127040, "usage": 6.8, "mount": "/" },
+  "process": { "pid": 1234, "uptime": 3600, "memoryRss": 250576896, "memoryHeap": 53037576, "bunVersion": "1.3.12", "nodeVersion": "v24.3.0" },
+  "os": { "platform": "darwin", "arch": "arm64", "hostname": "my-host", "release": "25.4.0", "uptime": 86400 },
+  "timestamp": 1780396120242
+}`,
+        notes: "CPU usage is sampled over ~200ms. Memory/disk values are in bytes.",
+        jsExample: `const info = await fetch("{{BASE_URL}}/api/system/info", {
+  headers: { "X-API-Key": "YOUR_API_KEY" }
+}).then(res => res.json());
+
+console.log(info.cpu.usage + "% CPU");
+console.log(info.memory.usage + "% RAM");`,
+      },
+      {
+        method: "GET",
+        path: "/version",
+        summary: "Get current and latest version info",
+        auth: "both",
+        response: `{
+  "current": "0.3.0",
+  "latest": "0.3.1",
+  "hasUpdate": true,
+  "checkedAt": 1780396120242
+}`,
+        jsExample: `const version = await fetch("{{BASE_URL}}/api/system/version", {
+  headers: { "X-API-Key": "YOUR_API_KEY" }
+}).then(res => res.json());
+
+if (version.hasUpdate) console.log("Update available:", version.latest);`,
+      },
+      {
+        method: "POST",
+        path: "/update",
+        summary: "Trigger self-update (superadmin only)",
+        auth: "both",
+        notes: "Downloads and installs the latest version. Server will restart after update.",
+        jsExample: `const result = await fetch("{{BASE_URL}}/api/system/update", {
+  method: "POST",
+  headers: { "X-API-Key": "YOUR_API_KEY" }
+}).then(res => res.json());
+
+console.log(result.ok, result.message);`,
+      },
+    ],
+  },
 ];
 
 /** Return full API docs data */
