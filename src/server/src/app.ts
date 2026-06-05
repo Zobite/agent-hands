@@ -164,7 +164,8 @@ export async function createApp() {
   app.register(cors, {
     origin: "*",
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "X-API-Key"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-API-Key", "mcp-session-id", "mcp-protocol-version"],
+    exposedHeaders: ["mcp-session-id"],
   });
 
   app.register(multipart, { limits: { fileSize: 10 * 1024 * 1024 * 1024 } });
@@ -314,6 +315,15 @@ export async function createApp() {
     const session = mcpStreamableSessions.get(sessionId);
     if (!session) {
       return reply.code(404).send({ error: "not_found", message: "Session not found" });
+    }
+
+    // Close existing standalone SSE stream before opening a new one to prevent
+    // 409 Conflict from the SDK (only one GET SSE stream allowed per session).
+    // This happens when clients reconnect after network hiccups or timeouts.
+    try {
+      session.transport.closeStandaloneSSEStream();
+    } catch {
+      // Ignore errors if there's no existing stream
     }
 
     reply.hijack();
