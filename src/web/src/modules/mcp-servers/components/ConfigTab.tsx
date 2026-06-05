@@ -7,18 +7,20 @@ import { useApiKey } from "src/common/hooks/useApiKey";
 
 export function ConfigTab({
   mcpEndpoint,
+  serverName,
 }: {
   mcpEndpoint: string;
+  serverName: string;
 }) {
   const [apiKey, setApiKey] = useApiKey();
   const authValue = apiKey || "<YOUR_API_KEY>";
 
-  const claudeCodeCmd = `claude mcp add --transport http agent-hands ${mcpEndpoint} --header "Authorization: Bearer ${authValue}"`;
+  const claudeCodeCmd = `claude mcp add --transport http ${serverName} ${mcpEndpoint} --header "Authorization: Bearer ${authValue}"`;
 
   const antigravityConfig = JSON.stringify(
     {
       mcpServers: {
-        "agent-hands": {
+        [serverName]: {
           serverUrl: `${mcpEndpoint}`,
           headers: {
             Authorization: `Bearer ${authValue}`,
@@ -67,17 +69,12 @@ export function ConfigTab({
       </div>
 
       {/* Claude Code */}
-      <ConfigBlock
-        title="Claude Code"
-        subtitle="Run this command in your terminal"
-        code={claudeCodeCmd}
-        delay="0.15s"
-      />
+      <ConfigBlock title="Claude Code" subtitle="Run this command in your terminal" code={claudeCodeCmd} delay="0.15s" />
 
       {/* Antigravity (Gemini) */}
       <ConfigBlock
         title="Antigravity / Gemini"
-        subtitle=""
+        subtitle="Add to mcp_config.json — authenticates via Authorization: Bearer <API_KEY>"
         code={antigravityConfig}
         delay="0.2s"
       />

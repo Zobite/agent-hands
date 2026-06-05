@@ -53,37 +53,53 @@ interface ParsedMetadata {
 export function parseToolCode(code: string): ParsedMetadata {
   const lines = code.split("\n");
   const commentLines: string[] = [];
+
+  // Strategy: scan the entire file for all JSDoc blocks.
+  // Collect lines from the block that contains @name/@description/@param tags.
+  // This handles cases where import statements appear before the JSDoc block.
+  const allBlocks: string[][] = [];
+  let currentBlock: string[] = [];
   let inJSDocBlock = false;
 
   for (const line of lines) {
     const trimmed = line.trim();
     if (trimmed.startsWith("/**")) {
       inJSDocBlock = true;
+      currentBlock = [];
       continue;
     }
     if (trimmed.endsWith("*/") && inJSDocBlock) {
       inJSDocBlock = false;
+      allBlocks.push(currentBlock);
+      currentBlock = [];
       continue;
     }
     if (inJSDocBlock) {
       const match = trimmed.match(/^\*\s*(.*)$/);
       if (match) {
-        commentLines.push(match[1]);
+        currentBlock.push(match[1]);
       } else {
-        commentLines.push(trimmed);
+        currentBlock.push(trimmed);
       }
-      continue;
     }
-    if (trimmed.startsWith("//")) {
-      commentLines.push(trimmed.slice(2).trim());
-      continue;
-    }
-    if (trimmed.startsWith("#")) {
-      commentLines.push(trimmed.slice(1).trim());
-      continue;
-    }
-    if (trimmed !== "") {
-      break;
+  }
+
+  // Find the JSDoc block that contains tool metadata (@name or @param)
+  const metaBlock = allBlocks.find((block) => block.some((l) => l.trim().startsWith("@name") || l.trim().startsWith("@param")));
+
+  if (metaBlock) {
+    commentLines.push(...metaBlock);
+  } else {
+    // Fallback: scan top-of-file single-line comments (// or #) before any code
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (trimmed.startsWith("//")) {
+        commentLines.push(trimmed.slice(2).trim());
+      } else if (trimmed.startsWith("#")) {
+        commentLines.push(trimmed.slice(1).trim());
+      } else if (trimmed !== "" && !trimmed.startsWith("import") && !trimmed.startsWith("/**")) {
+        break;
+      }
     }
   }
 
@@ -238,19 +254,87 @@ export function parseToolCode(code: string): ParsedMetadata {
   // Clean up empty required arrays
   const cleanSchema = (obj: any) => {
     if (obj.type === "object") {
-      if (obj.required?.length === 0) delete obj.required;
+      if (obj.required?.length === 0) obj.required = undefined;
       if (obj.properties) {
         for (const k in obj.properties) cleanSchema(obj.properties[k]);
       }
     } else if (obj.type === "array" && obj.items) {
-      if (obj.items.required?.length === 0) delete obj.items.required;
+      if (obj.items.required?.length === 0) obj.items.required = undefined;
       cleanSchema(obj.items);
     }
-    if (obj.description === undefined) delete obj.description;
+    if (obj.description === undefined) obj.description = undefined;
   };
   cleanSchema(schema);
 
   return { name, description, inputSchema: JSON.stringify(schema, null, 2) };
+}
+
+/**
+ * Normalize tool code: ensure JSDoc block (@name/@param) is always at the top,
+ * followed by import statements, then the rest of the code.
+ * Convention: JSDoc metadata comment must always be the first thing in the file.
+ */
+export function normalizeToolCode(code: string): string {
+  const lines = code.split("\n");
+
+  // Find the JSDoc block containing @name or @param
+  let jsdocStart = -1;
+  let jsdocEnd = -1;
+  let inBlock = false;
+  let foundMeta = false;
+  let blockStart = -1;
+
+  for (let i = 0; i < lines.length; i++) {
+    const trimmed = lines[i].trim();
+    if (trimmed.startsWith("/**")) {
+      inBlock = true;
+      blockStart = i;
+      foundMeta = false;
+    }
+    if (inBlock && (trimmed.includes("@name") || trimmed.includes("@param"))) {
+      foundMeta = true;
+    }
+    if (trimmed.endsWith("*/") && inBlock) {
+      inBlock = false;
+      if (foundMeta) {
+        jsdocStart = blockStart;
+        jsdocEnd = i;
+        break;
+      }
+    }
+  }
+
+  // If no metadata JSDoc found, or it's already at the top, return as-is
+  if (jsdocStart <= 0) return code;
+
+  // Check if there's only whitespace/imports before the JSDoc block
+  const beforeJsdoc = lines.slice(0, jsdocStart);
+  const hasCodeBefore = beforeJsdoc.some((l) => {
+    const t = l.trim();
+    return t !== "" && !t.startsWith("import ") && !t.startsWith("import{");
+  });
+
+  // Only reorder if the stuff before JSDoc is just imports (not arbitrary code)
+  if (hasCodeBefore) return code;
+
+  // Extract parts
+  const importLines = beforeJsdoc.filter((l) => l.trim() !== "");
+  const jsdocLines = lines.slice(jsdocStart, jsdocEnd + 1);
+  const afterJsdoc = lines.slice(jsdocEnd + 1);
+
+  // Rebuild: JSDoc first → imports → rest of code
+  const result: string[] = [];
+  result.push(...jsdocLines);
+  if (importLines.length > 0) {
+    result.push(...importLines);
+    // Add blank line after imports if the next line isn't blank
+    if (afterJsdoc.length > 0 && afterJsdoc[0].trim() !== "") {
+      result.push("");
+    }
+  }
+  result.push(...afterJsdoc);
+
+  return result.join("\n");
 }
 
 /**
@@ -378,7 +462,7 @@ export function useToolEditor() {
     } finally {
       setLoading(false);
     }
-  }, [serverId, toolId, navigate]);
+  }, [serverId, toolId, navigate, message.error]);
 
   useEffect(() => {
     fetchTool();
@@ -387,7 +471,8 @@ export function useToolEditor() {
   // ── Save ─────────────────────────────────────────────────────────────────
 
   const handleSave = async (codeOverride?: string) => {
-    const codeToSave = codeOverride ?? code;
+    // Normalize code: ensure JSDoc is always at top, imports after
+    const codeToSave = normalizeToolCode(codeOverride ?? code);
     try {
       const meta = parseToolCode(codeToSave);
       if (meta.error) {
@@ -401,10 +486,12 @@ export function useToolEditor() {
         description: meta.description,
         inputSchema: meta.inputSchema,
         code: codeToSave,
-        draftCode: codeToSave,  // Keep draft in sync with prod
+        draftCode: codeToSave, // Keep draft in sync with prod
       });
       message.success("Tool saved");
       savedCodeRef.current = codeToSave;
+      // Update editor with normalized code (JSDoc moved to top)
+      setCode(codeToSave);
       setToolName(meta.name);
       setToolDescription(meta.description);
       setInputSchema(meta.inputSchema);
@@ -472,7 +559,7 @@ export function useToolEditor() {
     } finally {
       setLogsLoading(false);
     }
-  }, [serverId, toolId]);
+  }, [serverId, toolId, message.error]);
 
   useEffect(() => {
     if (rightPanel === "logs") fetchLogs();

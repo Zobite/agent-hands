@@ -1,15 +1,5 @@
 import { Switch } from "antd";
-import {
-  Code,
-  Database,
-  HardDrive,
-  Monitor,
-  Plus,
-  Trash2,
-  Variable,
-  Wrench,
-  Zap,
-} from "lucide-react";
+import { Code, Database, HardDrive, Monitor, Plug, Plus, Trash2, Variable, Wrench, Zap } from "lucide-react";
 import type { McpToolItem } from "src/lib/types";
 
 // ── Built-in System Tools (individual tools exposed to AI agents) ────────────
@@ -40,10 +30,14 @@ const BUILTIN_TOOLS: BuiltinToolCategory[] = [
       { name: "datatables_list_tables", description: "List all tables in a project with column definitions" },
       { name: "datatables_create_table", description: "Create a new table with column definitions in a project" },
       { name: "datatables_update_table", description: "Update a table's metadata (name, description)" },
+      { name: "datatables_add_column", description: "Add a new column to an existing table" },
+      { name: "datatables_update_column", description: "Update an existing column's name, type, or options" },
+      { name: "datatables_delete_column", description: "Delete a column and its data from all rows" },
       { name: "datatables_query_rows", description: "Query table rows using MQL (SQL-like syntax)" },
+      { name: "datatables_get_row", description: "Get a single row by ID from a table" },
       { name: "datatables_insert_row", description: "Insert a new row into a table" },
-      { name: "datatables_update_row", description: "Update an existing row in a table" },
-      { name: "datatables_delete_row", description: "Delete a single row from a table" },
+      { name: "datatables_bulk_update_rows", description: "Update one or more rows in a single operation" },
+      { name: "datatables_bulk_delete_rows", description: "Delete one or more rows in a single operation" },
     ],
   },
   {
@@ -81,6 +75,23 @@ const BUILTIN_TOOLS: BuiltinToolCategory[] = [
       { name: "dynamic_api_create", description: "Create a new dynamic API with JavaScript handler" },
       { name: "dynamic_api_update", description: "Update an existing dynamic API endpoint" },
       { name: "dynamic_api_delete", description: "Delete a dynamic API endpoint" },
+    ],
+  },
+  {
+    category: "MCP Servers",
+    icon: <Plug size={14} strokeWidth={1.5} />,
+    tools: [
+      { name: "mcp_server_list", description: "List all MCP servers with tool counts" },
+      { name: "mcp_server_get", description: "Get MCP server details by ID" },
+      { name: "mcp_server_create", description: "Create a new custom MCP server" },
+      { name: "mcp_server_update", description: "Update server name, description, or status" },
+      { name: "mcp_server_delete", description: "Delete a custom MCP server and all its tools" },
+      { name: "mcp_tool_list", description: "List all tools in an MCP server" },
+      { name: "mcp_tool_get", description: "Get tool details including code and schema" },
+      { name: "mcp_tool_create", description: "Create a new tool in a custom server" },
+      { name: "mcp_tool_update", description: "Update tool name, description, code, or schema" },
+      { name: "mcp_tool_delete", description: "Delete a tool from a custom server" },
+      { name: "mcp_tool_test", description: "Test-execute a tool in its JavaScript sandbox" },
     ],
   },
 ];

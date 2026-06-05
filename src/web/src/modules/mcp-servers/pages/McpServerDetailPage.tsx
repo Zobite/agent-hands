@@ -40,7 +40,7 @@ export default function McpServerDetailPage() {
     }
   };
 
-  const apiOrigin = API_BASE || `${window.location.protocol}//${window.location.hostname}:18080`;
+  const apiOrigin = API_BASE || window.location.origin;
   const mcpEndpoint = `${apiOrigin}/api/mcp/${id}`;
 
   if (loading) {
@@ -147,7 +147,7 @@ export default function McpServerDetailPage() {
             navigate={navigate}
           />
         ) : (
-          <ConfigTab mcpEndpoint={mcpEndpoint} />
+          <ConfigTab mcpEndpoint={mcpEndpoint} serverName={server.name} />
         )}
       </div>
 
