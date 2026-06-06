@@ -274,7 +274,7 @@ gh release create "$TAG" \
   "$TARBALL_PATH" \
   --title "Agent Hands ${TAG}" \
   --notes "$RELEASE_NOTES" \
-  "${GH_RELEASE_FLAGS[@]}"
+  ${GH_RELEASE_FLAGS[@]+"${GH_RELEASE_FLAGS[@]}"}
 
 success "GitHub Release ${TAG} published!"
 

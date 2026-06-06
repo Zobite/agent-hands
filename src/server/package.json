@@ -1,6 +1,6 @@
 {
   "name": "agent-hands-server",
-  "version": "0.3.9",
+  "version": "0.3.10-pre.1",
   "type": "module",
   "private": true,
   "scripts": {
