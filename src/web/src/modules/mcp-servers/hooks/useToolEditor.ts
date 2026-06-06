@@ -470,14 +470,14 @@ export function useToolEditor() {
 
   // ── Save ─────────────────────────────────────────────────────────────────
 
-  const handleSave = async (codeOverride?: string) => {
+  const handleSave = async (codeOverride?: string): Promise<boolean> => {
     // Normalize code: ensure JSDoc is always at top, imports after
     const codeToSave = normalizeToolCode(codeOverride ?? code);
     try {
       const meta = parseToolCode(codeToSave);
       if (meta.error) {
         message.error(`JSDoc parsing error: ${meta.error}`);
-        return;
+        return false;
       }
 
       setSaving(true);
@@ -495,8 +495,11 @@ export function useToolEditor() {
       setToolName(meta.name);
       setToolDescription(meta.description);
       setInputSchema(meta.inputSchema);
+      return true;
     } catch (err) {
       if (err instanceof AgentHandsError) message.error(err.message);
+      else message.error("Failed to save tool");
+      return false;
     } finally {
       setSaving(false);
     }
@@ -570,14 +573,15 @@ export function useToolEditor() {
   const handleAcceptPending = async () => {
     if (pendingCode) {
       const codeToSave = pendingCode;
-      // Defer DiffEditor unmount by 1 frame so Monaco's DiffEditorWidget
-      // can dispose its internal models before React removes the DOM element.
-      // This prevents "TextModel got disposed before DiffEditorWidget model got reset".
-      setCode(codeToSave);
-      requestAnimationFrame(() => {
-        setPendingCode(null);
-      });
-      await handleSave(codeToSave);
+      const success = await handleSave(codeToSave);
+      if (success) {
+        // Defer DiffEditor unmount by 1 frame so Monaco's DiffEditorWidget
+        // can dispose its internal models before React removes the DOM element.
+        // This prevents "TextModel got disposed before DiffEditorWidget model got reset".
+        requestAnimationFrame(() => {
+          setPendingCode(null);
+        });
+      }
     }
   };
 

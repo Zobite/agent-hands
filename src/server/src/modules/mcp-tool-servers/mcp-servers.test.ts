@@ -7,12 +7,12 @@
  * Requires: server running at BASE_URL (bun dev:server)
  */
 
-import { describe, test, expect, beforeAll, afterAll } from "bun:test";
+import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 
 // ── Config ────────────────────────────────────────────────────────────────────
 
 const BASE_URL = process.env.TEST_BASE_URL ?? "http://127.0.0.1:18080";
-const LOGIN    = process.env.TEST_LOGIN    ?? "admin";
+const LOGIN = process.env.TEST_LOGIN ?? "admin";
 const PASSWORD = process.env.TEST_PASSWORD ?? "admin123";
 
 // ── State ─────────────────────────────────────────────────────────────────────
@@ -176,6 +176,15 @@ describe("MCP Tool Servers — Tool CRUD", () => {
     expect(res.status).toBe(200);
     const data = await json(res);
     expect(data.description).toBe("Updated description");
+  });
+
+  test("PATCH /:id/tools/:toolId — update tool with empty description", async () => {
+    const res = await apiPatch(`/mcp-tool-servers/${createdServerId}/tools/${createdToolId}`, {
+      description: "",
+    });
+    expect(res.status).toBe(200);
+    const data = await json(res);
+    expect(data.description).toBe("");
   });
 
   test("DELETE /:id/tools/:toolId — delete tool", async () => {

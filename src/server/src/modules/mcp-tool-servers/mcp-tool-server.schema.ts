@@ -35,7 +35,7 @@ export const createMcpToolBodySchema = z.object({
     .max(100)
     .regex(/^[a-z0-9_]+$/, "Tool name must be snake_case (lowercase alphanumeric + underscore)"),
   description: z.string().max(2000).default(""),
-  inputSchema: z.string().optional(),  // JSON Schema string
+  inputSchema: z.string().optional(), // JSON Schema string
   code: z.string().default(""),
 });
 
@@ -46,7 +46,7 @@ export const updateMcpToolBodySchema = z.object({
     .max(100)
     .regex(/^[a-z0-9_]+$/, "Tool name must be snake_case")
     .optional(),
-  description: z.string().min(1).max(2000).optional(),
+  description: z.string().max(2000).optional(),
   inputSchema: z.string().nullable().optional(),
   code: z.string().min(1).optional(),
   draftCode: z.string().nullable().optional(),

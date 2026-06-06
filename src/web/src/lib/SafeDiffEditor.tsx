@@ -23,34 +23,55 @@ type DiffEditorInstance = Parameters<NonNullable<DiffEditorProps["onMount"]>>[0]
  */
 export function SafeDiffEditor(props: DiffEditorProps) {
   const editorRef = useRef<DiffEditorInstance | null>(null);
+  const modelsRef = useRef<{ original: any; modified: any } | null>(null);
 
   const handleMount = useCallback(
     (...args: Parameters<NonNullable<DiffEditorProps["onMount"]>>) => {
-      editorRef.current = args[0];
+      const editor = args[0];
+      editorRef.current = editor;
+
+      const model = editor.getModel();
+      if (model) {
+        modelsRef.current = {
+          original: model.original,
+          modified: model.modified,
+        };
+      }
+
       props.onMount?.(...args);
     },
     [props.onMount],
   );
 
-  // Dispose the editor instance on unmount BEFORE React removes the DOM.
-  // This lets DiffEditorWidget detach its model references in the correct order,
-  // preventing the "TextModel got disposed before DiffEditorWidget model got reset" error.
+  // Keep the modelsRef in sync with the current models in case they change
+  useEffect(() => {
+    if (editorRef.current) {
+      const model = editorRef.current.getModel();
+      if (model) {
+        modelsRef.current = {
+          original: model.original,
+          modified: model.modified,
+        };
+      }
+    }
+  });
+
+  // Dispose the models AFTER the DiffEditor widget has already been disposed.
+  // Because we pass keepCurrentOriginalModel={true} and keepCurrentModifiedModel={true},
+  // the child component's unmount cleanup only disposes the editor widget itself,
+  // leaving the models intact. Then, this parent effect runs (which runs AFTER
+  // the child's cleanup) and safely disposes the models.
   useEffect(() => {
     return () => {
-      if (editorRef.current) {
+      if (modelsRef.current) {
         try {
-          // Grab references to the text models before disposing the editor.
-          const original = editorRef.current.getModel()?.original;
-          const modified = editorRef.current.getModel()?.modified;
-          // Dispose the widget FIRST — this resets its internal model references.
-          editorRef.current.dispose();
-          // Dispose the text models AFTER the widget, so the models' onWillDispose
-          // event doesn't fire while the widget still holds references to them.
+          const { original, modified } = modelsRef.current;
           original?.dispose();
           modified?.dispose();
         } catch {
-          // Swallow — the error suppressor will catch anything that leaks
+          // Swallow any errors
         }
+        modelsRef.current = null;
         editorRef.current = null;
       }
     };
@@ -58,7 +79,7 @@ export function SafeDiffEditor(props: DiffEditorProps) {
 
   return (
     <MonacoErrorBoundary>
-      <DiffEditor {...props} onMount={handleMount} />
+      <DiffEditor {...props} onMount={handleMount} keepCurrentOriginalModel={true} keepCurrentModifiedModel={true} />
     </MonacoErrorBoundary>
   );
 }
