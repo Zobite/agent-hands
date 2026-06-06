@@ -11,9 +11,7 @@ export default function ApiKeyInput() {
           <KeyRound size={13} className="text-muted" />
           <span>Autofill API Key</span>
         </div>
-        <span className="text-[11px] text-muted leading-none mt-0.5">
-          Stored locally in browser
-        </span>
+        <span className="text-[11px] text-muted leading-none mt-0.5">Stored locally in browser</span>
       </div>
       <div className="flex-1 flex items-center relative sm:max-w-[320px] sm:ml-auto">
         <input

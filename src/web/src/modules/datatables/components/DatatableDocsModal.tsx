@@ -1,9 +1,9 @@
-import { useState } from "react";
 import { Modal, message } from "antd";
-import { BookOpen, Copy, Check } from "lucide-react";
-import { API_BASE } from "src/lib/client";
-import { useApiKey } from "src/common/hooks/useApiKey";
+import { BookOpen, Check, Copy } from "lucide-react";
+import { useState } from "react";
 import ApiKeyInput from "src/common/components/ApiKeyInput";
+import { useApiKey } from "src/common/hooks/useApiKey";
+import { API_BASE } from "src/lib/client";
 import type { DynamicTable, ProjectItem } from "src/lib/types";
 
 interface DatatableDocsModalProps {
@@ -13,12 +13,7 @@ interface DatatableDocsModalProps {
   tables: DynamicTable[];
 }
 
-export default function DatatableDocsModal({
-  open,
-  onClose,
-  project,
-  tables,
-}: DatatableDocsModalProps) {
+export default function DatatableDocsModal({ open, onClose, project, tables }: DatatableDocsModalProps) {
   const [copied, setCopied] = useState(false);
   const [apiKey] = useApiKey();
 
@@ -26,15 +21,18 @@ export default function DatatableDocsModal({
   const displayKey = apiKey.trim() || "YOUR_API_KEY";
 
   // Build the context schema string for the prompt
-  const schemaDescription = tables.length > 0
-    ? tables.map((table) => {
-        const cols = [...table.columns].sort((a, b) => a.order - b.order);
-        const colLines = cols.map(c => `      - \`${c.id}\` ("${c.name}", type: \`${c.type}\`)`).join("\n");
-        return `  - **${table.name}** (Table ID: \`${table.id}\`)
+  const schemaDescription =
+    tables.length > 0
+      ? tables
+          .map((table) => {
+            const cols = [...table.columns].sort((a, b) => a.order - b.order);
+            const colLines = cols.map((c) => `      - \`${c.id}\` ("${c.name}", type: \`${c.type}\`)`).join("\n");
+            return `  - **${table.name}** (Table ID: \`${table.id}\`)
     Columns:
 ${colLines}`;
-      }).join("\n\n")
-    : "  - (No tables registered in this project yet)";
+          })
+          .join("\n\n")
+      : "  - (No tables registered in this project yet)";
 
   const llmPrompt = `This document provides connection details and API reference to programmatically interact with Project "${project.name}" (ID: \`${project.id}\`) of the DataTables module.
 
@@ -131,9 +129,7 @@ ${schemaDescription}
             <BookOpen size={12} />
             <span>System Reference</span>
           </div>
-          <div className="font-display text-[20px] md:text-[24px] tracking-tight text-ink font-normal leading-tight">
-            Connect LLM to Datatable
-          </div>
+          <div className="font-display text-[20px] md:text-[24px] tracking-tight text-ink font-normal leading-tight">Connect LLM to Datatable</div>
         </div>
       }
       open={open}
@@ -157,9 +153,7 @@ ${schemaDescription}
                 <div className="w-2.5 h-2.5 rounded-full border border-hairline-strong" />
                 <div className="w-2.5 h-2.5 rounded-full border border-hairline-strong" />
               </div>
-              <span className="ml-2 font-mono text-[11px] uppercase tracking-wider text-muted font-medium">
-                llm-datatable-instructions.md
-              </span>
+              <span className="ml-2 font-mono text-[11px] uppercase tracking-wider text-muted font-medium">llm-datatable-instructions.md</span>
             </div>
             <button
               onClick={handleCopy}

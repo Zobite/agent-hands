@@ -68,7 +68,7 @@ export class BrowserProfilesResource {
       description?: string | null;
       proxyConfig?: any;
       fingerprintConfig?: any;
-    }
+    },
   ): Promise<BrowserProfileItem> {
     return this.http.patch<BrowserProfileItem>(`/api/browsers/${id}`, body);
   }
@@ -80,16 +80,13 @@ export class BrowserProfilesResource {
 
   /** Start the persistent browser profile process */
   async start(id: string): Promise<{ id: string; status: string; cdpPort: number; wsEndpoint: string }> {
-    return this.http.post<{ id: string; status: string; cdpPort: number; wsEndpoint: string }>(
-      `/api/browsers/${id}/start`
-    );
+    return this.http.post<{ id: string; status: string; cdpPort: number; wsEndpoint: string }>(`/api/browsers/${id}/start`);
   }
 
   /** Stop the persistent browser profile process */
   async stop(id: string): Promise<{ id: string; stopped: boolean }> {
     return this.http.post<{ id: string; stopped: boolean }>(`/api/browsers/${id}/stop`);
   }
-
 
   /** Execute a sequence of browser actions on a profile */
   async runSteps(
@@ -104,7 +101,7 @@ export class BrowserProfilesResource {
         code?: string;
         timeout?: number;
       }>;
-    }
+    },
   ): Promise<any> {
     return this.http.post<any>(`/api/browsers/${profileId}/control`, body);
   }

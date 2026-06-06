@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
-import { Form, Input, Modal, Tabs, Button, Tooltip, InputNumber } from "antd";
-import type { BrowserProfileItem } from "src/lib/resources/browser";
+import { Button, Form, Input, InputNumber, Modal, Tabs, Tooltip } from "antd";
 import { Info, Sparkles } from "lucide-react";
+import { useEffect, useState } from "react";
+import type { BrowserProfileItem } from "src/lib/resources/browser";
 
 interface ProfileModalProps {
   open: boolean;
@@ -210,9 +210,7 @@ export function ProfileModal({ open, editingProfile, loading, onCancel, onSubmit
                   </div>
 
                   <div className="border border-hairline rounded-md p-3 bg-canvas-soft">
-                    <span className="font-mono text-[10px] uppercase tracking-wider text-muted font-bold block mb-2">
-                      Geolocation Overrides
-                    </span>
+                    <span className="font-mono text-[10px] uppercase tracking-wider text-muted font-bold block mb-2">Geolocation Overrides</span>
                     <div className="grid grid-cols-2 gap-4">
                       <Form.Item
                         name={["fingerprintConfig", "geolocation", "latitude"]}

@@ -1,13 +1,4 @@
-import {
-  AlertTriangle,
-  CheckCircle2,
-  Clock,
-  Loader2,
-  Play,
-  RotateCcw,
-  Terminal,
-  XCircle,
-} from "lucide-react";
+import { AlertTriangle, CheckCircle2, Clock, Loader2, Play, RotateCcw, Terminal, XCircle } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { client } from "src/lib/client";
 import type { McpToolTestResult } from "src/lib/types";
@@ -70,6 +61,7 @@ export function ToolTestPanel({ serverId, toolId, inputSchema }: ToolTestPanelPr
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Auto-resize textarea
+  // biome-ignore lint/correctness/useExhaustiveDependencies: params change should trigger textarea auto-resize
   useEffect(() => {
     const el = textareaRef.current;
     if (!el) return;
@@ -147,12 +139,8 @@ export function ToolTestPanel({ serverId, toolId, inputSchema }: ToolTestPanelPr
         <div className="w-14 h-14 rounded-lg border border-dashed border-hairline-strong flex items-center justify-center mb-4">
           <AlertTriangle size={22} strokeWidth={1.5} className="text-muted-soft" />
         </div>
-        <span className="font-mono text-[11px] uppercase tracking-[0.88px] text-muted-soft font-semibold">
-          SAVE TOOL FIRST
-        </span>
-        <span className="text-[12px] text-muted mt-2 max-w-[240px] leading-relaxed">
-          Save the tool before testing to ensure the latest code is used.
-        </span>
+        <span className="font-mono text-[11px] uppercase tracking-[0.88px] text-muted-soft font-semibold">SAVE TOOL FIRST</span>
+        <span className="text-[12px] text-muted mt-2 max-w-[240px] leading-relaxed">Save the tool before testing to ensure the latest code is used.</span>
       </div>
     );
   }
@@ -163,17 +151,13 @@ export function ToolTestPanel({ serverId, toolId, inputSchema }: ToolTestPanelPr
       <div className="shrink-0 px-3 py-3 border-b border-hairline">
         <div className="flex items-center gap-2 mb-3">
           <Terminal size={14} className="text-muted-soft" />
-          <span className="font-mono text-[11px] uppercase tracking-[0.88px] text-muted-soft font-semibold">
-            MANUAL TEST
-          </span>
+          <span className="font-mono text-[11px] uppercase tracking-[0.88px] text-muted-soft font-semibold">MANUAL TEST</span>
         </div>
 
         {/* Params editor */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <span className="font-mono text-[10px] uppercase tracking-[0.6px] text-muted-soft font-semibold">
-              Input Params (JSON)
-            </span>
+            <span className="font-mono text-[10px] uppercase tracking-[0.6px] text-muted-soft font-semibold">Input Params (JSON)</span>
             {sampleParams !== "{}" && (
               <button
                 type="button"
@@ -191,9 +175,7 @@ export function ToolTestPanel({ serverId, toolId, inputSchema }: ToolTestPanelPr
               value={params}
               onChange={(e) => setParams(e.target.value)}
               className={`w-full font-mono text-[12px] leading-[1.5] bg-surface-card text-ink px-3 py-2.5 rounded-md resize-none outline-none transition-colors border ${
-                parseError
-                  ? "border-semantic-error/40 focus:border-semantic-error"
-                  : "border-hairline focus:border-hairline-strong"
+                parseError ? "border-semantic-error/40 focus:border-semantic-error" : "border-hairline focus:border-hairline-strong"
               }`}
               rows={3}
               spellCheck={false}
@@ -240,9 +222,7 @@ export function ToolTestPanel({ serverId, toolId, inputSchema }: ToolTestPanelPr
             )}
           </div>
 
-          <div className="font-mono text-[10px] text-muted-soft text-center">
-            ⌘+Enter to run
-          </div>
+          <div className="font-mono text-[10px] text-muted-soft text-center">⌘+Enter to run</div>
         </div>
       </div>
 
@@ -253,12 +233,8 @@ export function ToolTestPanel({ serverId, toolId, inputSchema }: ToolTestPanelPr
             <div className="w-12 h-12 rounded-lg border border-dashed border-hairline-strong flex items-center justify-center mb-3">
               <Play size={20} strokeWidth={1.5} className="text-muted-soft" />
             </div>
-            <span className="font-mono text-[11px] uppercase tracking-[0.88px] text-muted-soft">
-              READY TO TEST
-            </span>
-            <span className="text-[12px] text-muted mt-1.5 max-w-[220px] leading-relaxed">
-              Set params and click Execute to test the tool
-            </span>
+            <span className="font-mono text-[11px] uppercase tracking-[0.88px] text-muted-soft">READY TO TEST</span>
+            <span className="text-[12px] text-muted mt-1.5 max-w-[220px] leading-relaxed">Set params and click Execute to test the tool</span>
           </div>
         )}
 
@@ -274,9 +250,7 @@ export function ToolTestPanel({ serverId, toolId, inputSchema }: ToolTestPanelPr
             {/* Status header */}
             <div
               className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg border ${
-                result.success
-                  ? "bg-semantic-success/5 border-semantic-success/20"
-                  : "bg-semantic-error/5 border-semantic-error/20"
+                result.success ? "bg-semantic-success/5 border-semantic-success/20" : "bg-semantic-error/5 border-semantic-error/20"
               }`}
             >
               {result.success ? (
@@ -285,27 +259,19 @@ export function ToolTestPanel({ serverId, toolId, inputSchema }: ToolTestPanelPr
                 <XCircle size={16} className="text-semantic-error shrink-0" />
               )}
               <div className="flex-1 min-w-0">
-                <span
-                  className={`font-mono text-[12px] font-semibold ${
-                    result.success ? "text-semantic-success" : "text-semantic-error"
-                  }`}
-                >
+                <span className={`font-mono text-[12px] font-semibold ${result.success ? "text-semantic-success" : "text-semantic-error"}`}>
                   {result.success ? "Success" : "Error"}
                 </span>
               </div>
               <div className="flex items-center gap-1 shrink-0">
                 <Clock size={11} className="text-muted-soft" />
-                <span className="font-mono text-[11px] text-muted-soft tabular-nums">
-                  {formatMs(result.executionTimeMs)}
-                </span>
+                <span className="font-mono text-[11px] text-muted-soft tabular-nums">{formatMs(result.executionTimeMs)}</span>
               </div>
             </div>
 
             {/* Result output */}
             <div>
-              <span className="font-mono text-[10px] uppercase tracking-[0.6px] text-muted-soft font-semibold">
-                Result
-              </span>
+              <span className="font-mono text-[10px] uppercase tracking-[0.6px] text-muted-soft font-semibold">Result</span>
               <pre className="mt-1.5 font-mono text-[11px] leading-[1.5] text-ink whitespace-pre-wrap break-words bg-surface-card border border-hairline rounded-md px-3 py-2.5 m-0 max-h-[300px] overflow-y-auto">
                 {formatResult(result.result)}
               </pre>
@@ -314,9 +280,7 @@ export function ToolTestPanel({ serverId, toolId, inputSchema }: ToolTestPanelPr
             {/* Stdout */}
             {result.stdout && (
               <div>
-                <span className="font-mono text-[10px] uppercase tracking-[0.6px] text-muted-soft font-semibold">
-                  Console Output
-                </span>
+                <span className="font-mono text-[10px] uppercase tracking-[0.6px] text-muted-soft font-semibold">Console Output</span>
                 <pre className="mt-1.5 font-mono text-[11px] leading-[1.5] text-muted whitespace-pre-wrap break-words bg-canvas-soft border border-hairline rounded-md px-3 py-2.5 m-0 max-h-[150px] overflow-y-auto">
                   {result.stdout}
                 </pre>
@@ -326,9 +290,7 @@ export function ToolTestPanel({ serverId, toolId, inputSchema }: ToolTestPanelPr
             {/* Stderr */}
             {result.stderr && (
               <div>
-                <span className="font-mono text-[10px] uppercase tracking-[0.6px] text-semantic-error font-semibold">
-                  Error Output
-                </span>
+                <span className="font-mono text-[10px] uppercase tracking-[0.6px] text-semantic-error font-semibold">Error Output</span>
                 <pre className="mt-1.5 font-mono text-[11px] leading-[1.5] text-semantic-error whitespace-pre-wrap break-words bg-semantic-error/5 border border-semantic-error/20 rounded-md px-3 py-2.5 m-0 max-h-[150px] overflow-y-auto">
                   {result.stderr}
                 </pre>
@@ -338,9 +300,7 @@ export function ToolTestPanel({ serverId, toolId, inputSchema }: ToolTestPanelPr
             {/* History */}
             {history.length > 1 && (
               <div className="pt-2 border-t border-hairline">
-                <span className="font-mono text-[10px] uppercase tracking-[0.6px] text-muted-soft font-semibold">
-                  Recent Runs ({history.length})
-                </span>
+                <span className="font-mono text-[10px] uppercase tracking-[0.6px] text-muted-soft font-semibold">Recent Runs ({history.length})</span>
                 <div className="mt-1.5 space-y-1">
                   {history.map((h, i) => (
                     <button
@@ -359,12 +319,8 @@ export function ToolTestPanel({ serverId, toolId, inputSchema }: ToolTestPanelPr
                       ) : (
                         <XCircle size={11} className="text-semantic-error shrink-0" />
                       )}
-                      <span className="font-mono text-[11px] text-muted truncate flex-1">
-                        {h.params.length > 40 ? `${h.params.slice(0, 40)}…` : h.params}
-                      </span>
-                      <span className="font-mono text-[10px] text-muted-soft tabular-nums shrink-0">
-                        {formatMs(h.result.executionTimeMs)}
-                      </span>
+                      <span className="font-mono text-[11px] text-muted truncate flex-1">{h.params.length > 40 ? `${h.params.slice(0, 40)}…` : h.params}</span>
+                      <span className="font-mono text-[10px] text-muted-soft tabular-nums shrink-0">{formatMs(h.result.executionTimeMs)}</span>
                     </button>
                   ))}
                 </div>

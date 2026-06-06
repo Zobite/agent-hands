@@ -20,12 +20,8 @@ export function UsageGaugeCard({ title, icon, usage, subtitle, details }: UsageG
     <div className="p-6 rounded-[12px] border border-hairline bg-surface-card hover:border-hairline-strong transition-all">
       {/* Header */}
       <div className="flex items-center gap-2 mb-5">
-        <div className="inline-flex items-center justify-center w-8 h-8 rounded-md bg-canvas border border-hairline-soft text-muted">
-          {icon}
-        </div>
-        <span className="font-mono text-[11px] font-semibold text-muted tracking-wide uppercase">
-          {title}
-        </span>
+        <div className="inline-flex items-center justify-center w-8 h-8 rounded-md bg-canvas border border-hairline-soft text-muted">{icon}</div>
+        <span className="font-mono text-[11px] font-semibold text-muted tracking-wide uppercase">{title}</span>
       </div>
 
       {/* Gauge */}
@@ -33,14 +29,7 @@ export function UsageGaugeCard({ title, icon, usage, subtitle, details }: UsageG
         <div className="relative flex-shrink-0">
           <svg width="120" height="120" className="transform -rotate-90">
             {/* Background track */}
-            <circle
-              cx="60"
-              cy="60"
-              r={radius}
-              fill="none"
-              stroke="var(--color-hairline-soft)"
-              strokeWidth="8"
-            />
+            <circle cx="60" cy="60" r={radius} fill="none" stroke="var(--color-hairline-soft)" strokeWidth="8" />
             {/* Usage arc */}
             <circle
               cx="60"

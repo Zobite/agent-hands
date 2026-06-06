@@ -1,23 +1,11 @@
+import { Button, Input, Table, Tooltip } from "antd";
+import { BookOpen, Cpu, ExternalLink, Globe, Laptop, Layers, MemoryStick, Plus, Search, Settings, Trash2 } from "lucide-react";
 import { useState } from "react";
-import { Button, Table, Input, Tooltip } from "antd";
-import {
-  Globe,
-  Plus,
-  Search,
-  Laptop,
-  Cpu,
-  MemoryStick,
-  Layers,
-  BookOpen,
-  Settings,
-  Trash2,
-  ExternalLink,
-} from "lucide-react";
-import { useBrowserProfiles } from "./hooks/useBrowserProfiles";
-import { ProfileModal } from "./components/ProfileModal";
-import BrowserDocsModal from "./components/BrowserDocsModal";
-import { getFingerprintSummary, getProxyDisplay } from "./common/utils";
 import type { BrowserProfileItem } from "src/lib/resources/browser";
+import { getFingerprintSummary, getProxyDisplay } from "./common/utils";
+import BrowserDocsModal from "./components/BrowserDocsModal";
+import { ProfileModal } from "./components/ProfileModal";
+import { useBrowserProfiles } from "./hooks/useBrowserProfiles";
 
 // ══════════════════════════════════════════════════════════════════════════════
 //  BROWSER PROFILES PAGE — Monitoring dashboard for LLM-driven browsers
@@ -53,14 +41,8 @@ export default function BrowserProfilesPage() {
       key: "name",
       render: (_: unknown, record: BrowserProfileItem) => (
         <div className="flex flex-col">
-          <span className="font-medium text-ink text-[13px] leading-tight">
-            {record.name}
-          </span>
-          {record.description && (
-            <span className="text-[11px] text-muted-soft mt-0.5 max-w-[240px] truncate block">
-              {record.description}
-            </span>
-          )}
+          <span className="font-medium text-ink text-[13px] leading-tight">{record.name}</span>
+          {record.description && <span className="text-[11px] text-muted-soft mt-0.5 max-w-[240px] truncate block">{record.description}</span>}
         </div>
       ),
     },
@@ -123,11 +105,7 @@ export default function BrowserProfilesPage() {
       render: (_: unknown, record: BrowserProfileItem) => {
         const display = getProxyDisplay(record.proxyConfig);
         const isDirect = display === "Direct";
-        return (
-          <span className={`font-mono text-[11px] ${isDirect ? "text-muted-soft" : "text-muted"}`}>
-            {display}
-          </span>
-        );
+        return <span className={`font-mono text-[11px] ${isDirect ? "text-muted-soft" : "text-muted"}`}>{display}</span>;
       },
     },
     {
@@ -136,9 +114,7 @@ export default function BrowserProfilesPage() {
       render: (_: unknown, record: BrowserProfileItem) => (
         <div className="flex items-center gap-1.5">
           <Laptop size={11} className="text-muted-soft shrink-0" />
-          <span className="font-mono text-[11px] text-muted">
-            {getFingerprintSummary(record.fingerprintConfig)}
-          </span>
+          <span className="font-mono text-[11px] text-muted">{getFingerprintSummary(record.fingerprintConfig)}</span>
         </div>
       ),
     },
@@ -193,11 +169,10 @@ export default function BrowserProfilesPage() {
 
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div>
-            <h1 className="font-display text-[24px] md:text-[32px] font-normal text-ink tracking-[-0.64px] m-0 leading-tight">
-              Browser Profiles
-            </h1>
+            <h1 className="font-display text-[24px] md:text-[32px] font-normal text-ink tracking-[-0.64px] m-0 leading-tight">Browser Profiles</h1>
             <p className="text-[13px] text-muted mt-2 m-0 leading-relaxed max-w-[520px]">
-              Isolated browser sessions with unique fingerprints and proxy routing. LLM agents launch and control browsers via API. Idle sessions auto-stop after 5 minutes.
+              Isolated browser sessions with unique fingerprints and proxy routing. LLM agents launch and control browsers via API. Idle sessions auto-stop
+              after 5 minutes.
             </p>
           </div>
 
@@ -255,22 +230,14 @@ export default function BrowserProfilesPage() {
               if (record.status !== "running") return null;
               const tabs = profileTabs[record.id] || [];
               if (tabs.length === 0) {
-                return (
-                  <span className="font-mono text-[11px] text-muted-soft italic">
-                    No open tabs
-                  </span>
-                );
+                return <span className="font-mono text-[11px] text-muted-soft italic">No open tabs</span>;
               }
               return (
                 <div className="flex flex-col gap-1.5 py-1">
                   {tabs.map((tab) => (
                     <div key={tab.index} className="flex items-center gap-2 min-w-0">
-                      <span className="font-mono text-[10px] text-muted bg-canvas border border-hairline px-1.5 py-0.5 rounded shrink-0">
-                        {tab.index + 1}
-                      </span>
-                      <span className="text-[12px] text-ink truncate max-w-[260px]">
-                        {tab.title || "Untitled"}
-                      </span>
+                      <span className="font-mono text-[10px] text-muted bg-canvas border border-hairline px-1.5 py-0.5 rounded shrink-0">{tab.index + 1}</span>
+                      <span className="text-[12px] text-ink truncate max-w-[260px]">{tab.title || "Untitled"}</span>
                       <a
                         href={tab.url}
                         target="_blank"
@@ -303,9 +270,7 @@ export default function BrowserProfilesPage() {
             emptyText: (
               <div className="py-12 flex flex-col items-center justify-center text-center">
                 <Globe size={32} strokeWidth={1.2} className="text-muted-soft mb-3" />
-                <span className="font-mono text-[12px] uppercase tracking-wider font-semibold text-muted">
-                  No Profiles
-                </span>
+                <span className="font-mono text-[12px] uppercase tracking-wider font-semibold text-muted">No Profiles</span>
                 <p className="text-[13px] text-muted-soft mt-2 max-w-[300px] leading-relaxed">
                   Create a browser profile with proxy and fingerprint settings. LLM agents will launch and operate them automatically.
                 </p>

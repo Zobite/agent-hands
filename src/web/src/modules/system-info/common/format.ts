@@ -26,9 +26,9 @@ export function formatUptime(seconds: number): string {
 
 /** Get a color token class based on usage percentage */
 export function getUsageColor(usage: number): string {
-  if (usage >= 90) return "#cf2d56";    // error red
-  if (usage >= 70) return "#c08532";    // warning amber
-  return "#1f8a65";                      // success green
+  if (usage >= 90) return "#cf2d56"; // error red
+  if (usage >= 70) return "#c08532"; // warning amber
+  return "#1f8a65"; // success green
 }
 
 /** Get a label for the usage level */

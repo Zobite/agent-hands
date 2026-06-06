@@ -63,6 +63,19 @@ export function SafeDiffEditor(props: DiffEditorProps) {
   // the child's cleanup) and safely disposes the models.
   useEffect(() => {
     return () => {
+      // 1. Reset the models on the DiffEditor widget to null to cleanly break references
+      if (editorRef.current) {
+        try {
+          editorRef.current.setModel({
+            original: null as any,
+            modified: null as any,
+          });
+        } catch {
+          // Swallow any errors
+        }
+      }
+
+      // 2. Dispose the models
       if (modelsRef.current) {
         try {
           const { original, modified } = modelsRef.current;

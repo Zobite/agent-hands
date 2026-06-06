@@ -21,4 +21,3 @@ export const nav: ModuleNav = {
   icon: "zap",
   order: 7,
 };
-

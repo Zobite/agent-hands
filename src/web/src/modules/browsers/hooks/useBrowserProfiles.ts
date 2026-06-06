@@ -1,7 +1,7 @@
+import { Modal, message } from "antd";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { client } from "src/lib/client";
 import type { BrowserProfileItem } from "src/lib/resources/browser";
-import { message, Modal } from "antd";
 
 export function useBrowserProfiles() {
   const [profiles, setProfiles] = useState<BrowserProfileItem[]>([]);

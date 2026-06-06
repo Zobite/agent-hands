@@ -210,23 +210,41 @@ fi
 
 step "[4/4] Publishing to GitHub"
 
-# Commit + tag
 echo ""
 read -p "  🚀 Ready to release ${TAG} to GitHub? [y/N]: " CONFIRM
 if [[ ! "$CONFIRM" =~ ^[Yy]$ ]]; then
+  if [ "$IS_PRERELEASE" = true ]; then
+    info "Reverting version bump..."
+    git checkout -- package.json src/server/package.json src/web/package.json
+  fi
   warn "Aborted. Tarball saved at: ${TARBALL_PATH}"
   exit 0
 fi
 
-info "Committing changes..."
-git add -A
-git commit -m "release: ${TAG}" || info "(nothing to commit)"
+if [ "$IS_PRERELEASE" = true ]; then
+  # ── Pre-release: tag-only, don't commit version bump to main ──
+  info "Pre-release: reverting local changes (package.json + public/)..."
+  git checkout -- package.json src/server/package.json src/web/package.json
+  git checkout -- public/ 2>/dev/null || true
+  success "Local files reverted to v${CURRENT_VERSION} — main stays clean"
 
-info "Creating tag ${TAG}..."
-git tag -a "$TAG" -m "Release ${TAG}"
+  info "Creating tag ${TAG} (tag-only, no commit on main)..."
+  git tag -a "$TAG" -m "Pre-release ${TAG}"
 
-info "Pushing to remote..."
-git push && git push --tags
+  info "Pushing tag to remote..."
+  git push origin "$TAG"
+else
+  # ── Stable release: commit + push to main ──
+  info "Committing changes..."
+  git add -A
+  git commit -m "release: ${TAG}" || info "(nothing to commit)"
+
+  info "Creating tag ${TAG}..."
+  git tag -a "$TAG" -m "Release ${TAG}"
+
+  info "Pushing to remote..."
+  git push && git push --tags
+fi
 
 # Create GitHub Release with tarball
 info "Creating GitHub Release..."

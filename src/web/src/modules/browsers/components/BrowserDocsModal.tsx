@@ -1,11 +1,11 @@
-import { useState } from "react";
 import { Modal, message } from "antd";
-import { BookOpen, Copy, Check } from "lucide-react";
-import { API_BASE } from "src/lib/client";
-import { useApiKey } from "src/common/hooks/useApiKey";
+import { BookOpen, Check, Copy } from "lucide-react";
+import { useState } from "react";
 import ApiKeyInput from "src/common/components/ApiKeyInput";
+import { useApiKey } from "src/common/hooks/useApiKey";
+import { API_BASE } from "src/lib/client";
 import type { BrowserProfileItem } from "src/lib/resources/browser";
-import { getProxyDisplay, getFingerprintSummary } from "../common/utils";
+import { getFingerprintSummary, getProxyDisplay } from "../common/utils";
 
 interface BrowserDocsModalProps {
   open: boolean;
@@ -13,11 +13,7 @@ interface BrowserDocsModalProps {
   profiles: BrowserProfileItem[];
 }
 
-export default function BrowserDocsModal({
-  open,
-  onClose,
-  profiles,
-}: BrowserDocsModalProps) {
+export default function BrowserDocsModal({ open, onClose, profiles }: BrowserDocsModalProps) {
   const [copied, setCopied] = useState(false);
   const [apiKey] = useApiKey();
 
@@ -25,14 +21,17 @@ export default function BrowserDocsModal({
   const displayKey = apiKey.trim() || "YOUR_API_KEY";
 
   // Build the context schema string for the prompt
-  const profileDescription = profiles.length > 0
-    ? profiles.map((p) => {
-        const proxy = getProxyDisplay(p.proxyConfig);
-        const fp = getFingerprintSummary(p.fingerprintConfig);
-        const tabs = p.status === "running" && p.tabCount > 0 ? `, Open Tabs: ${p.tabCount}` : "";
-        return `  - **${p.name}** (ID: \`${p.id}\`, Status: \`${p.status}\`${tabs}, Proxy: ${proxy}, Fingerprint: ${fp})`;
-      }).join("\n")
-    : "  - (No browser profiles created yet)";
+  const profileDescription =
+    profiles.length > 0
+      ? profiles
+          .map((p) => {
+            const proxy = getProxyDisplay(p.proxyConfig);
+            const fp = getFingerprintSummary(p.fingerprintConfig);
+            const tabs = p.status === "running" && p.tabCount > 0 ? `, Open Tabs: ${p.tabCount}` : "";
+            return `  - **${p.name}** (ID: \`${p.id}\`, Status: \`${p.status}\`${tabs}, Proxy: ${proxy}, Fingerprint: ${fp})`;
+          })
+          .join("\n")
+      : "  - (No browser profiles created yet)";
 
   const llmPrompt = `This document provides connection details and API reference to programmatically interact with the Browser Profiles module of Agent Hands.
 
@@ -153,9 +152,7 @@ ${profileDescription}
             <BookOpen size={12} />
             <span>System Reference</span>
           </div>
-          <div className="font-display text-[20px] md:text-[24px] tracking-tight text-ink font-normal leading-tight">
-            Connect LLM to Browsers
-          </div>
+          <div className="font-display text-[20px] md:text-[24px] tracking-tight text-ink font-normal leading-tight">Connect LLM to Browsers</div>
         </div>
       }
       open={open}
@@ -179,9 +176,7 @@ ${profileDescription}
                 <div className="w-2.5 h-2.5 rounded-full border border-hairline-strong" />
                 <div className="w-2.5 h-2.5 rounded-full border border-hairline-strong" />
               </div>
-              <span className="ml-2 font-mono text-[11px] uppercase tracking-wider text-muted font-medium">
-                llm-browser-instructions.md
-              </span>
+              <span className="ml-2 font-mono text-[11px] uppercase tracking-wider text-muted font-medium">llm-browser-instructions.md</span>
             </div>
             <button
               onClick={handleCopy}

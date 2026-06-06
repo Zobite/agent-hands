@@ -3,10 +3,10 @@ import { AgGridReact } from "ag-grid-react";
 import { Input, Spin } from "antd";
 import { Key, Search } from "lucide-react";
 import { useMemo, useRef } from "react";
-import { formatTTL, agentHandsGridTheme } from "./common/utils";
+import { agentHandsGridTheme, formatTTL } from "./common/utils";
 import AddVariableButton from "./components/AddVariableButton";
-import PurgeButton from "./components/PurgeButton";
 import KvDocsModal from "./components/KvDocsModal";
+import PurgeButton from "./components/PurgeButton";
 import { useKvStore } from "./hooks/useKvStore";
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -171,7 +171,6 @@ export default function KvStorePage() {
           </div>
         </div>
       )}
-
     </div>
   );
 }

@@ -27,6 +27,7 @@ import type { LlmProviderItem } from "src/lib/types";
 
 function useAutoResize(value: string) {
   const ref = useRef<HTMLTextAreaElement>(null);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: value change should trigger textarea auto-resize
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
@@ -743,7 +744,9 @@ export function AiCodingPanel({ apiId, method, path, currentCode, onApplyCode }:
                   const status = r.status as number | undefined;
                   const hasError = !!r.error;
                   const passed = !hasError && status != null && status < 400;
-                  actions.push(`- Called run_test → ${passed ? "PASSED" : "FAILED"} (Status ${status ?? "?"})${r.executionTimeMs ? ` (${r.executionTimeMs}ms)` : ""}`);
+                  actions.push(
+                    `- Called run_test → ${passed ? "PASSED" : "FAILED"} (Status ${status ?? "?"})${r.executionTimeMs ? ` (${r.executionTimeMs}ms)` : ""}`,
+                  );
                 } else {
                   actions.push("- Called run_test");
                 }
@@ -950,7 +953,11 @@ export function AiCodingPanel({ apiId, method, path, currentCode, onApplyCode }:
               <span className="relative inline-flex rounded-full h-[7px] w-[7px] bg-amber-500" />
             </span>
           )}
-          <span className={`font-mono text-[11px] uppercase tracking-[0.88px] font-semibold transition-colors ${running ? "text-amber-500" : "text-muted-soft"}`}>AI AGENT</span>
+          <span
+            className={`font-mono text-[11px] uppercase tracking-[0.88px] font-semibold transition-colors ${running ? "text-amber-500" : "text-muted-soft"}`}
+          >
+            AI AGENT
+          </span>
           {running && <span className="font-mono text-[11px] text-amber-400/80 tabular-nums ml-auto">{elapsedStr}</span>}
         </div>
         <ModelPickerPopover
@@ -1024,7 +1031,9 @@ export function AiCodingPanel({ apiId, method, path, currentCode, onApplyCode }:
       </div>
 
       <div className="shrink-0 px-2 py-2 bg-canvas">
-        <div className={`relative flex items-stretch bg-surface-card border rounded-lg focus-within:border-hairline-strong transition-colors overflow-hidden ${running ? "border-amber-500/30" : "border-hairline"}`}>
+        <div
+          className={`relative flex items-stretch bg-surface-card border rounded-lg focus-within:border-hairline-strong transition-colors overflow-hidden ${running ? "border-amber-500/30" : "border-hairline"}`}
+        >
           <textarea
             ref={textareaRef}
             value={prompt}

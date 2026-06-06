@@ -1,9 +1,9 @@
-import { Cpu, HardDrive, MemoryStick, Monitor, Server, Box, RefreshCw } from "lucide-react";
 import { Skeleton, Switch, Tooltip } from "antd";
-import { useSystemInfo } from "../hooks/useSystemInfo";
-import { UsageGaugeCard } from "../components/UsageGaugeCard";
+import { Box, Cpu, HardDrive, MemoryStick, Monitor, RefreshCw, Server } from "lucide-react";
+import { formatBytes, formatPlatform, formatUptime } from "../common/format";
 import { InfoCard } from "../components/InfoCard";
-import { formatBytes, formatUptime, formatPlatform } from "../common/format";
+import { UsageGaugeCard } from "../components/UsageGaugeCard";
+import { useSystemInfo } from "../hooks/useSystemInfo";
 
 export default function SystemInfoPage() {
   const { data, loading, autoRefresh, setAutoRefresh, refresh } = useSystemInfo();
@@ -17,18 +17,12 @@ export default function SystemInfoPage() {
           <span className="font-mono text-[13px] text-muted tracking-wide uppercase">System Info</span>
         </div>
         <div className="flex items-center justify-between">
-          <h2 className="font-display text-[28px] md:text-[36px] font-normal tracking-[-0.72px] text-ink leading-tight">
-            System Monitor
-          </h2>
+          <h2 className="font-display text-[28px] md:text-[36px] font-normal tracking-[-0.72px] text-ink leading-tight">System Monitor</h2>
           <div className="flex items-center gap-4">
             {/* Auto-refresh toggle */}
             <div className="flex items-center gap-2">
               <span className="text-[12px] text-muted-soft">Auto-refresh</span>
-              <Switch
-                size="small"
-                checked={autoRefresh}
-                onChange={setAutoRefresh}
-              />
+              <Switch size="small" checked={autoRefresh} onChange={setAutoRefresh} />
             </div>
             {/* Manual refresh */}
             <Tooltip title="Refresh now">
@@ -132,9 +126,7 @@ export default function SystemInfoPage() {
           </div>
 
           {/* Timestamp footer */}
-          <div className="text-right text-[11px] font-mono text-muted-soft">
-            Last updated: {new Date(data.timestamp).toLocaleTimeString()}
-          </div>
+          <div className="text-right text-[11px] font-mono text-muted-soft">Last updated: {new Date(data.timestamp).toLocaleTimeString()}</div>
         </div>
       ) : null}
     </div>

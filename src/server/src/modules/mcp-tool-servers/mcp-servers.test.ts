@@ -187,6 +187,25 @@ describe("MCP Tool Servers — Tool CRUD", () => {
     expect(data.description).toBe("");
   });
 
+  test("PATCH /:id/tools/:toolId — update tool with duplicate name -> 400", async () => {
+    const resCreate = await apiPost(`/mcp-tool-servers/${createdServerId}/tools`, {
+      name: "second_tool",
+      description: "Another test tool",
+      code: `async function execute(params, context) { return {}; }`,
+    });
+    expect(resCreate.status).toBe(201);
+    const tool2 = await json(resCreate);
+
+    const resUpdate = await apiPatch(`/mcp-tool-servers/${createdServerId}/tools/${tool2.id}`, {
+      name: "test_tool",
+    });
+    expect(resUpdate.status).toBe(400);
+    const errorData = await json(resUpdate);
+    expect(errorData.message).toContain("already exists in this server");
+
+    await apiDelete(`/mcp-tool-servers/${createdServerId}/tools/${tool2.id}`);
+  });
+
   test("DELETE /:id/tools/:toolId — delete tool", async () => {
     const res = await apiDelete(`/mcp-tool-servers/${createdServerId}/tools/${createdToolId}`);
     expect(res.status).toBe(200);

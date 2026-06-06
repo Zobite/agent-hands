@@ -51,157 +51,178 @@ interface ParsedMetadata {
 }
 
 export function parseToolCode(code: string): ParsedMetadata {
-  const lines = code.split("\n");
-  const commentLines: string[] = [];
+  try {
+    const lines = code.split("\n");
+    const commentLines: string[] = [];
 
-  // Strategy: scan the entire file for all JSDoc blocks.
-  // Collect lines from the block that contains @name/@description/@param tags.
-  // This handles cases where import statements appear before the JSDoc block.
-  const allBlocks: string[][] = [];
-  let currentBlock: string[] = [];
-  let inJSDocBlock = false;
+    // Strategy: scan the entire file for all JSDoc blocks.
+    // Collect lines from the block that contains @name/@description/@param tags.
+    // This handles cases where import statements appear before the JSDoc block.
+    const allBlocks: string[][] = [];
+    let currentBlock: string[] = [];
+    let inJSDocBlock = false;
 
-  for (const line of lines) {
-    const trimmed = line.trim();
-    if (trimmed.startsWith("/**")) {
-      inJSDocBlock = true;
-      currentBlock = [];
-      continue;
-    }
-    if (trimmed.endsWith("*/") && inJSDocBlock) {
-      inJSDocBlock = false;
-      allBlocks.push(currentBlock);
-      currentBlock = [];
-      continue;
-    }
-    if (inJSDocBlock) {
-      const match = trimmed.match(/^\*\s*(.*)$/);
-      if (match) {
-        currentBlock.push(match[1]);
-      } else {
-        currentBlock.push(trimmed);
-      }
-    }
-  }
-
-  // Find the JSDoc block that contains tool metadata (@name or @param)
-  const metaBlock = allBlocks.find((block) => block.some((l) => l.trim().startsWith("@name") || l.trim().startsWith("@param")));
-
-  if (metaBlock) {
-    commentLines.push(...metaBlock);
-  } else {
-    // Fallback: scan top-of-file single-line comments (// or #) before any code
     for (const line of lines) {
       const trimmed = line.trim();
-      if (trimmed.startsWith("//")) {
-        commentLines.push(trimmed.slice(2).trim());
-      } else if (trimmed.startsWith("#")) {
-        commentLines.push(trimmed.slice(1).trim());
-      } else if (trimmed !== "" && !trimmed.startsWith("import") && !trimmed.startsWith("/**")) {
-        break;
+      if (trimmed.startsWith("/**")) {
+        inJSDocBlock = true;
+        currentBlock = [];
+        continue;
       }
-    }
-  }
-
-  let name = "";
-  let description = "";
-  const params: Array<{
-    name: string;
-    type: string;
-    required: boolean;
-    description: string;
-  }> = [];
-
-  for (const rawLine of commentLines) {
-    const line = rawLine.trim();
-    if (line.startsWith("@name")) {
-      name = line.slice(5).trim();
-    } else if (line.startsWith("@description")) {
-      description = line.slice(12).trim();
-    } else if (line.startsWith("@param")) {
-      // @param {type} path (required/optional) - desc
-      const paramMatch = line.match(/^@param\s*\{([^}]+)\}\s*([^\s(-]+)\s*(?:\((required|optional)\))?\s*-?\s*(.*)$/i);
-      if (paramMatch) {
-        params.push({
-          name: paramMatch[2].trim(),
-          type: paramMatch[1].trim(),
-          required: paramMatch[3]?.toLowerCase() === "required",
-          description: paramMatch[4]?.trim() || "",
-        });
+      if (trimmed.endsWith("*/") && inJSDocBlock) {
+        inJSDocBlock = false;
+        allBlocks.push(currentBlock);
+        currentBlock = [];
+        continue;
       }
-    }
-  }
-
-  if (!name) {
-    name = "unnamed_tool";
-  } else {
-    name = name
-      .toLowerCase()
-      .trim()
-      .replace(/[^a-z0-9_]+/g, "_")
-      .replace(/^_+|_+$/g, "");
-  }
-
-  // ── Build JSON Schema from flat @param declarations ──────────────────────
-
-  const schema: any = { type: "object", properties: {}, required: [] };
-
-  const mapType = (t: string): string => {
-    const lt = t.toLowerCase();
-    if (lt === "string") return "string";
-    if (["number", "float", "double", "int", "integer"].includes(lt)) return "number";
-    if (lt === "boolean" || lt === "bool") return "boolean";
-    if (lt === "object") return "object";
-    if (lt === "array") return "array";
-    return "string";
-  };
-
-  /**
-   * Supports paths like:
-   *   query           → top-level string
-   *   filters.category → nested object
-   *   items[].name    → array of objects with property "name"
-   */
-  const setDeepProperty = (root: any, path: string, type: string, required: boolean, desc: string) => {
-    // Split path: "items[].name" → [{key:"items",isArray:true}, {key:"name",isArray:false}]
-    const parts: Array<{ key: string; isArray: boolean }> = [];
-    for (const seg of path.split(".")) {
-      if (seg.endsWith("[]")) {
-        parts.push({ key: seg.slice(0, -2), isArray: true });
-      } else {
-        parts.push({ key: seg, isArray: false });
-      }
-    }
-
-    let current = root;
-
-    for (let i = 0; i < parts.length; i++) {
-      const { key, isArray } = parts[i];
-      const isLast = i === parts.length - 1;
-      const typeIsArray = type.endsWith("[]") || type.toLowerCase() === "array";
-
-      // Determine if this segment should be an array
-      const existingProp = current.properties?.[key];
-      const shouldBeArray = isArray || existingProp?.type === "array" || (isLast && typeIsArray);
-
-      if (shouldBeArray) {
-        // Ensure the array wrapper exists
-        if (!current.properties[key]) {
-          current.properties[key] = {
-            type: "array",
-            description: isLast ? desc : undefined,
-            items: { type: "object", properties: {}, required: [] },
-          };
+      if (inJSDocBlock) {
+        const match = trimmed.match(/^\*\s*(.*)$/);
+        if (match) {
+          currentBlock.push(match[1]);
+        } else {
+          currentBlock.push(trimmed);
         }
-        if (required && !current.required.includes(key)) {
-          current.required.push(key);
+      }
+    }
+
+    // Find the JSDoc block that contains tool metadata (@name or @param)
+    const metaBlock = allBlocks.find((block) => block.some((l) => l.trim().startsWith("@name") || l.trim().startsWith("@param")));
+
+    if (metaBlock) {
+      commentLines.push(...metaBlock);
+    } else {
+      // Fallback: scan top-of-file single-line comments (// or #) before any code
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (trimmed.startsWith("//")) {
+          commentLines.push(trimmed.slice(2).trim());
+        } else if (trimmed.startsWith("#")) {
+          commentLines.push(trimmed.slice(1).trim());
+        } else if (trimmed !== "" && !trimmed.startsWith("import") && !trimmed.startsWith("/**")) {
+          break;
+        }
+      }
+    }
+
+    let name = "";
+    let description = "";
+    const params: Array<{
+      name: string;
+      type: string;
+      required: boolean;
+      description: string;
+    }> = [];
+
+    for (const rawLine of commentLines) {
+      const line = rawLine.trim();
+      if (line.startsWith("@name")) {
+        name = line.slice(5).trim();
+      } else if (line.startsWith("@description")) {
+        description = line.slice(12).trim();
+      } else if (line.startsWith("@param")) {
+        // @param {type} path (required/optional) - desc
+        const paramMatch = line.match(/^@param\s*\{([^}]+)\}\s*([^\s(-]+)\s*(?:\((required|optional)\))?\s*-?\s*(.*)$/i);
+        if (paramMatch) {
+          params.push({
+            name: paramMatch[2].trim(),
+            type: paramMatch[1].trim(),
+            required: paramMatch[3]?.toLowerCase() === "required",
+            description: paramMatch[4]?.trim() || "",
+          });
+        }
+      }
+    }
+
+    if (!name) {
+      name = "unnamed_tool";
+    } else {
+      name = name
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9_]+/g, "_")
+        .replace(/^_+|_+$/g, "");
+    }
+
+    // ── Build JSON Schema from flat @param declarations ──────────────────────
+
+    const schema: any = { type: "object", properties: {}, required: [] };
+
+    const mapType = (t: string): string => {
+      const lt = t.toLowerCase();
+      if (lt === "string") return "string";
+      if (["number", "float", "double", "int", "integer"].includes(lt)) return "number";
+      if (lt === "boolean" || lt === "bool") return "boolean";
+      if (lt === "object") return "object";
+      if (lt === "array") return "array";
+      return "string";
+    };
+
+    /**
+     * Supports paths like:
+     *   query           → top-level string
+     *   filters.category → nested object
+     *   items[].name    → array of objects with property "name"
+     */
+    const setDeepProperty = (root: any, path: string, type: string, required: boolean, desc: string) => {
+      // Split path: "items[].name" → [{key:"items",isArray:true}, {key:"name",isArray:false}]
+      const parts: Array<{ key: string; isArray: boolean }> = [];
+      for (const seg of path.split(".")) {
+        if (seg.endsWith("[]")) {
+          parts.push({ key: seg.slice(0, -2), isArray: true });
+        } else {
+          parts.push({ key: seg, isArray: false });
+        }
+      }
+
+      let current = root;
+
+      for (let i = 0; i < parts.length; i++) {
+        const { key, isArray } = parts[i];
+        const isLast = i === parts.length - 1;
+        const typeIsArray = type.endsWith("[]") || type.toLowerCase() === "array";
+
+        if (!current.properties) {
+          current.properties = {};
+        }
+        if (!current.required) {
+          current.required = [];
         }
 
-        if (isLast) {
-          // This line declares the array itself (e.g. @param {object[]} items)
-          const scalarType = type.endsWith("[]") ? type.slice(0, -2) : type;
-          if (scalarType.toLowerCase() === "object") {
-            // Keep items as object container
+        // Determine if this segment should be an array
+        const existingProp = current.properties?.[key];
+        const shouldBeArray = isArray || existingProp?.type === "array" || (isLast && typeIsArray);
+
+        if (shouldBeArray) {
+          // Ensure the array wrapper exists
+          if (!current.properties[key]) {
+            current.properties[key] = {
+              type: "array",
+              description: isLast ? desc : undefined,
+              items: { type: "object", properties: {}, required: [] },
+            };
+          }
+          if (required && !current.required.includes(key)) {
+            current.required.push(key);
+          }
+
+          if (isLast) {
+            // This line declares the array itself (e.g. @param {object[]} items)
+            const scalarType = type.endsWith("[]") ? type.slice(0, -2) : type;
+            if (scalarType.toLowerCase() === "object") {
+              // Keep items as object container
+              if (!current.properties[key].items?.properties) {
+                current.properties[key].items = {
+                  type: "object",
+                  properties: {},
+                  required: [],
+                };
+              }
+            } else {
+              current.properties[key].items = { type: mapType(scalarType) };
+            }
+            if (desc) current.properties[key].description = desc;
+          } else {
+            // Traverse into items
             if (!current.properties[key].items?.properties) {
               current.properties[key].items = {
                 type: "object",
@@ -209,64 +230,70 @@ export function parseToolCode(code: string): ParsedMetadata {
                 required: [],
               };
             }
-          } else {
-            current.properties[key].items = { type: mapType(scalarType) };
+            current = current.properties[key].items;
           }
-          if (desc) current.properties[key].description = desc;
+        } else if (isLast) {
+          // Leaf property
+          current.properties[key] = { type: mapType(type), description: desc };
+          if (required && !current.required.includes(key)) {
+            current.required.push(key);
+          }
         } else {
-          // Traverse into items
-          if (!current.properties[key].items?.properties) {
-            current.properties[key].items = {
+          // Intermediate object
+          if (!current.properties[key] || typeof current.properties[key] !== "object") {
+            current.properties[key] = {
               type: "object",
               properties: {},
               required: [],
             };
           }
-          current = current.properties[key].items;
-        }
-      } else if (isLast) {
-        // Leaf property
-        current.properties[key] = { type: mapType(type), description: desc };
-        if (required && !current.required.includes(key)) {
-          current.required.push(key);
-        }
-      } else {
-        // Intermediate object
-        if (!current.properties[key]) {
-          current.properties[key] = {
-            type: "object",
-            properties: {},
-            required: [],
-          };
-        }
-        if (required && !current.required.includes(key)) {
-          current.required.push(key);
-        }
-        current = current.properties[key];
-      }
-    }
-  };
+          if (current.properties[key].type !== "object" && current.properties[key].type !== "array") {
+            current.properties[key].type = "object";
+          }
+          if (!current.properties[key].properties) {
+            current.properties[key].properties = {};
+          }
+          if (!current.properties[key].required) {
+            current.properties[key].required = [];
+          }
 
-  for (const p of params) {
-    setDeepProperty(schema, p.name, p.type, p.required, p.description);
+          if (required && !current.required.includes(key)) {
+            current.required.push(key);
+          }
+          current = current.properties[key];
+        }
+      }
+    };
+
+    for (const p of params) {
+      setDeepProperty(schema, p.name, p.type, p.required, p.description);
+    }
+
+    // Clean up empty required arrays
+    const cleanSchema = (obj: any) => {
+      if (obj.type === "object") {
+        if (obj.required?.length === 0) obj.required = undefined;
+        if (obj.properties) {
+          for (const k in obj.properties) cleanSchema(obj.properties[k]);
+        }
+      } else if (obj.type === "array" && obj.items) {
+        if (obj.items.required?.length === 0) obj.items.required = undefined;
+        cleanSchema(obj.items);
+      }
+      if (obj.description === undefined) obj.description = undefined;
+    };
+    cleanSchema(schema);
+
+    return { name, description, inputSchema: JSON.stringify(schema, null, 2) };
+  } catch (err: any) {
+    // Suppress console.error during active typing/rendering to prevent console spam
+    return {
+      name: "unnamed_tool",
+      description: "",
+      inputSchema: "{}",
+      error: err?.message || "Unknown JSDoc parsing error",
+    };
   }
-
-  // Clean up empty required arrays
-  const cleanSchema = (obj: any) => {
-    if (obj.type === "object") {
-      if (obj.required?.length === 0) obj.required = undefined;
-      if (obj.properties) {
-        for (const k in obj.properties) cleanSchema(obj.properties[k]);
-      }
-    } else if (obj.type === "array" && obj.items) {
-      if (obj.items.required?.length === 0) obj.items.required = undefined;
-      cleanSchema(obj.items);
-    }
-    if (obj.description === undefined) obj.description = undefined;
-  };
-  cleanSchema(schema);
-
-  return { name, description, inputSchema: JSON.stringify(schema, null, 2) };
 }
 
 /**
@@ -453,7 +480,7 @@ export function useToolEditor() {
       setInputSchema(tool.inputSchema || DEFAULT_INPUT_SCHEMA);
 
       // If there's a pending draft from AI, show it as a diff
-      if (tool.draftCode) {
+      if (tool.draftCode && tool.draftCode !== tool.code) {
         setPendingCode(tool.draftCode);
       }
     } catch {
@@ -497,8 +524,16 @@ export function useToolEditor() {
       setInputSchema(meta.inputSchema);
       return true;
     } catch (err) {
-      if (err instanceof AgentHandsError) message.error(err.message);
-      else message.error("Failed to save tool");
+      if (err instanceof AgentHandsError) {
+        message.error(err.message);
+      } else {
+        console.error("[ToolEditor] Save failed:", err);
+        if (err instanceof Error) {
+          message.error(err.message);
+        } else {
+          message.error("Failed to save tool");
+        }
+      }
       return false;
     } finally {
       setSaving(false);

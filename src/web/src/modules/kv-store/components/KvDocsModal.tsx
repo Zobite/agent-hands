@@ -1,9 +1,9 @@
-import { useState } from "react";
 import { Modal, message } from "antd";
-import { BookOpen, Copy, Check } from "lucide-react";
-import { API_BASE } from "src/lib/client";
-import { useApiKey } from "src/common/hooks/useApiKey";
+import { BookOpen, Check, Copy } from "lucide-react";
+import { useState } from "react";
 import ApiKeyInput from "src/common/components/ApiKeyInput";
+import { useApiKey } from "src/common/hooks/useApiKey";
+import { API_BASE } from "src/lib/client";
 
 // ══════════════════════════════════════════════════════════════════════════════
 //  KV STORE — DOCS & PROMPT MODAL (self-contained with trigger button)
@@ -91,9 +91,7 @@ export default function KvDocsModal() {
               <BookOpen size={12} />
               <span>System Reference</span>
             </div>
-            <div className="font-display text-[20px] md:text-[24px] tracking-tight text-ink font-normal leading-tight">
-              Connect LLM to KV Store
-            </div>
+            <div className="font-display text-[20px] md:text-[24px] tracking-tight text-ink font-normal leading-tight">Connect LLM to KV Store</div>
           </div>
         }
         open={open}
@@ -117,9 +115,7 @@ export default function KvDocsModal() {
                   <div className="w-2.5 h-2.5 rounded-full border border-hairline-strong" />
                   <div className="w-2.5 h-2.5 rounded-full border border-hairline-strong" />
                 </div>
-                <span className="ml-2 font-mono text-[11px] uppercase tracking-wider text-muted font-medium">
-                  llm-kv-instructions.md
-                </span>
+                <span className="ml-2 font-mono text-[11px] uppercase tracking-wider text-muted font-medium">llm-kv-instructions.md</span>
               </div>
               <button
                 onClick={handleCopy}

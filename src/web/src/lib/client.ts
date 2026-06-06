@@ -2,6 +2,7 @@ import { type ClientOptions, HttpClient } from "./http";
 import { ApiDocsResource } from "./resources/api-doc";
 import { ApiKeysResource } from "./resources/api-key";
 import { AuthResource } from "./resources/auth";
+import { BrowserProfilesResource } from "./resources/browser";
 import { ConfigurationsResource } from "./resources/configuration";
 import { ProjectsResource } from "./resources/database";
 import { DynamicApisResource } from "./resources/dynamic-api";
@@ -12,7 +13,6 @@ import { StorageResource } from "./resources/storage";
 import { SystemResource } from "./resources/system";
 import { TablesResource } from "./resources/table";
 import { UsersResource } from "./resources/user";
-import { BrowserProfilesResource } from "./resources/browser";
 
 class AgentHandsClient {
   private http: HttpClient;
