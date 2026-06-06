@@ -20,6 +20,7 @@ cd "$ROOT_DIR"
 # ── Config ──────────────────────────────────────────────────────────────────
 TARBALL_DIR="$ROOT_DIR/releases"
 DRY_RUN=false
+IS_PRERELEASE=false
 
 for arg in "$@"; do
   case "$arg" in
@@ -83,7 +84,9 @@ success "Server build complete"
 # ── 3. Version selection ───────────────────────────────────────────────────
 step "Version selection"
 
-IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT_VERSION"
+# Strip any existing pre-release suffix for base version math
+BASE_VERSION="${CURRENT_VERSION%%-*}"
+IFS='.' read -r MAJOR MINOR PATCH <<< "$BASE_VERSION"
 V_PATCH="$MAJOR.$MINOR.$((PATCH + 1))"
 V_MINOR="$MAJOR.$((MINOR + 1)).0"
 V_MAJOR="$((MAJOR + 1)).0.0"
@@ -94,22 +97,50 @@ echo ""
 echo "  1) patch  → v${V_PATCH}"
 echo "  2) minor  → v${V_MINOR}"
 echo "  3) major  → v${V_MAJOR}"
-echo "  4) skip   → keep v${CURRENT_VERSION}"
+echo "  4) pre    → pre-release for testing"
+echo "  5) skip   → keep v${CURRENT_VERSION}"
 echo ""
-read -p "  Choose [1-4] (default: 1): " CHOICE
+read -p "  Choose [1-5] (default: 1): " CHOICE
 CHOICE=${CHOICE:-1}
 
 case "$CHOICE" in
   1) NEW_VERSION="$V_PATCH" ;;
   2) NEW_VERSION="$V_MINOR" ;;
   3) NEW_VERSION="$V_MAJOR" ;;
-  4) NEW_VERSION="$CURRENT_VERSION" ;;
+  4)
+    IS_PRERELEASE=true
+    echo ""
+    echo -e "  ${DIM}Pre-release base version:${NC}"
+    echo "    a) patch  → ${V_PATCH}-pre.N"
+    echo "    b) minor  → ${V_MINOR}-pre.N"
+    echo "    c) major  → ${V_MAJOR}-pre.N"
+    echo ""
+    read -p "  Choose [a-c] (default: a): " PRE_BASE
+    PRE_BASE=${PRE_BASE:-a}
+    case "$PRE_BASE" in
+      a) PRE_VERSION="$V_PATCH" ;;
+      b) PRE_VERSION="$V_MINOR" ;;
+      c) PRE_VERSION="$V_MAJOR" ;;
+      *) fail "Invalid choice" ;;
+    esac
+    # Auto-increment pre-release number by checking existing tags
+    PRE_NUM=1
+    while git tag -l "v${PRE_VERSION}-pre.${PRE_NUM}" | grep -q .; do
+      PRE_NUM=$((PRE_NUM + 1))
+    done
+    NEW_VERSION="${PRE_VERSION}-pre.${PRE_NUM}"
+    ;;
+  5) NEW_VERSION="$CURRENT_VERSION" ;;
   *) fail "Invalid choice" ;;
 esac
 
 TAG="v${NEW_VERSION}"
 echo ""
-info "Release version: ${TAG}"
+if [ "$IS_PRERELEASE" = true ]; then
+  info "Pre-release version: ${TAG} ${YELLOW}(will NOT be installed by default)${NC}"
+else
+  info "Release version: ${TAG}"
+fi
 
 # ── 4. Bump version in package.json files ───────────────────────────────────
 if [ "$NEW_VERSION" != "$CURRENT_VERSION" ]; then
@@ -200,7 +231,22 @@ git push && git push --tags
 # Create GitHub Release with tarball
 info "Creating GitHub Release..."
 
-RELEASE_NOTES="## Agent Hands ${TAG}
+if [ "$IS_PRERELEASE" = true ]; then
+  RELEASE_NOTES="## Agent Hands ${TAG} (Pre-release)
+
+> ⚠️ This is a **pre-release** for testing. Not recommended for production use.
+
+### Install this pre-release
+
+\`\`\`bash
+VERSION=${NEW_VERSION} curl -fsSL https://raw.githubusercontent.com/Zobite/agent-hands/main/install.sh | bash
+\`\`\`
+
+---
+
+See [README](https://github.com/Zobite/agent-hands#readme) for full documentation."
+else
+  RELEASE_NOTES="## Agent Hands ${TAG}
 
 ### Installation
 
@@ -217,11 +263,18 @@ VERSION=${NEW_VERSION} curl -fsSL https://raw.githubusercontent.com/Zobite/agent
 ---
 
 See [README](https://github.com/Zobite/agent-hands#readme) for full documentation."
+fi
+
+GH_RELEASE_FLAGS=()
+if [ "$IS_PRERELEASE" = true ]; then
+  GH_RELEASE_FLAGS+=(--prerelease)
+fi
 
 gh release create "$TAG" \
   "$TARBALL_PATH" \
   --title "Agent Hands ${TAG}" \
-  --notes "$RELEASE_NOTES"
+  --notes "$RELEASE_NOTES" \
+  "${GH_RELEASE_FLAGS[@]}"
 
 success "GitHub Release ${TAG} published!"
 
@@ -229,5 +282,12 @@ echo ""
 echo -e "${GREEN}${BOLD}🎉 Release ${TAG} complete!${NC}"
 echo ""
 echo -e "  ${BOLD}Release page${NC}: https://github.com/Zobite/agent-hands/releases/tag/${TAG}"
-echo -e "  ${BOLD}Install cmd${NC} : curl -fsSL https://raw.githubusercontent.com/Zobite/agent-hands/main/install.sh | bash"
+if [ "$IS_PRERELEASE" = true ]; then
+  echo -e "  ${BOLD}Test cmd${NC}   : ${CYAN}VERSION=${NEW_VERSION} curl -fsSL https://raw.githubusercontent.com/Zobite/agent-hands/main/install.sh | bash${NC}"
+  echo ""
+  echo -e "  ${DIM}This pre-release will NOT affect users running the default install command.${NC}"
+  echo -e "  ${DIM}Share the test command above with your testers.${NC}"
+else
+  echo -e "  ${BOLD}Install cmd${NC} : curl -fsSL https://raw.githubusercontent.com/Zobite/agent-hands/main/install.sh | bash"
+fi
 echo ""

@@ -1,7 +1,8 @@
-import Editor, { DiffEditor, type Monaco } from "@monaco-editor/react";
+import Editor, { type Monaco } from "@monaco-editor/react";
 import { Dropdown } from "antd";
 import { BookOpen, Check, X } from "lucide-react";
 import { useCallback, useMemo } from "react";
+import { SafeDiffEditor } from "../../../lib/SafeDiffEditor";
 import { installMonacoErrorSuppressor } from "../../../lib/monaco-error-suppressor";
 
 installMonacoErrorSuppressor();
@@ -445,7 +446,7 @@ export function ToolCodeEditor({ value, onChange, pendingCode, onAcceptPending, 
       <div className="flex-1 min-h-0 overflow-hidden border border-hairline relative">
         {hasPending ? (
           <div className="w-full h-full">
-            <DiffEditor original={value} modified={pendingCode || ""} language="javascript" theme="vs-dark" options={DIFF_EDITOR_OPTIONS} />
+            <SafeDiffEditor original={value} modified={pendingCode || ""} language="javascript" theme="vs-dark" options={DIFF_EDITOR_OPTIONS} />
           </div>
         ) : (
           <div className="w-full h-full">

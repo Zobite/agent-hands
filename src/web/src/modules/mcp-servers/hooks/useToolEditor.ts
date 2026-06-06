@@ -569,15 +569,23 @@ export function useToolEditor() {
 
   const handleAcceptPending = async () => {
     if (pendingCode) {
-      setCode(pendingCode);
-      setPendingCode(null);
-      // Promote draft → official code and clear draftCode
-      await handleSave(pendingCode);
+      const codeToSave = pendingCode;
+      // Defer DiffEditor unmount by 1 frame so Monaco's DiffEditorWidget
+      // can dispose its internal models before React removes the DOM element.
+      // This prevents "TextModel got disposed before DiffEditorWidget model got reset".
+      setCode(codeToSave);
+      requestAnimationFrame(() => {
+        setPendingCode(null);
+      });
+      await handleSave(codeToSave);
     }
   };
 
   const handleRejectPending = async () => {
-    setPendingCode(null);
+    // Defer DiffEditor unmount by 1 frame (same reason as accept)
+    requestAnimationFrame(() => {
+      setPendingCode(null);
+    });
     // Reset draftCode back to prod code in DB
     if (serverId && toolId) {
       client.mcpToolServers.updateTool(serverId, toolId, { draftCode: savedCodeRef.current }).catch(() => {});

@@ -4,6 +4,8 @@ export const versionResponseSchema = z.object({
   current: z.string(),
   latest: z.string().nullable(),
   hasUpdate: z.boolean(),
+  channel: z.enum(["stable", "dev"]),
+  isPreRelease: z.boolean(),
   checkedAt: z.number(),
 });
 
@@ -25,25 +27,25 @@ const cpuInfoSchema = z.object({
 });
 
 const memoryInfoSchema = z.object({
-  total: z.number(),    // bytes
-  used: z.number(),     // bytes
-  free: z.number(),     // bytes
-  usage: z.number(),    // percentage 0-100
+  total: z.number(), // bytes
+  used: z.number(), // bytes
+  free: z.number(), // bytes
+  usage: z.number(), // percentage 0-100
 });
 
 const diskInfoSchema = z.object({
-  total: z.number(),    // bytes
-  used: z.number(),     // bytes
-  free: z.number(),     // bytes
-  usage: z.number(),    // percentage 0-100
+  total: z.number(), // bytes
+  used: z.number(), // bytes
+  free: z.number(), // bytes
+  usage: z.number(), // percentage 0-100
   mount: z.string(),
 });
 
 const processInfoSchema = z.object({
   pid: z.number(),
-  uptime: z.number(),       // seconds
-  memoryRss: z.number(),    // bytes
-  memoryHeap: z.number(),   // bytes
+  uptime: z.number(), // seconds
+  memoryRss: z.number(), // bytes
+  memoryHeap: z.number(), // bytes
   bunVersion: z.string(),
   nodeVersion: z.string(),
 });
@@ -53,7 +55,7 @@ const osInfoSchema = z.object({
   arch: z.string(),
   hostname: z.string(),
   release: z.string(),
-  uptime: z.number(),   // seconds
+  uptime: z.number(), // seconds
 });
 
 export const systemInfoResponseSchema = z.object({

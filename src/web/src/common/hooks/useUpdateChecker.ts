@@ -9,6 +9,7 @@ interface UpdateCheckerState {
   isUpdating: boolean;
   updateError: string | null;
   dismissedVersion: string | null;
+  channelLoading: boolean;
 }
 
 export function useUpdateChecker() {
@@ -17,6 +18,7 @@ export function useUpdateChecker() {
     isUpdating: false,
     updateError: null,
     dismissedVersion: null,
+    channelLoading: false,
   });
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -62,6 +64,24 @@ export function useUpdateChecker() {
     }
   }, []);
 
+  const toggleChannel = useCallback(async (enabled: boolean) => {
+    const newChannel = enabled ? "dev" : "stable";
+    setState((prev) => ({ ...prev, channelLoading: true }));
+    try {
+      await client.system.setUpdateChannel(newChannel);
+      // Re-check version immediately with new channel
+      const info = await client.system.getVersion();
+      setState((prev) => ({
+        ...prev,
+        versionInfo: info,
+        channelLoading: false,
+        dismissedVersion: null, // reset dismissal when channel changes
+      }));
+    } catch {
+      setState((prev) => ({ ...prev, channelLoading: false }));
+    }
+  }, []);
+
   const showBanner = state.versionInfo?.hasUpdate === true && state.versionInfo.latest !== state.dismissedVersion;
 
   return {
@@ -69,7 +89,9 @@ export function useUpdateChecker() {
     showBanner,
     isUpdating: state.isUpdating,
     updateError: state.updateError,
+    channelLoading: state.channelLoading,
     dismiss,
     triggerUpdate,
+    toggleChannel,
   };
 }

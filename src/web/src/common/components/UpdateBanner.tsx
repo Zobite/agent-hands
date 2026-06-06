@@ -51,6 +51,9 @@ export function UpdateBanner({ versionInfo, isUpdating, updateError, onUpdate, o
               <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-medium" style={{ background: "rgba(99,102,241,0.15)", color: "#6366f1" }}>
                 v{versionInfo.latest}
               </span>
+              {versionInfo.isPreRelease && (
+                <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-medium bg-[rgba(245,158,11,0.12)] text-[#d97706]">pre-release</span>
+              )}
             </div>
             <p className="text-[12px] text-muted mt-0.5">You're running v{versionInfo.current}. Update to get the latest features and fixes.</p>
           </div>

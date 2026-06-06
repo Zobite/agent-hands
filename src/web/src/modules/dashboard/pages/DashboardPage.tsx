@@ -1,4 +1,5 @@
-import { ArrowRight, BookOpen, Braces, Database, HardDrive, KeyRound, Terminal } from "lucide-react";
+import { Switch, Tooltip } from "antd";
+import { ArrowRight, BookOpen, Braces, Database, FlaskConical, HardDrive, KeyRound, Terminal } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { UpdateBanner } from "src/common/components/UpdateBanner";
 import { useUpdateChecker } from "src/common/hooks/useUpdateChecker";
@@ -17,7 +18,8 @@ export default function DashboardPage() {
   const user = useAuthStore((s) => s.user);
   const navigate = useNavigate();
   const greeting = getGreeting();
-  const { versionInfo, showBanner, isUpdating, updateError, dismiss, triggerUpdate } = useUpdateChecker();
+  const { versionInfo, showBanner, isUpdating, updateError, dismiss, triggerUpdate, toggleChannel, channelLoading } = useUpdateChecker();
+  const isDevChannel = versionInfo?.channel === "dev";
 
   return (
     <div className="max-w-[900px] mx-auto px-8 py-12 animate-fade-in-up">
@@ -50,6 +52,27 @@ export default function DashboardPage() {
           />
         </div>
       )}
+
+      {/* Dev Channel Toggle */}
+      <div className="mb-6 flex items-center justify-between px-4 py-3 rounded-xl border border-hairline bg-surface-card">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-canvas border border-hairline-soft">
+            <FlaskConical size={15} className="text-muted" />
+          </div>
+          <div>
+            <div className="text-[13px] font-medium text-ink flex items-center gap-2">
+              Pre-release updates
+              {isDevChannel && <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-medium bg-[rgba(245,158,11,0.12)] text-[#d97706]">DEV</span>}
+            </div>
+            <div className="text-[11px] text-muted-soft mt-0.5">
+              {isDevChannel ? "You'll receive notifications for pre-release versions" : "Only stable releases will be notified"}
+            </div>
+          </div>
+        </div>
+        <Tooltip title={isDevChannel ? "Switch to stable channel" : "Enable pre-release notifications"}>
+          <Switch size="small" checked={isDevChannel} loading={channelLoading} onChange={toggleChannel} />
+        </Tooltip>
+      </div>
 
       {/* Navigation Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">

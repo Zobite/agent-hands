@@ -1,8 +1,9 @@
 import { existsSync, readFileSync } from "node:fs";
-import { join, dirname } from "node:path";
-import { fileURLToPath } from "node:url";
 import os from "node:os";
-import type { VersionResponse, SystemInfoResponse } from "./system.schema.js";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+import { getConfiguration } from "../configurations/configuration.service.js";
+import type { SystemInfoResponse, VersionResponse } from "./system.schema.js";
 
 /**
  * Injected at build time by `src/server/build.ts` via Bun's `define`.
@@ -49,10 +50,14 @@ export function getCurrentVersion(): string {
   return _currentVersion;
 }
 
-
 /** Cache: latest version fetched from GitHub Releases */
 let _cachedLatest: string | null = null;
 let _cachedAt = 0;
+
+/** Cache: latest pre-release version */
+let _cachedPreRelease: string | null = null;
+let _cachedPreAt = 0;
+
 const CACHE_TTL_MS = 60_000; // 1 minute
 const GITHUB_REPO = process.env.GITHUB_REPO || "Zobite/agent-hands";
 
@@ -78,21 +83,95 @@ export async function checkLatestVersion(): Promise<string | null> {
   }
 }
 
-/** Compare semver — returns true if latest > current */
+/** Check for the latest pre-release version from all releases */
+export async function checkLatestPreRelease(): Promise<string | null> {
+  const now = Date.now();
+  if (_cachedPreRelease !== null && now - _cachedPreAt < CACHE_TTL_MS) {
+    return _cachedPreRelease;
+  }
+
+  try {
+    const res = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/releases?per_page=20`, {
+      headers: { Accept: "application/vnd.github+json" },
+      signal: AbortSignal.timeout(5000),
+    });
+    if (!res.ok) return _cachedPreRelease;
+    const releases = (await res.json()) as Array<{ tag_name?: string; prerelease?: boolean }>;
+
+    // Find the newest release (first in list) — could be stable or pre-release
+    // When includePreRelease is on, we want the absolute latest regardless of type
+    const newest = releases[0];
+    if (newest?.tag_name) {
+      _cachedPreRelease = newest.tag_name.replace(/^v/, "");
+      _cachedPreAt = now;
+    }
+    return _cachedPreRelease;
+  } catch {
+    return _cachedPreRelease;
+  }
+}
+
+/** Compare semver — returns true if latest > current. Handles pre-release suffixes. */
 function isNewer(current: string, latest: string): boolean {
-  const parse = (v: string) => v.replace(/^v/, "").split(".").map(Number);
-  const [ca, cb, cc] = parse(current);
-  const [la, lb, lc] = parse(latest);
+  // Split off pre-release suffix: "0.3.9-pre.1" → ["0.3.9", "pre.1"]
+  const parseParts = (v: string) => {
+    const clean = v.replace(/^v/, "");
+    const [base, ...preParts] = clean.split("-");
+    const nums = base.split(".").map(Number);
+    const pre = preParts.length > 0 ? preParts.join("-") : null;
+    return { nums, pre };
+  };
+
+  const c = parseParts(current);
+  const l = parseParts(latest);
+  const [ca, cb, cc] = c.nums;
+  const [la, lb, lc] = l.nums;
+
+  // Compare major.minor.patch first
   if (la !== ca) return la > ca;
   if (lb !== cb) return lb > cb;
-  return lc > cc;
+  if (lc !== cc) return lc > cc;
+
+  // Same base version: stable > pre-release
+  if (c.pre && !l.pre) return true; // current is pre, latest is stable → update
+  if (!c.pre && l.pre) return false; // current is stable, latest is pre → no update
+
+  // Both pre-release: compare pre-release numbers (e.g., pre.2 > pre.1)
+  if (c.pre && l.pre) {
+    const cNum = parseInt(c.pre.split(".").pop() ?? "0", 10);
+    const lNum = parseInt(l.pre.split(".").pop() ?? "0", 10);
+    return lNum > cNum;
+  }
+
+  return false;
+}
+
+/** Read the update channel setting from config DB */
+async function getUpdateChannel(): Promise<"stable" | "dev"> {
+  try {
+    const config = await getConfiguration("update_channel");
+    if (config?.value === "dev") return "dev";
+  } catch {
+    // config table might not exist yet
+  }
+  return "stable";
 }
 
 export async function getVersionInfo(): Promise<VersionResponse> {
   const current = getCurrentVersion();
-  const latest = await checkLatestVersion();
+  const channel = await getUpdateChannel();
+
+  let latest: string | null;
+  if (channel === "dev") {
+    // Check both stable and pre-release, return whichever is newest
+    latest = await checkLatestPreRelease();
+  } else {
+    latest = await checkLatestVersion();
+  }
+
   const hasUpdate = latest != null && isNewer(current, latest);
-  return { current, latest, hasUpdate, checkedAt: Date.now() };
+  const isPreRelease = latest != null && latest.includes("-");
+  return { current, latest, hasUpdate, channel, isPreRelease, checkedAt: Date.now() };
 }
 
 /**
@@ -102,11 +181,22 @@ export async function getVersionInfo(): Promise<VersionResponse> {
  */
 export async function performUpdate(): Promise<{ ok: boolean; message: string }> {
   try {
+    const channel = await getUpdateChannel();
     const installUrl = `https://raw.githubusercontent.com/${GITHUB_REPO}/main/install.sh`;
+
+    // If on dev channel, pass the specific pre-release version to install
+    const envVars: Record<string, string> = { ...process.env } as Record<string, string>;
+    if (channel === "dev") {
+      const latest = await checkLatestPreRelease();
+      if (latest) {
+        envVars.VERSION = latest;
+      }
+    }
+
     const proc = Bun.spawn(["bash", "-c", `curl -fsSL ${installUrl} | bash`], {
       stdout: "inherit",
       stderr: "inherit",
-      env: { ...process.env },
+      env: envVars,
     });
 
     const exitCode = await proc.exited;
@@ -130,6 +220,7 @@ export async function performUpdate(): Promise<{ ok: boolean; message: string }>
 /** Invalidate version cache (force re-check) */
 export function invalidateVersionCache() {
   _cachedAt = 0;
+  _cachedPreAt = 0;
 }
 
 // ── System Info ────────────────────────────────────────────────────────────────

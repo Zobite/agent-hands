@@ -44,7 +44,10 @@ export default function McpToolEditorPage() {
     (newCode: string, isFinal?: boolean) => {
       if (isFinal) {
         setCode(newCode);
-        setPendingCode(null);
+        // Defer DiffEditor unmount by 1 frame so Monaco can cleanup
+        requestAnimationFrame(() => {
+          setPendingCode(null);
+        });
       } else {
         setPendingCode(newCode);
       }
@@ -166,31 +169,23 @@ export default function McpToolEditorPage() {
               type="button"
               onClick={() => setActiveTab("ai")}
               className={`flex items-center gap-1.5 px-4 py-2.5 font-mono text-[11px] uppercase tracking-[0.6px] font-semibold border-none cursor-pointer transition-colors relative ${
-                activeTab === "ai"
-                  ? "text-ink bg-transparent"
-                  : "text-muted-soft bg-transparent hover:text-muted"
+                activeTab === "ai" ? "text-ink bg-transparent" : "text-muted-soft bg-transparent hover:text-muted"
               }`}
             >
               <Sparkles size={13} />
               AI Agent
-              {activeTab === "ai" && (
-                <div className="absolute bottom-0 left-2 right-2 h-[2px] bg-ink rounded-t-full" />
-              )}
+              {activeTab === "ai" && <div className="absolute bottom-0 left-2 right-2 h-[2px] bg-ink rounded-t-full" />}
             </button>
             <button
               type="button"
               onClick={() => setActiveTab("test")}
               className={`flex items-center gap-1.5 px-4 py-2.5 font-mono text-[11px] uppercase tracking-[0.6px] font-semibold border-none cursor-pointer transition-colors relative ${
-                activeTab === "test"
-                  ? "text-ink bg-transparent"
-                  : "text-muted-soft bg-transparent hover:text-muted"
+                activeTab === "test" ? "text-ink bg-transparent" : "text-muted-soft bg-transparent hover:text-muted"
               }`}
             >
               <Terminal size={13} />
               Test
-              {activeTab === "test" && (
-                <div className="absolute bottom-0 left-2 right-2 h-[2px] bg-ink rounded-t-full" />
-              )}
+              {activeTab === "test" && <div className="absolute bottom-0 left-2 right-2 h-[2px] bg-ink rounded-t-full" />}
             </button>
           </div>
 
@@ -207,12 +202,7 @@ export default function McpToolEditorPage() {
                 onApplyCode={handleApplyCode}
               />
             ) : (
-              <ToolTestPanel
-                serverId={serverId!}
-                toolId={toolId}
-                code={code}
-                inputSchema={liveInputSchema}
-              />
+              <ToolTestPanel serverId={serverId!} toolId={toolId} code={code} inputSchema={liveInputSchema} />
             )}
           </div>
         </div>
@@ -220,4 +210,3 @@ export default function McpToolEditorPage() {
     </div>
   );
 }
-

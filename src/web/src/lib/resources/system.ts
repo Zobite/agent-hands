@@ -4,9 +4,10 @@ export interface VersionInfo {
   current: string;
   latest: string | null;
   hasUpdate: boolean;
+  channel: "stable" | "dev";
+  isPreRelease: boolean;
   checkedAt: number;
 }
-
 
 export interface SystemInfo {
   cpu: {
@@ -60,5 +61,12 @@ export class SystemResource {
   triggerUpdate(): Promise<{ ok: boolean; message: string }> {
     return this.http.post<{ ok: boolean; message: string }>("/api/system/update");
   }
-}
 
+  getUpdateChannel(): Promise<{ channel: "stable" | "dev" }> {
+    return this.http.get<{ channel: "stable" | "dev" }>("/api/system/update-channel");
+  }
+
+  setUpdateChannel(channel: "stable" | "dev"): Promise<{ channel: "stable" | "dev" }> {
+    return this.http.request<{ channel: "stable" | "dev" }>("PUT", "/api/system/update-channel", { channel });
+  }
+}

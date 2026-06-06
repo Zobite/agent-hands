@@ -261,7 +261,11 @@ export default function DynamicApiDetailPage() {
   const handleApplyCode = useCallback((newCode: string, isFinal?: boolean) => {
     if (isFinal) {
       setCode(newCode);
-      setPendingCode(null);
+      // Defer DiffEditor unmount by 1 frame so Monaco's DiffEditorWidget
+      // can dispose its internal models before React removes the DOM element.
+      requestAnimationFrame(() => {
+        setPendingCode(null);
+      });
     } else {
       setPendingCode(newCode);
     }
@@ -270,15 +274,21 @@ export default function DynamicApiDetailPage() {
   // ── Pending code accept/reject (same flow as MCP tools) ──────────────────
   const handleAcceptPending = async () => {
     if (pendingCode) {
-      setCode(pendingCode);
-      setPendingCode(null);
-      // Promote draft → official code and clear draftCode
-      await handleSave(pendingCode);
+      const codeToSave = pendingCode;
+      setCode(codeToSave);
+      // Defer DiffEditor unmount by 1 frame (same reason as above)
+      requestAnimationFrame(() => {
+        setPendingCode(null);
+      });
+      await handleSave(codeToSave);
     }
   };
 
   const handleRejectPending = async () => {
-    setPendingCode(null);
+    // Defer DiffEditor unmount by 1 frame (same reason as above)
+    requestAnimationFrame(() => {
+      setPendingCode(null);
+    });
     // Reset draftCode back to prod code in DB
     if (id) {
       client.dynamicApis.update(id, { draftCode: savedCodeRef.current }).catch(() => {});
