@@ -16,11 +16,11 @@ export default defineConfig({
     allowedHosts: true,
     proxy: {
       "/api": {
-        target: `http://127.0.0.1:${process.env.PORT || 18081}`,
+        target: `http://127.0.0.1:${process.env.PORT || 18080}`,
         changeOrigin: true,
       },
       "/public": {
-        target: `http://127.0.0.1:${process.env.PORT || 18081}`,
+        target: `http://127.0.0.1:${process.env.PORT || 18080}`,
         changeOrigin: true,
       },
     },

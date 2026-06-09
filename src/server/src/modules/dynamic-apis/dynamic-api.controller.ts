@@ -147,14 +147,18 @@ export function registerDynamicApiRoutes(app: FastifyInstance) {
 
       const input = req.body as DryRunBody;
 
-      // Pick code based on source: "prod" = official code, "draft" = draftCode (fallback to code)
-      const codeToTest = input.source === "prod" ? existing.code : (existing.draftCode ?? existing.code);
+      // Use code from body if provided, otherwise pick from DB based on source
+      const codeToTest = input.code
+        ? input.code
+        : input.source === "prod"
+          ? existing.code
+          : (existing.draftCode ?? existing.code);
 
       const startTime = Date.now();
 
       const requestObj = {
-        method: existing.method,
-        path: existing.path,
+        method: input.method ?? existing.method,
+        path: input.path ?? existing.path,
         params: input.params ?? {},
         query: input.query ?? {},
         headers: input.headers ?? {},

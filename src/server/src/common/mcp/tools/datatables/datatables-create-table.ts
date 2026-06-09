@@ -53,7 +53,7 @@ export function registerDatatablesCreateTable(server: McpServer) {
         );
         const result = await createTable(
           projectId,
-          { name, description, columns },
+          { name, description, columns: columns.map((c) => ({ ...c, options: {} })) },
           "usr_mcp_system",
         );
         return {

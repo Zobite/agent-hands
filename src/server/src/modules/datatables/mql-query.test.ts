@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll } from "bun:test";
 
-const BASE = "http://localhost:18080";
+const BASE = process.env.TEST_BASE_URL ?? "http://127.0.0.1:18080";
 let TOKEN = "";
 let DB_ID = "";
 let TABLE_ID = "";

@@ -1,5 +1,5 @@
-import { existsSync, readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { existsSync, readFileSync, realpathSync } from "node:fs";
+import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import cors from "@fastify/cors";
@@ -126,7 +126,35 @@ async function createCustomMcpServer(serverId: string, authToken: string): Promi
   return server;
 }
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
+// Resolve __dirname robustly — handles the case where the install directory
+// was deleted and recreated during an update while the process was still running.
+// In that scenario import.meta.url can point to a deleted inode, so we fall back
+// to process.argv[1] (the actual script path passed to bun).
+function resolveDirname(): string {
+  // Primary: import.meta.url (works in normal conditions)
+  try {
+    const dir = dirname(fileURLToPath(import.meta.url));
+    // Verify the directory actually exists on disk (not a deleted inode)
+    if (existsSync(dir)) return realpathSync(dir);
+  } catch {}
+
+  // Fallback: resolve from the script path bun is executing
+  // e.g. /root/.local/share/agent-hands/dist/index.js → /root/.local/share/agent-hands/dist
+  try {
+    const scriptPath = process.argv[1];
+    if (scriptPath) {
+      const dir = dirname(resolve(scriptPath));
+      if (existsSync(dir)) return realpathSync(dir);
+    }
+  } catch {}
+
+  // Last resort: derive from DATA_DIR env
+  // DATA_DIR is typically ~/.agent-hands (separate from install dir)
+  // but the install dir is usually ~/.local/share/agent-hands
+  // so we can't reliably derive it. Just return the original.
+  return dirname(fileURLToPath(import.meta.url));
+}
+const __dirname = resolveDirname();
 
 // ── Module Registry (static — bun build compatible) ────────────────────────
 const MODULE_REGISTRY = [
@@ -403,7 +431,20 @@ export async function createApp() {
   });
 
   // ── Serve web SPA under /ui ─────────────────────────────────────────────────
-  const webDistPaths = [join(__dirname, "../../web/dist"), join(__dirname, "../public")];
+  // Try multiple paths to find web assets. The primary path "../public" is the
+  // production layout (public/ sits next to dist/ in the install root).
+  // "../../web/dist" is the dev layout. We also try resolving via process.argv[1]
+  // as an extra fallback in case __dirname resolved to a stale path.
+  const webDistCandidates = new Set<string>();
+  webDistCandidates.add(join(__dirname, "../../web/dist"));
+  webDistCandidates.add(join(__dirname, "../public"));
+  // Fallback: resolve from process.argv[1] in case __dirname is stale
+  try {
+    const scriptDir = dirname(resolve(process.argv[1] || ""));
+    webDistCandidates.add(join(scriptDir, "../../web/dist"));
+    webDistCandidates.add(join(scriptDir, "../public"));
+  } catch {}
+  const webDistPaths = [...webDistCandidates];
   const webDist = webDistPaths.find((p) => existsSync(join(p, "index.html")));
 
   if (webDist) {

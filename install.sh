@@ -119,7 +119,16 @@ STAGING_DIR="$TMP_DIR/staging"
 mkdir -p "$STAGING_DIR"
 tar -xzf "$TMP_DIR/$TARBALL_NAME" -C "$STAGING_DIR" --strip-components=1
 
-# Only remove old installation after successful extract
+# Stop running server BEFORE removing the old directory.
+# If we don't, the monitor/server process keeps running with a deleted cwd,
+# __dirname resolves to a stale inode, and the SPA routes fail with 404.
+if [ -f "$INSTALL_DIR/bin/agent-hands.js" ]; then
+  info "Stopping running server before upgrade..."
+  bun "$INSTALL_DIR/bin/agent-hands.js" stop 2>/dev/null || true
+  sleep 1
+fi
+
+# Only remove old installation after successful extract + server stop
 rm -rf "$INSTALL_DIR"
 mkdir -p "$(dirname "$INSTALL_DIR")"
 mv "$STAGING_DIR" "$INSTALL_DIR"

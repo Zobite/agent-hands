@@ -48,8 +48,6 @@ export async function getModelForProvider(providerId: string, modelName: string)
       const openai = createOpenAI({
         apiKey,
         baseURL,
-        // Use Chat Completions API — Responses API is not supported by OpenRouter/Ollama/custom
-        useResponsesApi: false,
       });
       return openai(modelName);
     }

@@ -63,6 +63,9 @@ export const listDynamicApiLogsQuerySchema = z.object({
 
 export const dryRunBodySchema = z.object({
   source: z.enum(["prod", "draft"]).default("draft"),
+  code: z.string().optional(),
+  method: z.string().optional(),
+  path: z.string().optional(),
   params: z.record(z.string()).optional().default({}),
   query: z.record(z.string()).optional().default({}),
   headers: z.record(z.string()).optional().default({}),

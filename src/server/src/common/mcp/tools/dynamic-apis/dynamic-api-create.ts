@@ -56,7 +56,7 @@ export function registerDynamicApiCreate(server: McpServer) {
           "../../../../modules/dynamic-apis/dynamic-api.service.js"
         );
         const result = await createDynamicApi(
-          { name, method, path, description, code, isPublic, timeout },
+          { name, method, path, description, code, isPublic: isPublic ?? false, timeout: timeout ?? 30000 },
           "usr_mcp_system",
         );
         return {
