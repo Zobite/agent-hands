@@ -515,6 +515,54 @@ TOTAL_FILES=$(find "$STAGING" -type f | wc -l | tr -d ' ')
   && pass_test "Tarball file count: $TOTAL_FILES" \
   || fail_test "Tarball too few files ($TOTAL_FILES)"
 
+# ── Release package.json cleanliness ─────────────────────────────────
+step "Release package.json validation"
+
+# Simulate what release.sh does: clean the package.json
+if command -v node &> /dev/null; then
+  node -e "
+    const fs = require('fs');
+    const p = JSON.parse(fs.readFileSync('$STAGING/package.json', 'utf8'));
+    delete p.workspaces;
+    delete p.devDependencies;
+    delete p.scripts;
+    fs.writeFileSync('$STAGING/package.json', JSON.stringify(p, null, 2) + '\n');
+  "
+fi
+
+# Test: no workspaces in release package.json
+if grep -q '"workspaces"' "$STAGING/package.json"; then
+  fail_test "Release package.json has 'workspaces'" \
+    "This breaks 'bun add' in install dir (src/server, src/web don't exist)"
+else
+  pass_test "Release package.json: no workspaces"
+fi
+
+# Test: no devDependencies in release package.json
+if grep -q '"devDependencies"' "$STAGING/package.json"; then
+  fail_test "Release package.json has 'devDependencies'" \
+    "Dev deps are not needed in production"
+else
+  pass_test "Release package.json: no devDependencies"
+fi
+
+# Test: no scripts in release package.json
+if grep -q '"scripts"' "$STAGING/package.json"; then
+  fail_test "Release package.json has 'scripts'" \
+    "Source scripts reference src/ dirs that don't exist in release"
+else
+  pass_test "Release package.json: no scripts"
+fi
+
+# Test: bun add works in staging dir (simulates playwright install step)
+step "bun add in release dir (Playwright install simulation)"
+if (cd "$STAGING" && bun add --dry-run is-even >/dev/null 2>&1); then
+  pass_test "bun add works in release dir (no workspace errors)"
+else
+  fail_test "bun add fails in release dir" \
+    "Users will see 'Workspace not found' when install.sh tries to add playwright"
+fi
+
 rm -rf "$STAGING_DIR"
 
 phase_end

@@ -184,6 +184,20 @@ chmod +x "$STAGING/bin/agent-hands.js"
 cp package.json "$STAGING/"
 cp README.md "$STAGING/"
 
+# Remove "workspaces" from the release package.json — the tarball doesn't contain
+# src/server or src/web, so bun would error on `bun add` if workspaces remain.
+if command -v node &> /dev/null; then
+  node -e "
+    const fs = require('fs');
+    const p = JSON.parse(fs.readFileSync('$STAGING/package.json', 'utf8'));
+    delete p.workspaces;
+    delete p.devDependencies;
+    delete p.scripts;
+    fs.writeFileSync('$STAGING/package.json', JSON.stringify(p, null, 2) + '\n');
+  "
+  info "Cleaned package.json for release (removed workspaces, devDependencies, scripts)"
+fi
+
 info "Staged files:"
 (cd "$STAGING" && find . -type f | head -20 | sed 's/^/    /')
 FILE_COUNT=$(cd "$STAGING" && find . -type f | wc -l | tr -d ' ')
