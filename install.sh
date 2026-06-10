@@ -11,6 +11,10 @@
 # ─────────────────────────────────────────────────────────────────────────────
 set -euo pipefail
 
+# Di chuyển về thư mục tạm an toàn để tránh lỗi cwd bị xóa
+cd /tmp || cd "$HOME" || cd /
+
+
 # ── Config ──────────────────────────────────────────────────────────────────
 REPO="Zobite/agent-hands"
 INSTALL_DIR="${INSTALL_DIR:-$HOME/.local/share/agent-hands}"

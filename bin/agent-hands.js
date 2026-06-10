@@ -282,7 +282,7 @@ async function cmdStart() {
       HOST: host,
       DATA_DIR: dataDir,
     },
-    cwd: PKG_ROOT,
+    cwd: dataDir,
   });
 
   closeSync(logFd);
