@@ -14,14 +14,14 @@
  *   agent-hands mcp           -- start MCP server (stdio)
  */
 
-import { spawn } from "node:child_process";
-import { appendFileSync, closeSync, existsSync, mkdirSync, openSync, readFileSync, unlinkSync, writeFileSync } from "node:fs";
+import { execSync, spawn } from "node:child_process";
+import { appendFileSync, closeSync, existsSync, lstatSync, mkdirSync, openSync, readFileSync, readlinkSync, rmSync, unlinkSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import { dirname, join, resolve } from "node:path";
+import { createInterface } from "node:readline";
 import { fileURLToPath } from "node:url";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+const __dirname = dirname(fileURLToPath(import.meta.url));
 const PKG_ROOT = resolve(__dirname, "..");
 
 // ─── Defaults ──────────────────────────────────────────────────────────────────
@@ -42,6 +42,10 @@ function parseFlags(args) {
       flags.foreground = true;
     } else if (arg === "--follow") {
       flags.follow = true;
+    } else if (arg.startsWith("--") && arg.includes("=")) {
+      // Support --key=value syntax
+      const eqIdx = arg.indexOf("=");
+      flags[arg.slice(2, eqIdx)] = arg.slice(eqIdx + 1);
     } else if (arg.startsWith("--") && args[i + 1] && !args[i + 1].startsWith("--")) {
       flags[arg.slice(2)] = args[++i];
     }
@@ -51,17 +55,48 @@ function parseFlags(args) {
 
 const flags = parseFlags(rawArgs);
 
-// ─── Persisted config (saved on start, read by other commands) ──────────────
-const configFile = join(PKG_ROOT, ".agent-hands.conf");
+// ─── Persisted config ──────────────────────────────────────────────────────────
+// Config file lives in dataDir (survives upgrades that rm -rf the install dir).
+// We need dataDir to find the config, but dataDir can come from the config.
+// Resolution order: CLI flag → env var → config file → default.
+// To bootstrap: resolve dataDir first from flags/env/default, then load config from there.
 
 function loadSavedConfig() {
-  try {
-    if (existsSync(configFile)) {
-      return JSON.parse(readFileSync(configFile, "utf-8"));
-    }
-  } catch {}
+  // 1. Determine dataDir without config (flags → env → default)
+  const bootstrapDataDir = flags["data-dir"] ?? process.env.DATA_DIR ?? DEFAULT_DATA_DIR;
+  const newPath = join(bootstrapDataDir, ".agent-hands.conf");
+  // 2. Also check old location (PKG_ROOT) for migration from older versions
+  const oldPath = join(PKG_ROOT, ".agent-hands.conf");
+
+  for (const path of [newPath, oldPath]) {
+    try {
+      if (existsSync(path)) {
+        const config = JSON.parse(readFileSync(path, "utf-8"));
+        // Migrate: if loaded from old location, delete it after first load
+        if (path === oldPath && path !== newPath) {
+          try { unlinkSync(oldPath); } catch {}
+        }
+        return config;
+      }
+    } catch {}
+  }
   return {};
 }
+
+const savedConfig = loadSavedConfig();
+const dataDir = flags["data-dir"] ?? process.env.DATA_DIR ?? savedConfig.dataDir ?? DEFAULT_DATA_DIR;
+const port = Number(flags.port ?? process.env.PORT ?? savedConfig.port ?? DEFAULT_PORT);
+const host = flags.host ?? process.env.HOST ?? savedConfig.host ?? DEFAULT_HOST;
+
+// Validate port
+if (Number.isNaN(port) || port < 1 || port > 65535 || !Number.isInteger(port)) {
+  console.error(`❌ Invalid port: ${flags.port ?? process.env.PORT ?? savedConfig.port}`);
+  console.error(`   Port must be an integer between 1 and 65535.`);
+  process.exit(1);
+}
+
+// Config file definitive location (in dataDir)
+const configFile = join(dataDir, ".agent-hands.conf");
 
 function saveConfig(config) {
   try {
@@ -69,13 +104,12 @@ function saveConfig(config) {
   } catch {}
 }
 
-const savedConfig = loadSavedConfig();
-const dataDir = flags["data-dir"] ?? process.env.DATA_DIR ?? savedConfig.dataDir ?? DEFAULT_DATA_DIR;
-const port = Number(flags.port ?? savedConfig.port ?? DEFAULT_PORT);
-const host = flags.host ?? savedConfig.host ?? DEFAULT_HOST;
-
-// Ensure data dir exists
-mkdirSync(dataDir, { recursive: true });
+// Ensure data dir exists (needed for PID file, log file, config)
+// Only create for commands that actually need it
+const NEEDS_DATA_DIR = ["start", "stop", "status", "restart", "logs", "init", "mcp", "_monitor", "uninstall"];
+if (NEEDS_DATA_DIR.includes(command)) {
+  mkdirSync(dataDir, { recursive: true });
+}
 
 const pidFile = join(dataDir, "server.pid");
 const logFile = join(dataDir, "server.log");
@@ -92,12 +126,29 @@ function isProcessAlive(pid) {
   }
 }
 
+/**
+ * Verify a PID belongs to an agent-hands process (guards against PID reuse by OS).
+ * Returns true if we can confirm it's ours, or if we can't determine (benefit of doubt).
+ */
+function isOurProcess(pid) {
+  try {
+    const cmd = execSync(`ps -p ${pid} -o command=`, { encoding: "utf-8", timeout: 2000 }).trim();
+    // Check if the process command line mentions agent-hands or our server entry
+    return cmd.includes("agent-hands") || cmd.includes("dist/index.js");
+  } catch {
+    // ps failed (process may have just died, or ps not available)
+    // Fall back to basic alive check
+    return isProcessAlive(pid);
+  }
+}
+
 function readPid() {
   if (!existsSync(pidFile)) return null;
   const raw = readFileSync(pidFile, "utf-8").trim();
   const pid = Number(raw);
   if (Number.isNaN(pid)) return null;
-  if (isProcessAlive(pid)) return pid;
+  // Process must be alive AND actually be agent-hands (not a reused PID)
+  if (isProcessAlive(pid) && isOurProcess(pid)) return pid;
   try {
     unlinkSync(pidFile);
   } catch {}
@@ -122,13 +173,63 @@ function getLocalVersion() {
   }
 }
 
+/**
+ * Find PIDs listening on a given port.
+ * Returns an array of PID numbers. Empty if port is free.
+ */
+function findPidsOnPort(targetPort) {
+  // Try lsof first (macOS + most Linux)
+  try {
+    const out = execSync(`lsof -ti :${targetPort}`, { encoding: "utf-8", timeout: 3000 }).trim();
+    if (out) return out.split("\n").map(Number).filter((p) => !Number.isNaN(p) && p > 0);
+  } catch {}
+  // Fallback: ss (Linux without lsof, e.g. Alpine/Debian slim)
+  try {
+    const out = execSync(`ss -tlnp sport = :${targetPort}`, { encoding: "utf-8", timeout: 3000 });
+    const pids = [];
+    for (const match of out.matchAll(/pid=(\d+)/g)) {
+      const p = Number(match[1]);
+      if (p > 0) pids.push(p);
+    }
+    return pids;
+  } catch {}
+  return [];
+}
+
+/**
+ * Kill an entire process group (monitor + its children).
+ * Falls back to single-PID kill if group kill fails.
+ */
+function killProcessGroup(pid, signal = "SIGTERM") {
+  // Try killing the entire process group first (negative PID)
+  try {
+    process.kill(-pid, signal);
+    return;
+  } catch {}
+  // Fallback: kill just the PID
+  try {
+    process.kill(pid, signal);
+  } catch {}
+}
+
 // ─── Commands ──────────────────────────────────────────────────────────────────
 
 async function cmdStart() {
+  // ── Guard: check PID file ────────────────────────────────────────────────
   const existing = readPid();
   if (existing) {
     console.log(`⚠️  Agent Hands is already running (PID: ${existing})`);
     console.log(`   Use 'agent-hands restart' to restart.`);
+    process.exit(1);
+  }
+
+  // ── Guard: check if port is occupied (catches orphaned processes) ───────
+  const portPids = findPidsOnPort(port);
+  if (portPids.length > 0) {
+    console.log(`⚠️  Port ${port} is already in use (PIDs: ${portPids.join(", ")})`);
+    console.log(`   This may be an orphaned Agent Hands process or another application.`);
+    console.log(`   Kill it first:  kill ${portPids.join(" ")}`);
+    console.log(`   Or use a different port:  agent-hands start --port <other-port>`);
     process.exit(1);
   }
 
@@ -148,6 +249,12 @@ async function cmdStart() {
     console.log(`   Host     : ${host}`);
     console.log(`   Data dir : ${dataDir}\n`);
 
+    // Write PID so other CLI commands know we're running
+    writePid(process.pid);
+    const cleanup = () => { removePid(); process.exit(0); };
+    process.on("SIGTERM", cleanup);
+    process.on("SIGINT", cleanup);
+
     process.env.PORT = String(port);
     process.env.HOST = host;
     process.env.DATA_DIR = dataDir;
@@ -164,10 +271,7 @@ async function cmdStart() {
 
   const logFd = openSync(logFile, "a");
   const binPath = join(PKG_ROOT, "bin", "agent-hands.js");
-  const monitorArgs = ["run", binPath, "_monitor"];
-  if (flags.port) monitorArgs.push("--port", String(port));
-  if (flags.host) monitorArgs.push("--host", host);
-  if (flags["data-dir"]) monitorArgs.push("--data-dir", dataDir);
+  const monitorArgs = ["run", binPath, "_monitor", "--port", String(port), "--host", host, "--data-dir", dataDir];
 
   const child = spawn("bun", monitorArgs, {
     detached: true,
@@ -183,34 +287,80 @@ async function cmdStart() {
 
   closeSync(logFd);
 
-  await new Promise((resolve) => setTimeout(resolve, 800));
-
-  if (child.exitCode !== null) {
-    console.error("❌ Agent Hands failed to start. Check logs:");
-    console.error(`   ${logFile}`);
-    process.exit(1);
-  }
-
+  // Wait for server to be ready (health check) or fail fast if process exits
   writePid(child.pid);
   child.unref();
 
-  console.log("\n🤖 Agent Hands started!");
-  console.log(`   PID      : ${child.pid}`);
-  console.log(`   URL      : http://${host}:${port}`);
-  console.log(`   Data dir : ${dataDir}`);
-  console.log(`   Logs     : ${logFile}`);
+  const startDeadline = Date.now() + 15000; // 15s max wait
+  let started = false;
+  while (Date.now() < startDeadline) {
+    // Fail fast: process already exited
+    if (child.exitCode !== null) {
+      removePid();
+      console.error("❌ Agent Hands failed to start. Check logs:");
+      console.error(`   ${logFile}`);
+      process.exit(1);
+    }
+    // Health check — always use 127.0.0.1 (host may be 0.0.0.0 which some systems can't connect to)
+    try {
+      const healthHost = (host === "0.0.0.0" || host === "::") ? "127.0.0.1" : host;
+      const res = await fetch(`http://${healthHost}:${port}/api/health`, { signal: AbortSignal.timeout(1000) });
+      if (res.ok) { started = true; break; }
+    } catch {}
+    await new Promise((r) => setTimeout(r, 500));
+  }
+
+  if (!started) {
+    // Process is alive but not responding — could be slow startup
+    if (child.exitCode === null) {
+      console.log("\n⚠️  Server process started but health check timed out (15s).");
+      console.log(`   PID      : ${child.pid}`);
+      console.log(`   URL      : http://${host}:${port}`);
+      console.log(`   It may still be initializing. Check: ${logFile}`);
+    } else {
+      removePid();
+      console.error("❌ Agent Hands failed to start. Check logs:");
+      console.error(`   ${logFile}`);
+      process.exit(1);
+    }
+  } else {
+    console.log("\n🤖 Agent Hands started!");
+    console.log(`   PID      : ${child.pid}`);
+    console.log(`   URL      : http://${host}:${port}`);
+    console.log(`   Data dir : ${dataDir}`);
+    console.log(`   Logs     : ${logFile}`);
+  }
   console.log(`\n   Use 'agent-hands stop' to stop.\n`);
 }
 
 function cmdStop() {
   const pid = readPid();
   if (!pid) {
-    console.log("ℹ️  Agent Hands is not running.");
+    // Even without PID file, check for orphaned processes on the configured port
+    const orphans = findPidsOnPort(port);
+    if (orphans.length > 0) {
+      console.log(`⚠️  No PID file, but found orphaned process(es) on port ${port}: ${orphans.join(", ")}`);
+      console.log(`   Killing orphans...`);
+      for (const opid of orphans) {
+        try { process.kill(opid, "SIGTERM"); } catch {}
+      }
+      Bun.sleepSync(1000);
+      for (const opid of orphans) {
+        if (isProcessAlive(opid)) {
+          try { process.kill(opid, "SIGKILL"); } catch {}
+        }
+      }
+      console.log("✅ Orphaned processes cleaned up.\n");
+    } else {
+      console.log("ℹ️  Agent Hands is not running.");
+    }
     return;
   }
 
   console.log(`🛑 Stopping Agent Hands (PID: ${pid})...`);
-  process.kill(pid, "SIGTERM");
+
+  // Kill the entire process group (monitor + server child) to prevent orphans
+  killProcessGroup(pid, "SIGTERM");
 
   const deadline = Date.now() + 5000;
   while (Date.now() < deadline && isProcessAlive(pid)) {
@@ -218,11 +368,15 @@ function cmdStop() {
   }
 
   if (isProcessAlive(pid)) {
-    console.log("   Force killing...");
-    try {
-      process.kill(pid, "SIGKILL");
-    } catch {}
+    console.log("   Force killing process group...");
+    killProcessGroup(pid, "SIGKILL");
     Bun.sleepSync(300);
+  }
+
+  // Final safety net: kill anything still on the port
+  const remaining = findPidsOnPort(port);
+  for (const rpid of remaining) {
+    try { process.kill(rpid, "SIGKILL"); } catch {}
   }
 
   removePid();
@@ -234,23 +388,30 @@ function cmdStatus() {
   if (pid) {
     console.log("\n🟢 Agent Hands is running");
     console.log(`   PID      : ${pid}`);
+    console.log(`   URL      : http://${host}:${port}`);
     console.log(`   Data dir : ${dataDir}`);
-    console.log(`   Logs     : ${logFile}\n`);
+    console.log(`   Logs     : ${logFile}`);
   } else {
-    console.log("\n🔴 Agent Hands is not running.\n");
+    // Check for orphan processes
+    const orphans = findPidsOnPort(port);
+    if (orphans.length > 0) {
+      console.log(`\n🟡 Agent Hands PID file missing, but port ${port} is in use (PIDs: ${orphans.join(", ")})`);
+      console.log(`   This may be an orphaned process. Run 'agent-hands stop' to clean up.`);
+    } else {
+      console.log("\n🔴 Agent Hands is not running.");
+    }
   }
+  console.log("");
 }
 
 async function cmdRestart() {
-  const pid = readPid();
-  if (pid) {
-    cmdStop();
-    await new Promise((r) => setTimeout(r, 500));
-  }
+  // Always call stop — it handles both PID-tracked and orphaned processes
+  cmdStop();
+  await new Promise((r) => setTimeout(r, 500));
   await cmdStart();
 }
 
-function cmdLogs() {
+async function cmdLogs() {
   if (!existsSync(logFile)) {
     console.log("ℹ️  No log file found. Start the server first.");
     return;
@@ -266,7 +427,9 @@ function cmdLogs() {
       tail.kill();
       process.exit(0);
     });
-    return new Promise(() => {});
+    // Wait for tail to exit (e.g. when killed by SIGINT above)
+    await new Promise((resolve) => tail.on("close", resolve));
+    return;
   }
 
   const content = readFileSync(logFile, "utf-8");
@@ -301,19 +464,11 @@ async function cmdMcp() {
 }
 
 async function cmdUninstall() {
-  // 1. Stop server if running
-  const pid = readPid();
-  if (pid) {
-    console.log(`🛑 Stopping running server (PID: ${pid})...`);
-    cmdStop();
-  }
+  // 1. Stop server if running (also cleans orphans)
+  cmdStop();
 
   // 2. Detect paths
   const installDir = PKG_ROOT;
-  const binLink = join(
-    process.env.BIN_DIR ?? (existsSync(join(os.homedir(), ".local/bin", "agent-hands")) ? join(os.homedir(), ".local/bin") : "/usr/local/bin"),
-    "agent-hands",
-  );
 
   // Also try to find symlink by scanning common locations
   const possibleBinDirs = [join(os.homedir(), ".local/bin"), join(os.homedir(), "bin"), "/usr/local/bin"];
@@ -321,7 +476,7 @@ async function cmdUninstall() {
     .map((dir) => join(dir, "agent-hands"))
     .filter((p) => {
       try {
-        return existsSync(p) && readFileSync !== undefined;
+        return existsSync(p);
       } catch {
         return false;
       }
@@ -336,8 +491,7 @@ async function cmdUninstall() {
   console.log("");
 
   // 3. Confirm
-  const readline = await import("node:readline");
-  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+  const rl = createInterface({ input: process.stdin, output: process.stdout });
   const ask = (q) => new Promise((res) => rl.question(q, res));
 
   const answer = await ask("⚠️  This will remove Agent Hands and all data. Continue? [y/N] ");
@@ -351,7 +505,6 @@ async function cmdUninstall() {
   // 4. Remove symlink(s)
   for (const link of foundLinks) {
     try {
-      const { lstatSync, readlinkSync } = await import("node:fs");
       const stat = lstatSync(link);
       if (stat.isSymbolicLink()) {
         const target = readlinkSync(link);
@@ -361,8 +514,6 @@ async function cmdUninstall() {
             unlinkSync(link);
             console.log(`   ✅ Removed symlink: ${link}`);
           } catch {
-            // Try with sudo-like approach
-            const { execSync } = await import("node:child_process");
             try {
               execSync(`sudo rm -f "${link}"`, { stdio: "inherit" });
               console.log(`   ✅ Removed symlink: ${link} (sudo)`);
@@ -377,20 +528,18 @@ async function cmdUninstall() {
 
   // 5. Remove install directory
   try {
-    const { rmSync } = await import("node:fs");
     rmSync(installDir, { recursive: true, force: true });
     console.log(`   ✅ Removed install dir: ${installDir}`);
-  } catch (e) {
+  } catch {
     console.log(`   ⚠️  Could not remove install dir: ${installDir}`);
     console.log(`       Remove manually: rm -rf "${installDir}"`);
   }
 
-  // 6. Remove data directory
+  // 6. Remove data directory (includes config, PID, logs)
   try {
-    const { rmSync } = await import("node:fs");
     rmSync(dataDir, { recursive: true, force: true });
     console.log(`   ✅ Removed data dir: ${dataDir}`);
-  } catch (e) {
+  } catch {
     console.log(`   ⚠️  Could not remove data dir: ${dataDir}`);
     console.log(`       Remove manually: rm -rf "${dataDir}"`);
   }
@@ -465,7 +614,14 @@ async function cmdMonitor() {
     });
     activeChild = serverChild;
 
+    // If SIGTERM arrived during spawn, kill the child we just created
+    if (stopping) {
+      serverChild.kill("SIGTERM");
+      break;
+    }
+
     const exitCode = await serverChild.exited;
+    activeChild = null;
     if (stopping) break;
     if (exitCode === 0) break;
 
@@ -477,6 +633,7 @@ async function cmdMonitor() {
 
     if (crashTimes.length >= MAX_RAPID_CRASHES) {
       console.error(`[Monitor] ${MAX_RAPID_CRASHES} crashes in ${RAPID_CRASH_WINDOW_MS / 1000}s — giving up.`);
+      removePid();
       process.exit(1);
     }
 
