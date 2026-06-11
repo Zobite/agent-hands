@@ -82,8 +82,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Install script for one-line installation
 - Web UI with React 19 + Ant Design v6 + Tailwind CSS v4
 
-[0.2.7]: https://github.com/Zobite/agent-hands/compare/v0.2.5...v0.2.7
-[0.2.5]: https://github.com/Zobite/agent-hands/compare/v0.2.4...v0.2.5
-[0.2.4]: https://github.com/Zobite/agent-hands/compare/v0.2.3...v0.2.4
-[0.2.3]: https://github.com/Zobite/agent-hands/compare/v0.2.2...v0.2.3
-[0.2.2]: https://github.com/Zobite/agent-hands/releases/tag/v0.2.2
+[0.2.7]: https://github.com/phamvanquyit/agent-hands/compare/v0.2.5...v0.2.7
+[0.2.5]: https://github.com/phamvanquyit/agent-hands/compare/v0.2.4...v0.2.5
+[0.2.4]: https://github.com/phamvanquyit/agent-hands/compare/v0.2.3...v0.2.4
+[0.2.3]: https://github.com/phamvanquyit/agent-hands/compare/v0.2.2...v0.2.3
+[0.2.2]: https://github.com/phamvanquyit/agent-hands/releases/tag/v0.2.2

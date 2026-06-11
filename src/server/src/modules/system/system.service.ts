@@ -59,7 +59,7 @@ let _cachedPreRelease: string | null = null;
 let _cachedPreAt = 0;
 
 const CACHE_TTL_MS = 60_000; // 1 minute
-const GITHUB_REPO = process.env.GITHUB_REPO || "Zobite/agent-hands";
+const GITHUB_REPO = process.env.GITHUB_REPO || "phamvanquyit/agent-hands";
 
 export async function checkLatestVersion(): Promise<string | null> {
   const now = Date.now();

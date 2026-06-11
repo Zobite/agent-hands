@@ -4,8 +4,8 @@
     <strong>LLM-first knowledge base — Docs, DataTables, MCP server, S3-compatible file store.</strong>
   </p>
   <p align="center">
-    <a href="https://github.com/Zobite/agent-hands/releases"><img src="https://img.shields.io/badge/version-0.3.3-blue" alt="Version"></a>
-    <a href="https://github.com/Zobite/agent-hands/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="License"></a>
+    <a href="https://github.com/phamvanquyit/agent-hands/releases"><img src="https://img.shields.io/badge/version-0.3.3-blue" alt="Version"></a>
+    <a href="https://github.com/phamvanquyit/agent-hands/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="License"></a>
     <img src="https://img.shields.io/badge/runtime-Bun-f9e1b3?logo=bun" alt="Bun">
     <img src="https://img.shields.io/badge/database-SQLite-003B57?logo=sqlite" alt="SQLite">
   </p>
@@ -64,7 +64,7 @@ graph LR
 ### Install (one-liner)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Zobite/agent-hands/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/phamvanquyit/agent-hands/main/install.sh | bash
 ```
 
 > **Prerequisite:** [Bun](https://bun.sh) runtime must be installed first.
@@ -459,7 +459,7 @@ All endpoints require authentication via `Authorization: Bearer <jwt>` or `Autho
 
 ```bash
 # Clone
-git clone https://github.com/Zobite/agent-hands.git
+git clone https://github.com/phamvanquyit/agent-hands.git
 cd agent-hands
 
 # Install dependencies
@@ -508,4 +508,4 @@ All data is stored in `~/.agent-hands/` by default (configurable via `--data-dir
 
 ## License
 
-[MIT](LICENSE) © [Zobite](https://github.com/Zobite)
+[MIT](LICENSE) © [Zobite](https://github.com/phamvanquyit)

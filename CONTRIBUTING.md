@@ -202,7 +202,7 @@ bun test tests/<module>.test.ts   # Run specific module
 
 ## Reporting Bugs
 
-Use [GitHub Issues](https://github.com/Zobite/agent-hands/issues) to report bugs. Please include:
+Use [GitHub Issues](https://github.com/phamvanquyit/agent-hands/issues) to report bugs. Please include:
 
 - **Steps to reproduce** the bug
 - **Expected behavior** vs **actual behavior**
@@ -211,7 +211,7 @@ Use [GitHub Issues](https://github.com/Zobite/agent-hands/issues) to report bugs
 
 ## Requesting Features
 
-Open a [GitHub Issue](https://github.com/Zobite/agent-hands/issues) with the "Feature Request" template. Describe:
+Open a [GitHub Issue](https://github.com/phamvanquyit/agent-hands/issues) with the "Feature Request" template. Describe:
 
 - **Problem** you're trying to solve
 - **Proposed solution** or feature

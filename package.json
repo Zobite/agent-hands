@@ -1,17 +1,17 @@
 {
   "name": "agent-hands",
-  "version": "0.3.17",
+  "version": "1.0.0",
   "type": "module",
   "description": "Agent Hands — LLM-first knowledge base. Docs, Datatable, MCP server, S3-compatible file store.",
   "author": "Zobite",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Zobite/agent-hands.git"
+    "url": "git+https://github.com/phamvanquyit/agent-hands.git"
   },
-  "homepage": "https://github.com/Zobite/agent-hands#readme",
+  "homepage": "https://github.com/phamvanquyit/agent-hands#readme",
   "bugs": {
-    "url": "https://github.com/Zobite/agent-hands/issues"
+    "url": "https://github.com/phamvanquyit/agent-hands/issues"
   },
   "workspaces": ["src/server", "src/web"],
   "scripts": {

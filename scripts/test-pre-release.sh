@@ -647,10 +647,10 @@ PKG
 
   # ── Prepare HTTP server files ────────────────────────────────────────
   HTTP_DIR="$DOCKER_TMP/http"
-  mkdir -p "$HTTP_DIR/repos/Zobite/agent-hands/releases"
-  echo '{"tag_name": "v1.0.0"}' > "$HTTP_DIR/repos/Zobite/agent-hands/releases/latest"
-  mkdir -p "$HTTP_DIR/Zobite/agent-hands/releases/download/v1.0.0"
-  cp "$TARBALL_PATH" "$HTTP_DIR/Zobite/agent-hands/releases/download/v1.0.0/"
+  mkdir -p "$HTTP_DIR/repos/phamvanquyit/agent-hands/releases"
+  echo '{"tag_name": "v1.0.0"}' > "$HTTP_DIR/repos/phamvanquyit/agent-hands/releases/latest"
+  mkdir -p "$HTTP_DIR/phamvanquyit/agent-hands/releases/download/v1.0.0"
+  cp "$TARBALL_PATH" "$HTTP_DIR/phamvanquyit/agent-hands/releases/download/v1.0.0/"
 
   # ── Create Dockerfile inline ─────────────────────────────────────────
   cat > "$DOCKER_TMP/Dockerfile" << 'DOCKERFILE'
@@ -741,9 +741,9 @@ mkdir -p "$dir/bin"
 echo '{ "name": "agent-hands", "version": "0.9.0" }' > "$dir/package.json"
 echo '#!/usr/bin/env bun' > "$dir/bin/agent-hands.js"; chmod +x "$dir/bin/agent-hands.js"
 corrupt="/tmp/corrupt-http"
-mkdir -p "$corrupt/repos/Zobite/agent-hands/releases" "$corrupt/Zobite/agent-hands/releases/download/v1.0.0"
-echo '{"tag_name": "v1.0.0"}' > "$corrupt/repos/Zobite/agent-hands/releases/latest"
-echo "CORRUPT" > "$corrupt/Zobite/agent-hands/releases/download/v1.0.0/agent-hands-1.0.0.tar.gz"
+mkdir -p "$corrupt/repos/phamvanquyit/agent-hands/releases" "$corrupt/phamvanquyit/agent-hands/releases/download/v1.0.0"
+echo '{"tag_name": "v1.0.0"}' > "$corrupt/repos/phamvanquyit/agent-hands/releases/latest"
+echo "CORRUPT" > "$corrupt/phamvanquyit/agent-hands/releases/download/v1.0.0/agent-hands-1.0.0.tar.gz"
 cd "$corrupt"; python3 -m http.server 18889 --bind 127.0.0.1 &>/dev/null & cpid=$!; cd ~; sleep 0.3
 cinst="/tmp/cinst.sh"
 sed -e "s|https://api.github.com|http://127.0.0.1:18889|g" -e "s|https://github.com|http://127.0.0.1:18889|g" /test/install.sh > "$cinst"; chmod +x "$cinst"

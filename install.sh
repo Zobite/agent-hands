@@ -3,7 +3,7 @@
 # Agent Hands — Installer
 #
 # Usage:
-#   curl -fsSL https://raw.githubusercontent.com/Zobite/agent-hands/main/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/phamvanquyit/agent-hands/main/install.sh | bash
 #
 # Options (environment variables):
 #   VERSION=0.3.0      Install a specific version (default: latest)
@@ -16,7 +16,7 @@ cd /tmp || cd "$HOME" || cd /
 
 
 # ── Config ──────────────────────────────────────────────────────────────────
-REPO="Zobite/agent-hands"
+REPO="phamvanquyit/agent-hands"
 INSTALL_DIR="${INSTALL_DIR:-$HOME/.local/share/agent-hands}"
 # Determine the best BIN_DIR (prefer user-local directories if they are in PATH)
 if [ -z "${BIN_DIR:-}" ]; then

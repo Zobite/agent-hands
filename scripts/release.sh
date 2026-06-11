@@ -271,30 +271,30 @@ if [ "$IS_PRERELEASE" = true ]; then
 ### Install this pre-release
 
 \`\`\`bash
-VERSION=${NEW_VERSION} curl -fsSL https://raw.githubusercontent.com/Zobite/agent-hands/main/install.sh | bash
+VERSION=${NEW_VERSION} curl -fsSL https://raw.githubusercontent.com/phamvanquyit/agent-hands/main/install.sh | bash
 \`\`\`
 
 ---
 
-See [README](https://github.com/Zobite/agent-hands#readme) for full documentation."
+See [README](https://github.com/phamvanquyit/agent-hands#readme) for full documentation."
 else
   RELEASE_NOTES="## Agent Hands ${TAG}
 
 ### Installation
 
 \`\`\`bash
-curl -fsSL https://raw.githubusercontent.com/Zobite/agent-hands/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/phamvanquyit/agent-hands/main/install.sh | bash
 \`\`\`
 
 ### Or install a specific version
 
 \`\`\`bash
-VERSION=${NEW_VERSION} curl -fsSL https://raw.githubusercontent.com/Zobite/agent-hands/main/install.sh | bash
+VERSION=${NEW_VERSION} curl -fsSL https://raw.githubusercontent.com/phamvanquyit/agent-hands/main/install.sh | bash
 \`\`\`
 
 ---
 
-See [README](https://github.com/Zobite/agent-hands#readme) for full documentation."
+See [README](https://github.com/phamvanquyit/agent-hands#readme) for full documentation."
 fi
 
 GH_RELEASE_FLAGS=()
@@ -313,13 +313,13 @@ success "GitHub Release ${TAG} published!"
 echo ""
 echo -e "${GREEN}${BOLD}🎉 Release ${TAG} complete!${NC}"
 echo ""
-echo -e "  ${BOLD}Release page${NC}: https://github.com/Zobite/agent-hands/releases/tag/${TAG}"
+echo -e "  ${BOLD}Release page${NC}: https://github.com/phamvanquyit/agent-hands/releases/tag/${TAG}"
 if [ "$IS_PRERELEASE" = true ]; then
-  echo -e "  ${BOLD}Test cmd${NC}   : ${CYAN}VERSION=${NEW_VERSION} curl -fsSL https://raw.githubusercontent.com/Zobite/agent-hands/main/install.sh | bash${NC}"
+  echo -e "  ${BOLD}Test cmd${NC}   : ${CYAN}VERSION=${NEW_VERSION} curl -fsSL https://raw.githubusercontent.com/phamvanquyit/agent-hands/main/install.sh | bash${NC}"
   echo ""
   echo -e "  ${DIM}This pre-release will NOT affect users running the default install command.${NC}"
   echo -e "  ${DIM}Share the test command above with your testers.${NC}"
 else
-  echo -e "  ${BOLD}Install cmd${NC} : curl -fsSL https://raw.githubusercontent.com/Zobite/agent-hands/main/install.sh | bash"
+  echo -e "  ${BOLD}Install cmd${NC} : curl -fsSL https://raw.githubusercontent.com/phamvanquyit/agent-hands/main/install.sh | bash"
 fi
 echo ""
